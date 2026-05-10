@@ -1,0 +1,17 @@
+# 세션 메타데이터
+- 세션 ID: 20260504-new-business
+- 시작 시각: 2026-05-04
+- 워크플로우: new-business
+- 주요 목표: 주식회사 서우의 AI 에이전트 기획·서비스 상품화 사업 전략 수립
+- 사용자 입력값:
+  - 회사명: 주식회사 서우 (SEOWOO), 설립 2025년 10월
+  - 사업 방향: AI 에이전트 기획 및 서비스 사업화
+  - 브랜드 슬로건: "We grow together!"
+  - 브랜드 핵심 감정: 진정성 + 신뢰
+  - 기존 비즈니스 모델 참고: 4-Track (AI Discovery Sprint / Co-build MVP / In-house Venture / AI Builder Bootcamp)
+- 실행 에이전트 순서: market-researcher + competitor-analyst + keyword-researcher → analyst → financial-reporter → compliance-checker + legal-researcher → proposal-writer → report-writer
+- 현재 단계: Phase 4 — 사업계획서 작성
+- 완료된 에이전트: market-researcher, competitor-analyst, keyword-researcher, analyst, financial-reporter, compliance-checker, legal-researcher
+- 사용자 결정 사항:
+  - HITL 게이트 1: AI Co-builder 포지션 확정, 타겟 1순위 중소·중견기업 AI 바우처 연계
+  - HITL 게이트 2: 수익모델 A+B+C 조합 선택 (60:30:10) — M4 흑자 전환 목표

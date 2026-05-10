@@ -1,0 +1,102 @@
+import { notFound } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import ShopOrderSection from '@/components/shop/ShopOrderSection'
+import { formatPrice } from '@/lib/utils/format'
+import Hexagon from '@/components/brand/Hexagon'
+
+async function getProductWithPrice(id: string, role: string) {
+  const supabase = await createClient()
+  const { data: product } = await supabase
+    .from('products')
+    .select('id, name, description, category, retail_price, wholesale_price, is_instructor_only, is_active, stock_qty, images')
+    .eq('id', id)
+    .single()
+
+  if (!product || !product.is_active) return null
+  if (product.is_instructor_only && !['instructor', 'admin'].includes(role)) return null
+
+  const isWholesale = ['instructor', 'admin'].includes(role) && !!product.wholesale_price
+  const price = isWholesale ? product.wholesale_price! : product.retail_price
+
+  return { ...product, price, isWholesale, stock: product.stock_qty, wholesale_price: undefined }
+}
+
+async function getUserRole() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return 'guest'
+  const { data } = await supabase.from('users').select('role').eq('id', user.id).single()
+  return data?.role ?? 'user'
+}
+
+export default async function ShopDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const role = await getUserRole()
+  const product = await getProductWithPrice(id, role)
+
+  if (!product) notFound()
+
+  const isSoldOut = product.stock === 0
+
+  return (
+    <div className="min-h-screen bg-brand-bg">
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* 이미지 */}
+          <div>
+            <div className="aspect-square bg-white rounded-2xl overflow-hidden shadow-sm border border-brand-mist/30">
+              {product.images && product.images.length > 0 ? (
+                <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-6xl opacity-20">📦</div>
+              )}
+            </div>
+          </div>
+
+          {/* 상세 */}
+          <div>
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-brand-mist/30 mb-5">
+              {product.category && (
+                <div className="flex items-center gap-2 mb-2">
+                  <Hexagon color="amber" size={14} />
+                  <span className="text-xs text-brand-grey">{product.category}</span>
+                </div>
+              )}
+              <h1 className="text-2xl font-bold text-brand-ink mb-3">{product.name}</h1>
+              <div className="flex items-center gap-3 mb-2">
+                <span className="text-3xl font-bold text-brand-deep">{formatPrice(product.price)}</span>
+                {product.isWholesale && (
+                  <span className="text-sm font-medium bg-brand-amber text-brand-ink px-3 py-1 rounded-full">
+                    강사 도매가
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-brand-grey">
+                재고 {(product.stock ?? 0) > 0 ? `${product.stock}개 남음` : '품절'}
+              </p>
+            </div>
+
+            {product.description && (
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-mist/30 mb-5">
+                <h2 className="text-sm font-semibold text-brand-ink mb-2">상품 설명</h2>
+                <p className="text-sm text-brand-grey leading-relaxed whitespace-pre-wrap">{product.description}</p>
+              </div>
+            )}
+
+            {!isSoldOut ? (
+              <ShopOrderSection
+                productId={product.id}
+                productName={product.name}
+                price={product.price}
+              />
+            ) : (
+              <div className="bg-brand-bg rounded-2xl p-5 text-center border border-brand-mist/30">
+                <p className="text-brand-grey font-medium">현재 품절된 상품입니다</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

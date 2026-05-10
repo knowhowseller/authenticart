@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\노하우셀러\\\\aiagent\" -Recurse -Force)",
+      "Bash(Select-Object FullName, PSIsContainer)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\노하우셀러\\\\.claude\\\\plugins\\\\marketplaces\\\\claude-plugins-official\\\\plugins\" -Directory)",
+      "Bash(Select-Object Name)",
+      "Bash(dir \"C:\\\\Users\\\\노하우셀러\\\\aiagent\")",
+      "Read(//c/Users/노하우셀러/.claude/**)",
+      "WebSearch",
+      "PowerShell(pnpm *)",
+      "PowerShell(npm install *)",
+      "PowerShell(Set-ExecutionPolicy *)"
+    ]
+  }
+}
