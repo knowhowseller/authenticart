@@ -45,7 +45,7 @@ export default async function MyOrdersPage() {
         ) : (
           <div className="space-y-4">
             {orders.map((order: any) => (
-              <div key={order.id} className="bg-white rounded-2xl p-5 shadow-sm border border-brand-mist/30">
+              <Link key={order.id} href={`/my/orders/${order.id}`} className="block bg-white rounded-2xl p-5 shadow-sm border border-brand-mist/30 hover:shadow-md transition-all">
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-12 h-12 rounded-xl bg-brand-bg overflow-hidden flex-shrink-0">
@@ -83,7 +83,7 @@ export default async function MyOrdersPage() {
                     )}
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}

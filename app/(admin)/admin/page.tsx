@@ -47,6 +47,7 @@ export default async function AdminPage() {
     { href: '/admin/orders', label: '주문 관리', icon: '📦', desc: '전체 주문 현황 및 배송' },
     { href: '/admin/payouts', label: '정산 실행', icon: '💰', desc: '월별 정산 처리 및 입금' },
     { href: '/admin/products', label: '상품 관리', icon: '🛍️', desc: '상품 등록 및 재고 관리' },
+    { href: '/admin/branches', label: '지부 관리', icon: '🏢', desc: '지부 생성 및 지부장 지정' },
   ]
 
   return (

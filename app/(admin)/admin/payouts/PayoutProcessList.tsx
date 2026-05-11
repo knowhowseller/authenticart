@@ -17,6 +17,7 @@ interface PayoutItem {
   status: string
   paid_at: string | null
   users: { name: string; email: string } | null
+  instructor_profiles: { payout_account: { bank: string; account: string; holder: string } | null } | null
 }
 
 export default function PayoutProcessList({
@@ -88,13 +89,22 @@ export default function PayoutProcessList({
           <div key={p.id} className="bg-white rounded-2xl p-5 shadow-sm border border-brand-mist/30">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <p className="font-semibold text-brand-ink">{p.users?.name ?? '이름 없음'}</p>
                   <span className="text-xs text-brand-grey">{p.users?.email}</span>
                 </div>
-                <p className="text-xs text-brand-grey mb-3">
+                <p className="text-xs text-brand-grey mb-2">
                   {p.period_year}년 {p.period_month}월 · 예약 {p.booking_count}건 · 주문 {p.order_count}건
                 </p>
+                {p.instructor_profiles?.payout_account ? (
+                  <p className="text-xs text-brand-deep mb-3 font-medium">
+                    {p.instructor_profiles.payout_account.bank}{' '}
+                    {p.instructor_profiles.payout_account.account}{' '}
+                    ({p.instructor_profiles.payout_account.holder})
+                  </p>
+                ) : (
+                  <p className="text-xs text-red-500 mb-3 font-medium">⚠️ 계좌 미등록</p>
+                )}
                 <div className="grid grid-cols-4 gap-2 text-center">
                   {[
                     { label: '총 매출', value: formatPrice(p.total_gross) },

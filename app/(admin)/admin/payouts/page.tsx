@@ -17,14 +17,14 @@ export default async function AdminPayoutsPage() {
 
   const { data: pending } = await supabase
     .from('payouts')
-    .select('*, users!instructor_id(name, email)')
+    .select('*, users!instructor_id(name, email), instructor_profiles!instructor_id(payout_account)')
     .eq('status', 'pending')
     .order('period_year', { ascending: false })
     .order('period_month', { ascending: false })
 
   const { data: recentPaid } = await supabase
     .from('payouts')
-    .select('*, users!instructor_id(name, email)')
+    .select('*, users!instructor_id(name, email), instructor_profiles!instructor_id(payout_account)')
     .eq('status', 'paid')
     .order('paid_at', { ascending: false })
     .limit(30)

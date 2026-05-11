@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import ClassBadges from '@/components/brand/ClassBadges'
 import BookingSection from '@/components/class/BookingSection'
 import ReviewSection from '@/components/class/ReviewSection'
+import RefundPolicyBox from '@/components/class/RefundPolicyBox'
 import Hexagon from '@/components/brand/Hexagon'
 import { formatPrice, formatDateTime } from '@/lib/utils/format'
 import { Star } from 'lucide-react'
@@ -178,6 +179,9 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
                 <p className="text-sm text-brand-grey leading-relaxed">{profile.bio}</p>
               </div>
             )}
+
+            {/* 환불 정책 */}
+            <RefundPolicyBox />
 
             {/* 리뷰 섹션 */}
             <ReviewSection

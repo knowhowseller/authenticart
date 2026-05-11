@@ -2,15 +2,16 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { formatPrice } from '@/lib/utils/format'
 import Hexagon from '@/components/brand/Hexagon'
+import OrderActions from './OrderActions'
 
 const statusLabel: Record<string, { label: string; color: string }> = {
-  pending:   { label: '결제 전', color: 'bg-yellow-50 text-yellow-600' },
+  pending:   { label: '결제 전',   color: 'bg-yellow-50 text-yellow-600' },
   paid:      { label: '결제 완료', color: 'bg-blue-50 text-blue-600' },
-  preparing: { label: '준비 중', color: 'bg-brand-bg text-brand-grey' },
-  shipped:   { label: '배송 중', color: 'bg-purple-50 text-purple-600' },
+  preparing: { label: '준비 중',   color: 'bg-brand-bg text-brand-grey' },
+  shipped:   { label: '배송 중',   color: 'bg-purple-50 text-purple-600' },
   delivered: { label: '배송 완료', color: 'bg-green-50 text-green-600' },
-  cancelled: { label: '취소됨', color: 'bg-brand-bg text-brand-grey' },
-  refunded:  { label: '환불됨', color: 'bg-red-50 text-red-500' },
+  cancelled: { label: '취소됨',    color: 'bg-brand-bg text-brand-grey' },
+  refunded:  { label: '환불됨',    color: 'bg-red-50 text-red-500' },
 }
 
 export default async function AdminOrdersPage() {
@@ -23,13 +24,14 @@ export default async function AdminOrdersPage() {
   const { data: orders } = await supabase
     .from('orders')
     .select(`
-      id, status, total_amount, shipping_name, shipping_phone,
-      shipping_address, tracking_number, created_at,
+      id, status, total_amount, quantity,
+      shipping_name, shipping_phone, shipping_address,
+      tracking_number, created_at,
       users!buyer_id(name, email),
       products!product_id(name)
     `)
     .order('created_at', { ascending: false })
-    .limit(100)
+    .limit(200)
 
   return (
     <div className="min-h-screen bg-brand-bg">
@@ -50,28 +52,41 @@ export default async function AdminOrdersPage() {
               const s = statusLabel[o.status] ?? { label: o.status, color: '' }
               return (
                 <div key={o.id} className="bg-white rounded-2xl p-4 shadow-sm border border-brand-mist/30">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-medium text-brand-ink text-sm truncate">
-                        {o.products?.name ?? '-'}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${s.color}`}>
+                          {s.label}
+                        </span>
+                        <span className="text-xs text-brand-grey">
+                          {new Date(o.created_at).toLocaleDateString('ko-KR')}
+                        </span>
+                      </div>
+                      <p className="font-medium text-brand-ink text-sm">
+                        {o.products?.name ?? '-'} {o.quantity > 1 && `× ${o.quantity}`}
                       </p>
                       <p className="text-xs text-brand-grey mt-0.5">
-                        구매자: {o.users?.name} · {formatPrice(o.total_amount)}
+                        구매자: {o.users?.name} ({o.users?.email})
                       </p>
                       <p className="text-xs text-brand-grey mt-0.5">
-                        {o.shipping_name} · {o.shipping_phone}
+                        배송: {o.shipping_name} · {o.shipping_phone}
                       </p>
-                      {o.tracking_number && (
-                        <p className="text-xs text-brand-deep mt-0.5">운송장: {o.tracking_number}</p>
+                      {o.shipping_address && (
+                        <p className="text-xs text-brand-grey mt-0.5 truncate">{o.shipping_address}</p>
                       )}
+                      {o.tracking_number && (
+                        <p className="text-xs text-brand-deep mt-0.5 font-medium">
+                          운송장: {o.tracking_number}
+                        </p>
+                      )}
+                      <p className="text-sm font-bold text-brand-deep mt-1">{formatPrice(o.total_amount)}</p>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${s.color}`}>
-                        {s.label}
-                      </span>
-                      <span className="text-xs text-brand-grey hidden sm:block">
-                        {new Date(o.created_at).toLocaleDateString('ko-KR')}
-                      </span>
+                    <div className="flex-shrink-0 w-36">
+                      <OrderActions
+                        orderId={o.id}
+                        initialStatus={o.status}
+                        initialTracking={o.tracking_number}
+                      />
                     </div>
                   </div>
                 </div>

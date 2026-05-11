@@ -18,15 +18,16 @@ export default async function StudioSchedulesPage() {
     .eq('status', 'published')
     .order('title')
 
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
   const { data: schedules } = await supabase
     .from('class_schedules')
     .select(`
       id, start_at, end_at, max_students, booked_count,
       classes!class_id(id, title, instructor_id)
     `)
-    .gte('start_at', new Date().toISOString())
-    .order('start_at', { ascending: true })
-    .limit(50)
+    .gte('start_at', thirtyDaysAgo)
+    .order('start_at', { ascending: false })
+    .limit(100)
     .then(({ data }) => ({
       data: (data ?? []).filter((s: any) => s.classes?.instructor_id === user.id),
     }))

@@ -138,6 +138,7 @@ export default async function StudioPage() {
             { href: '/studio/schedules', label: '회차 관리', icon: '🗓️' },
             { href: '/studio/requests', label: '예약 신청 관리', icon: '📬' },
             { href: '/studio/payouts', label: '정산 조회', icon: '💰' },
+            { href: '/studio/settings', label: '프로필 & 계좌', icon: '⚙️' },
           ].map(({ href, label, icon }) => (
             <Link
               key={href}

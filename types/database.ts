@@ -1,10 +1,11 @@
-export type UserRole = 'student' | 'instructor' | 'admin'
+export type UserRole = 'student' | 'instructor' | 'admin' | 'branch_manager'
 export type BookingStatus =
   | 'pending_payment' | 'pending_approval' | 'approved' | 'paid' | 'rejected'
   | 'cancelled' | 'completed' | 'expired' | 'refunded'
 export type ConfirmationMode = 'instant' | 'request'
 export type ClassStatus = 'draft' | 'published' | 'closed'
 export type OrderStatus = 'pending' | 'paid' | 'preparing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded'
+export type BranchManagerRole = 'branch_manager'
 export type PayoutStatus = 'pending' | 'processing' | 'paid' | 'hold'
 export type InstructorStatus = 'pending' | 'approved' | 'rejected'
 
@@ -191,6 +192,24 @@ export interface Database {
         }
         Update: Partial<Database['public']['Tables']['products']['Insert']>
       }
+      branches: {
+        Row: {
+          id: string
+          name: string
+          region: string
+          manager_id: string | null
+          commission_rate: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          name: string
+          region: string
+          manager_id?: string | null
+          commission_rate?: number
+        }
+        Update: Partial<Database['public']['Tables']['branches']['Insert']>
+      }
       orders: {
         Row: {
           id: string
@@ -200,6 +219,7 @@ export interface Database {
           total_amount: number
           status: OrderStatus
           payment_id: string | null
+          receipt_url: string | null
           shipping_name: string | null
           shipping_phone: string | null
           shipping_address: string | null

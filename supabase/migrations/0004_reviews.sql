@@ -20,19 +20,23 @@ create index if not exists idx_reviews_class on public.class_reviews(class_id);
 alter table public.class_reviews enable row level security;
 
 -- 누구나 읽기
+drop policy if exists "reviews_select" on public.class_reviews;
 create policy "reviews_select" on public.class_reviews
   for select using (true);
 
 -- 본인만 작성 (booking_id 있는 수강 완료 건만)
+drop policy if exists "reviews_insert" on public.class_reviews;
 create policy "reviews_insert" on public.class_reviews
   for insert with check (
     auth.uid() = student_id
   );
 
 -- 본인만 수정
+drop policy if exists "reviews_update" on public.class_reviews;
 create policy "reviews_update" on public.class_reviews
   for update using (auth.uid() = student_id);
 
 -- 본인만 삭제
+drop policy if exists "reviews_delete" on public.class_reviews;
 create policy "reviews_delete" on public.class_reviews
   for delete using (auth.uid() = student_id);

@@ -113,6 +113,9 @@ export default function RequestsList({ initialRequests }: { initialRequests: Req
             <div>
               <p className="text-brand-ink font-medium">{req.users?.name}</p>
               <p className="text-brand-grey text-xs">{req.users?.email}</p>
+              {req.users?.phone && (
+                <p className="text-brand-grey text-xs mt-0.5">{req.users.phone}</p>
+              )}
             </div>
             <div className="text-right">
               <p className="text-xs text-brand-grey mb-0.5">응답 남은 시간</p>
