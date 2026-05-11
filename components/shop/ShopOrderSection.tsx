@@ -48,7 +48,9 @@ export default function ShopOrderSection({ productId, productName, price }: Shop
       if (!res.ok) throw new Error(orderData.error ?? '주문 생성 실패')
 
       await loadTossPayments()
-      const tossPayments = (window as any).TossPayments(process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? '')
+      const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY
+      if (!clientKey) throw new Error('결제 설정 오류. 관리자에게 문의해주세요.')
+      const tossPayments = (window as any).TossPayments(clientKey)
       await tossPayments.requestPayment('카드', {
         amount: price,
         orderId: orderData.order_id,

@@ -9,15 +9,14 @@ export async function POST(request: Request) {
   const { product_id, quantity = 1, shipping_info } = await request.json()
   if (!product_id) return NextResponse.json({ error: 'product_id required' }, { status: 400 })
 
-  const admin = await createAdminClient()
-
-  const { data: product } = await admin
+  // 상품 조회는 일반 클라이언트로 (products는 공개 읽기 가능)
+  const { data: product, error: productError } = await supabase
     .from('products')
     .select('id, name, retail_price, wholesale_price, is_instructor_only, is_active, stock_qty')
     .eq('id', product_id)
     .single()
 
-  if (!product || !product.is_active) {
+  if (productError || !product || !product.is_active) {
     return NextResponse.json({ error: '상품을 찾을 수 없습니다' }, { status: 404 })
   }
 
@@ -25,7 +24,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: '재고가 부족합니다' }, { status: 400 })
   }
 
-  const { data: userData } = await admin.from('users').select('role').eq('id', user.id).single()
+  // 역할 조회도 일반 클라이언트로
+  const { data: userData } = await supabase.from('users').select('role').eq('id', user.id).single()
   const role = userData?.role ?? 'student'
 
   if (product.is_instructor_only && !['instructor', 'admin'].includes(role)) {
@@ -38,6 +38,8 @@ export async function POST(request: Request) {
 
   const totalAmount = unitPrice * quantity
 
+  // 주문 insert는 admin client (RLS 우회)
+  const admin = await createAdminClient()
   const { data: order, error } = await admin
     .from('orders')
     .insert({

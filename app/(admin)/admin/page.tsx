@@ -41,6 +41,7 @@ export default async function AdminPage() {
   ]
 
   const menus = [
+    { href: '/admin/users', label: '회원 관리', icon: '👥', desc: '회원 목록 조회 및 역할 변경' },
     { href: '/admin/instructors', label: '강사 승인 관리', icon: '👩‍🎨', desc: '신규 강사 신청 검토 및 승인' },
     { href: '/admin/classes', label: '클래스 검수', icon: '📋', desc: 'draft 클래스 검수 및 게시' },
     { href: '/admin/bookings', label: '예약 관리', icon: '📅', desc: '전체 예약 현황 조회' },
