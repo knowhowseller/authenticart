@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import Hexagon from '@/components/brand/Hexagon'
+import { Star, BookOpen, MapPin } from 'lucide-react'
 
 export default async function InstructorsPage() {
   const supabase = await createClient()
@@ -8,8 +9,12 @@ export default async function InstructorsPage() {
   const { data: instructors } = await supabase
     .from('instructor_profiles')
     .select(`
-      instructor_id, bio, region, status,
-      users!instructor_id(name)
+      instructor_id, bio, region, status, profile_image,
+      users!instructor_id(name),
+      classes!instructor_id(
+        id,
+        class_reviews(rating)
+      )
     `)
     .eq('status', 'approved')
     .order('created_at', { ascending: false })
@@ -25,22 +30,63 @@ export default async function InstructorsPage() {
         <p className="text-brand-grey mb-10">오센틱아트의 공예 전문 강사들을 만나보세요</p>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {(instructors ?? []).map((i: any) => (
-            <Link
-              key={i.instructor_id}
-              href={`/instructors/${i.instructor_id}`}
-              className="bg-white rounded-2xl p-5 shadow-sm border border-brand-mist/30 hover:shadow-md hover:border-brand-amber/30 transition-all"
-            >
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-blush to-brand-mist flex items-center justify-center mb-3">
-                <span className="text-2xl">👩‍🎨</span>
-              </div>
-              <h3 className="font-semibold text-brand-ink text-sm">{i.users?.name}</h3>
-              {i.region && <p className="text-xs text-brand-grey mt-0.5">{i.region}</p>}
-              {i.bio && (
-                <p className="text-xs text-brand-grey mt-2 line-clamp-2">{i.bio}</p>
-              )}
-            </Link>
-          ))}
+          {(instructors ?? []).map((inst: any) => {
+            const publishedClasses = (inst.classes ?? []).filter((c: any) => c.id)
+            const allReviews = publishedClasses.flatMap((c: any) => c.class_reviews ?? [])
+            const avgRating = allReviews.length > 0
+              ? allReviews.reduce((s: number, r: any) => s + r.rating, 0) / allReviews.length
+              : null
+
+            return (
+              <Link
+                key={inst.instructor_id}
+                href={`/instructors/${inst.instructor_id}`}
+                className="bg-white rounded-2xl overflow-hidden shadow-sm border border-brand-mist/30 hover:shadow-md hover:border-brand-amber/30 transition-all group"
+              >
+                {/* 상단 배너 + 아바타 */}
+                <div className="relative h-16 bg-gradient-to-r from-brand-deep/10 via-brand-blush/20 to-brand-mist/30">
+                  <div className="absolute -bottom-6 left-4 w-12 h-12 rounded-xl border-2 border-white shadow-sm overflow-hidden bg-gradient-to-br from-brand-blush to-brand-mist">
+                    {inst.profile_image ? (
+                      <img src={inst.profile_image} alt={inst.users?.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-xl">👩‍🎨</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="pt-8 pb-4 px-4">
+                  <h3 className="font-semibold text-brand-ink text-sm group-hover:text-brand-deep transition-colors">
+                    {inst.users?.name}
+                  </h3>
+                  {inst.region && (
+                    <div className="flex items-center gap-0.5 text-xs text-brand-grey mt-0.5">
+                      <MapPin size={10} />
+                      {inst.region}
+                    </div>
+                  )}
+
+                  {/* 스탯 */}
+                  <div className="flex items-center gap-3 mt-2.5">
+                    <div className="flex items-center gap-1 text-xs text-brand-grey">
+                      <BookOpen size={10} className="text-brand-amber" />
+                      {publishedClasses.length}개
+                    </div>
+                    {avgRating !== null && (
+                      <div className="flex items-center gap-1 text-xs text-brand-grey">
+                        <Star size={10} className="text-brand-amber fill-brand-amber" />
+                        {avgRating.toFixed(1)}
+                      </div>
+                    )}
+                  </div>
+
+                  {inst.bio && (
+                    <p className="text-xs text-brand-grey mt-2 line-clamp-2 leading-relaxed">{inst.bio}</p>
+                  )}
+                </div>
+              </Link>
+            )
+          })}
+
           {(!instructors || instructors.length === 0) && (
             <div className="col-span-full text-center py-12 text-brand-grey">
               등록된 강사가 없습니다
