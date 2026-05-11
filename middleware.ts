@@ -5,49 +5,40 @@ import { NextResponse } from 'next/server'
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321',
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder',
-    {
-      cookies: {
-        getAll() { return request.cookies.getAll() },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          )
-          supabaseResponse = NextResponse.next({ request })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
+  try {
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() { return request.cookies.getAll() },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value }) =>
+              request.cookies.set(name, value)
+            )
+            supabaseResponse = NextResponse.next({ request })
+            cookiesToSet.forEach(({ name, value, options }) =>
+              supabaseResponse.cookies.set(name, value, options)
+            )
+          },
         },
-      },
+      }
+    )
+
+    // 세션 쿠키 갱신만 수행 (DB 쿼리 없음)
+    await supabase.auth.getSession()
+
+    const { pathname } = request.nextUrl
+
+    // /my/* 는 쿠키에 세션이 없으면 로그인으로
+    const hasSession = request.cookies.get('sb-coabfjizufovypfappco-auth-token') ||
+                       request.cookies.getAll().some(c => c.name.includes('auth-token'))
+
+    if (pathname.startsWith('/my') && !hasSession) {
+      return NextResponse.redirect(new URL('/login', request.url))
     }
-  )
-
-  const { data: { user } } = await supabase.auth.getUser()
-
-  let role: string | null = null
-  if (user) {
-    const { data } = await supabase.from('users').select('role').eq('id', user.id).single()
-    role = data?.role ?? 'student'
-  }
-
-  const { pathname } = request.nextUrl
-
-  if (pathname.startsWith('/my') && !user) {
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
-
-  if (pathname.startsWith('/studio') && !['instructor', 'admin'].includes(role ?? '')) {
-    return NextResponse.redirect(new URL('/', request.url))
-  }
-
-  if (pathname.startsWith('/admin') && role !== 'admin') {
-    return NextResponse.redirect(new URL('/', request.url))
-  }
-
-  if (user && (pathname === '/login' || pathname.startsWith('/signup'))) {
-    return NextResponse.redirect(new URL('/', request.url))
+  } catch {
+    // 미들웨어 오류 시 그냥 통과 (페이지 레벨에서 재검증)
   }
 
   return supabaseResponse
