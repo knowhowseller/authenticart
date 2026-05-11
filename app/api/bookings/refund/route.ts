@@ -3,6 +3,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { calcRefundAmount } from '@/lib/utils/fees'
 import { sendEmail } from '@/lib/email/resend'
 import { refundCompleteHtml } from '@/lib/email/templates/refund-complete'
+import { releaseAndNotify } from '@/lib/waitlist'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -64,6 +65,9 @@ export async function POST(req: NextRequest) {
     refunded_at: new Date().toISOString(),
     refund_reason: '고객 환불 요청',
   }).eq('id', booking_id)
+
+  // 좌석 반환 + 대기자 알림
+  releaseAndNotify(booking_id, admin).catch(() => {})
 
   await admin.from('audit_logs').insert({
     actor_id: user.id,

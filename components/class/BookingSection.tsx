@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { formatPrice, formatDateTime } from '@/lib/utils/format'
 import Button from '@/components/ui/Button'
 import Hexagon from '@/components/brand/Hexagon'
+import WaitlistButton from './WaitlistButton'
 
 interface Schedule {
   id: string
@@ -14,18 +15,28 @@ interface Schedule {
   available_seats: number
 }
 
+interface WaitlistEntry {
+  scheduleId: string
+  position: number | null
+}
+
 interface BookingSectionProps {
   classId: string
   price: number
   confirmationMode: 'instant' | 'request'
   schedules: Schedule[]
+  myWaitlists?: WaitlistEntry[]
 }
 
-export default function BookingSection({ classId, price, confirmationMode, schedules }: BookingSectionProps) {
+export default function BookingSection({
+  classId, price, confirmationMode, schedules, myWaitlists = [],
+}: BookingSectionProps) {
   const router = useRouter()
   const supabase = createClient()
   const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null)
   const [loading, setLoading] = useState(false)
+
+  const waitlistMap = new Map(myWaitlists.map(w => [w.scheduleId, w.position]))
 
   async function handleBooking() {
     if (!selectedSchedule) return
@@ -39,7 +50,6 @@ export default function BookingSection({ classId, price, confirmationMode, sched
 
     setLoading(true)
     try {
-      // 예약 생성
       const res = await fetch('/api/bookings/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -58,7 +68,6 @@ export default function BookingSection({ classId, price, confirmationMode, sched
         return
       }
 
-      // instant: 토스 결제 실행
       await loadTossPayments()
       const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY
       if (!clientKey) throw new Error('결제 설정 오류. 관리자에게 문의해주세요.')
@@ -89,6 +98,8 @@ export default function BookingSection({ classId, price, confirmationMode, sched
     })
   }
 
+  const allSoldOut = schedules.length > 0 && schedules.every(s => s.available_seats === 0)
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-brand-mist/30 p-5 sticky top-24">
       <div className="flex items-center gap-2 mb-4">
@@ -101,33 +112,57 @@ export default function BookingSection({ classId, price, confirmationMode, sched
           {schedules.map((s) => {
             const isSoldOut = s.available_seats === 0
             const isSelected = selectedSchedule?.id === s.id
+            const isWaitlisted = waitlistMap.has(s.id)
+            const waitPosition = waitlistMap.get(s.id)
+
             return (
-              <button
-                key={s.id}
-                disabled={isSoldOut}
-                onClick={() => setSelectedSchedule(isSelected ? null : s)}
-                className={`w-full text-left p-3 rounded-xl border transition-all ${
-                  isSoldOut
-                    ? 'border-brand-mist/30 bg-brand-bg opacity-50 cursor-not-allowed'
-                    : isSelected
-                    ? 'border-brand-amber bg-brand-amber/5'
-                    : 'border-brand-mist/50 hover:border-brand-deep/30'
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-brand-ink">
-                      {formatDateTime(s.start_at)}
-                    </p>
-                    <p className="text-xs text-brand-grey mt-0.5">
-                      {isSoldOut ? '마감' : `잔여 ${s.available_seats}석`}
-                    </p>
+              <div key={s.id}>
+                <button
+                  disabled={isSoldOut}
+                  onClick={() => !isSoldOut && setSelectedSchedule(isSelected ? null : s)}
+                  className={`w-full text-left p-3 rounded-xl border transition-all ${
+                    isSoldOut
+                      ? 'border-brand-mist/30 bg-brand-bg cursor-default'
+                      : isSelected
+                      ? 'border-brand-amber bg-brand-amber/5'
+                      : 'border-brand-mist/50 hover:border-brand-deep/30'
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className={`text-sm font-medium ${isSoldOut ? 'text-brand-grey' : 'text-brand-ink'}`}>
+                        {formatDateTime(s.start_at)}
+                      </p>
+                      <p className="text-xs text-brand-grey mt-0.5">
+                        {isSoldOut
+                          ? isWaitlisted
+                            ? `대기 중 (${waitPosition ?? '?'}번째)`
+                            : '마감'
+                          : `잔여 ${s.available_seats}석`}
+                      </p>
+                    </div>
+                    {isSelected && !isSoldOut && (
+                      <span className="text-brand-amber text-xs font-medium">선택됨</span>
+                    )}
+                    {isSoldOut && isWaitlisted && (
+                      <span className="text-xs bg-brand-amber/10 text-brand-amber border border-brand-amber/30 px-2 py-0.5 rounded-full font-medium">
+                        대기 중
+                      </span>
+                    )}
                   </div>
-                  {isSelected && (
-                    <span className="text-brand-amber text-xs font-medium">선택됨</span>
-                  )}
-                </div>
-              </button>
+                </button>
+
+                {/* 마감 회차 → 대기 버튼 */}
+                {isSoldOut && (
+                  <div className="mt-1.5 px-1">
+                    <WaitlistButton
+                      scheduleId={s.id}
+                      initialWaitlisted={isWaitlisted}
+                      initialPosition={waitPosition}
+                    />
+                  </div>
+                )}
+              </div>
             )
           })}
         </div>
@@ -135,30 +170,35 @@ export default function BookingSection({ classId, price, confirmationMode, sched
         <p className="text-sm text-brand-grey text-center py-6">예정된 회차가 없습니다</p>
       )}
 
-      {selectedSchedule && (
-        <div className="border-t border-brand-mist/30 pt-4 mb-4">
-          <div className="flex justify-between text-sm mb-1">
-            <span className="text-brand-grey">수강료</span>
-            <span className="font-semibold text-brand-ink">{formatPrice(price)}</span>
-          </div>
-        </div>
-      )}
+      {/* 예약 가능한 회차가 있을 때만 결제 영역 표시 */}
+      {!allSoldOut && (
+        <>
+          {selectedSchedule && (
+            <div className="border-t border-brand-mist/30 pt-4 mb-4">
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-brand-grey">수강료</span>
+                <span className="font-semibold text-brand-ink">{formatPrice(price)}</span>
+              </div>
+            </div>
+          )}
 
-      <Button
-        className="w-full"
-        variant={confirmationMode === 'instant' ? 'accent' : 'primary'}
-        size="lg"
-        disabled={!selectedSchedule}
-        loading={loading}
-        onClick={handleBooking}
-      >
-        {confirmationMode === 'instant' ? '바로 결제' : '예약 신청'}
-      </Button>
+          <Button
+            className="w-full"
+            variant={confirmationMode === 'instant' ? 'accent' : 'primary'}
+            size="lg"
+            disabled={!selectedSchedule}
+            loading={loading}
+            onClick={handleBooking}
+          >
+            {confirmationMode === 'instant' ? '바로 결제' : '예약 신청'}
+          </Button>
 
-      {confirmationMode === 'request' && (
-        <p className="text-xs text-brand-grey text-center mt-2">
-          강사가 24시간 내 응답합니다
-        </p>
+          {confirmationMode === 'request' && (
+            <p className="text-xs text-brand-grey text-center mt-2">
+              강사가 24시간 내 응답합니다
+            </p>
+          )}
+        </>
       )}
     </div>
   )

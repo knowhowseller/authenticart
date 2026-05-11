@@ -66,6 +66,32 @@ async function getMyBooking(classId: string, userId: string) {
   return data
 }
 
+async function getMyWaitlists(classId: string, userId: string) {
+  const supabase = await createClient()
+  const { data: schedules } = await supabase
+    .from('class_schedules').select('id').eq('class_id', classId)
+  if (!schedules || schedules.length === 0) return []
+  const scheduleIds = schedules.map(s => s.id)
+  const { data: waitlists } = await supabase
+    .from('class_waitlists')
+    .select('schedule_id')
+    .eq('user_id', userId)
+    .in('schedule_id', scheduleIds)
+    .in('status', ['waiting', 'notified'])
+  if (!waitlists || waitlists.length === 0) return []
+  const result = await Promise.all(
+    waitlists.map(async (w) => {
+      const { count } = await supabase
+        .from('class_waitlists')
+        .select('id', { count: 'exact', head: true })
+        .eq('schedule_id', w.schedule_id)
+        .eq('status', 'waiting')
+      return { scheduleId: w.schedule_id, position: count }
+    })
+  )
+  return result
+}
+
 export default async function ClassDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const [cls, schedules, reviews, currentUser] = await Promise.all([
@@ -83,6 +109,7 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
   if (cls.status !== 'published' && !isPrivileged) notFound()
 
   const myBooking = currentUser ? await getMyBooking(id, currentUser.id) : null
+  const myWaitlists = currentUser ? await getMyWaitlists(id, currentUser.id) : []
   const hasReviewed = reviews.some((r) => r.student_id === currentUser?.id)
 
   const attrs = cls.attributes as ClassAttributes
@@ -222,6 +249,7 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
                   end_at: s.end_at,
                   available_seats: (s.max_students ?? 0) - (s.booked_count ?? 0),
                 }))}
+                myWaitlists={myWaitlists}
               />
             ) : (
               <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-mist/30 text-center text-sm text-brand-grey">
