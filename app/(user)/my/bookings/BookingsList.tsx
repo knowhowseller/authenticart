@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import Link from 'next/link'
 import { toast } from 'sonner'
 import { formatPrice, formatDateTime } from '@/lib/utils/format'
 
@@ -23,7 +24,7 @@ interface Booking {
   receipt_url: string | null
   class_schedules: {
     start_at: string
-    classes: { title: string; region: string; price: number }
+    classes: { id: string; title: string; region: string; price: number }
   } | null
 }
 
@@ -110,6 +111,14 @@ export default function BookingsList({ bookings }: { bookings: Booking[] }) {
                   <a href={`/bookings/${b.id}/pay`} className="text-xs font-medium text-brand-amber hover:underline">
                     결제하기
                   </a>
+                )}
+                {b.status === 'completed' && b.class_schedules?.classes?.id && (
+                  <Link
+                    href={`/classes/${b.class_schedules.classes.id}#reviews`}
+                    className="text-xs font-medium text-brand-deep hover:underline"
+                  >
+                    후기 작성
+                  </Link>
                 )}
               </div>
             </div>

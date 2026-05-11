@@ -72,6 +72,33 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
+
+      {/* 회사 정보 */}
+      <section className="py-12 border-t border-brand-mist/30">
+        <div className="max-w-4xl mx-auto px-4">
+          <h2 className="text-sm font-semibold text-brand-grey uppercase tracking-wider mb-6">회사 정보</h2>
+          <div className="grid md:grid-cols-2 gap-6 text-sm text-brand-grey leading-relaxed">
+            <div className="space-y-1.5">
+              <p><span className="font-medium text-brand-ink">상호</span> · 주식회사 오센틱아트</p>
+              <p><span className="font-medium text-brand-ink">대표</span> · 유진</p>
+              <p><span className="font-medium text-brand-ink">사업자등록번호</span> · 102-81-47445</p>
+              <p><span className="font-medium text-brand-ink">통신판매업신고</span> · 제2023-경기군포-00203호</p>
+            </div>
+            <div className="space-y-1.5">
+              <p><span className="font-medium text-brand-ink">주소</span> · 경기도 군포시 공단로140번길 27, 군포LS R&amp;D센터 819호</p>
+              <p><span className="font-medium text-brand-ink">이메일</span> · support@authenticart.kr</p>
+              <p>
+                <span className="font-medium text-brand-ink">채널</span> ·{' '}
+                <a href="http://pf.kakao.com/_AaxjDxj" target="_blank" rel="noopener noreferrer" className="hover:text-brand-deep transition-colors">카카오채널</a>
+                {' '}·{' '}
+                <a href="https://instagram.com/authentic_art.rs/" target="_blank" rel="noopener noreferrer" className="hover:text-brand-deep transition-colors">인스타그램</a>
+                {' '}·{' '}
+                <a href="https://cafe.naver.com/authenticart" target="_blank" rel="noopener noreferrer" className="hover:text-brand-deep transition-colors">네이버카페</a>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }

@@ -10,7 +10,7 @@ async function getMyBookings(userId: string) {
       id, status, gross_amount, refund_amount, created_at, receipt_url,
       class_schedules!schedule_id(
         start_at, end_at,
-        classes!class_id(title, region, price, instructor_id)
+        classes!class_id(id, title, region, price, instructor_id)
       )
     `)
     .eq('student_id', userId)

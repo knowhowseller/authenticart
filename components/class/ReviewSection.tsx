@@ -95,7 +95,7 @@ export default function ReviewSection({
       </div>
 
       {/* 작성 폼 */}
-      {currentUserId && !hasReviewed && (
+      {currentUserId && bookingId && !hasReviewed && (
         <form onSubmit={handleSubmit} className="mb-6 bg-brand-bg rounded-xl p-4 border border-brand-mist/30">
           <p className="text-sm font-medium text-brand-ink mb-3">후기 작성</p>
           <div className="mb-3">
