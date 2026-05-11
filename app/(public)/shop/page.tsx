@@ -1,19 +1,30 @@
+import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import ProductCard from '@/components/shop/ProductCard'
+import ShopFilterBar from '@/components/shop/ShopFilterBar'
 import Hexagon from '@/components/brand/Hexagon'
 
 interface SearchParams {
   category?: string
   sort?: string
+  q?: string
 }
 
-async function getProductsWithPrices(role: string) {
+async function getProductsWithPrices(role: string, params: SearchParams) {
   const supabase = await createClient()
-  const { data } = await supabase
+  let query = supabase
     .from('products')
-    .select('id, name, category, retail_price, wholesale_price, is_instructor_only, stock_qty, images')
+    .select('id, name, category, retail_price, wholesale_price, is_instructor_only, stock_qty, images, description')
     .eq('is_active', true)
-    .order('created_at', { ascending: false })
+
+  if (params.q) query = query.ilike('name', `%${params.q}%`)
+  if (params.category) query = query.eq('category', params.category)
+
+  if (params.sort === 'price_asc') query = query.order('retail_price', { ascending: true })
+  else if (params.sort === 'price_desc') query = query.order('retail_price', { ascending: false })
+  else query = query.order('created_at', { ascending: false })
+
+  const { data } = await query
 
   return (data ?? []).map((p: any) => ({
     ...p,
@@ -22,7 +33,6 @@ async function getProductsWithPrices(role: string) {
       ? p.wholesale_price
       : p.retail_price,
     isWholesale: ['instructor', 'admin'].includes(role) && !!p.wholesale_price,
-    wholesale_price: undefined,
   }))
 }
 
@@ -34,15 +44,24 @@ async function getUserRole() {
   return data?.role ?? 'user'
 }
 
+async function getCategories() {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('products')
+    .select('category')
+    .eq('is_active', true)
+    .not('category', 'is', null)
+  const cats = [...new Set((data ?? []).map((p: any) => p.category).filter(Boolean))]
+  return cats as string[]
+}
+
 export default async function ShopPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams
-  const role = await getUserRole()
-  const products = await getProductsWithPrices(role)
-
-  const categories = [...new Set(products.map((p: any) => p.category).filter(Boolean))]
-  const filtered = params.category
-    ? products.filter((p: any) => p.category === params.category)
-    : products
+  const [role, categories] = await Promise.all([
+    getUserRole(),
+    getCategories(),
+  ])
+  const productsWithRole = await getProductsWithPrices(role, params)
 
   return (
     <div className="min-h-screen bg-brand-bg">
@@ -67,48 +86,43 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* 카테고리 필터 */}
-        <div className="flex gap-2 flex-wrap mb-6">
-          <a
-            href="/shop"
-            className={`text-sm px-4 py-1.5 rounded-full border transition-colors ${
-              !params.category ? 'bg-brand-deep text-white border-brand-deep' : 'border-brand-mist text-brand-ink hover:border-brand-deep'
-            }`}
-          >
-            전체
-          </a>
-          {categories.map((cat) => (
-            <a
-              key={cat as string}
-              href={`/shop?category=${cat}`}
-              className={`text-sm px-4 py-1.5 rounded-full border transition-colors ${
-                params.category === cat ? 'bg-brand-deep text-white border-brand-deep' : 'border-brand-mist text-brand-ink hover:border-brand-deep'
-              }`}
-            >
-              {cat as string}
-            </a>
-          ))}
-        </div>
+      {/* 필터바 */}
+      <Suspense fallback={null}>
+        <ShopFilterBar categories={categories} />
+      </Suspense>
 
-        {/* 상품 그리드 */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {(filtered as any[]).map((product) => (
-            <ProductCard
-              key={product.id}
-              id={product.id}
-              name={product.name}
-              category={product.category}
-              price={product.price}
-              isWholesale={product.isWholesale}
-              stock={product.stock}
-              images={product.images ?? []}
-              status=""
-              isInstructorOnly={product.is_instructor_only}
-              userRole={role}
-            />
-          ))}
-        </div>
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <p className="text-sm text-brand-grey mb-5">
+          총 <span className="font-semibold text-brand-ink">{productsWithRole.length}</span>개의 상품
+        </p>
+
+        {productsWithRole.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {(productsWithRole as any[]).map((product) => (
+              <ProductCard
+                key={product.id}
+                id={product.id}
+                name={product.name}
+                category={product.category}
+                price={product.price}
+                isWholesale={product.isWholesale}
+                stock={product.stock}
+                images={product.images ?? []}
+                status=""
+                isInstructorOnly={product.is_instructor_only}
+                userRole={role}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-20 text-brand-grey">
+            <div className="text-5xl mb-4">📦</div>
+            <p className="text-lg font-medium">조건에 맞는 상품이 없습니다</p>
+            <a href="/shop" className="inline-block mt-4 text-sm text-brand-deep hover:underline">
+              전체 상품 보기
+            </a>
+          </div>
+        )}
       </div>
     </div>
   )

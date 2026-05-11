@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { MapPin, Clock, Star } from 'lucide-react'
 import { formatPrice, formatDuration } from '@/lib/utils/format'
 import type { ClassAttributes, ConfirmationMode } from '@/types/database'
+import WishlistButton from './WishlistButton'
 
 interface ClassCardProps {
   id: string
@@ -16,6 +17,7 @@ interface ClassCardProps {
   available_seats?: number
   avg_rating?: number
   review_count?: number
+  wishlisted?: boolean
 }
 
 const difficultyBadge = {
@@ -27,7 +29,7 @@ const difficultyBadge = {
 export default function ClassCard({
   id, title, instructorName, region, price,
   thumbnail_url, confirmation_mode, attributes, available_seats,
-  avg_rating, review_count,
+  avg_rating, review_count, wishlisted = false,
 }: ClassCardProps) {
   const diff = attributes.difficulty
   const badge = diff ? difficultyBadge[diff] : null
@@ -64,6 +66,10 @@ export default function ClassCard({
               강사 승인
             </span>
           )}
+        </div>
+        {/* 찜 버튼 */}
+        <div className="absolute top-2 right-2 bg-white/80 backdrop-blur rounded-full p-1.5 shadow-sm">
+          <WishlistButton classId={id} initialWishlisted={wishlisted} size={15} />
         </div>
         {available_seats !== undefined && available_seats <= 2 && available_seats > 0 && (
           <div className="absolute bottom-2 right-2 text-xs font-medium bg-red-50 text-red-500 px-2 py-0.5 rounded-full border border-red-200">

@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { X, ImagePlus } from 'lucide-react'
+import { updateClass } from '@/app/actions/classes'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 
@@ -75,7 +76,7 @@ export default function ClassEditForm({ cls }: { cls: any }) {
 
   async function onSubmit(data: FormData) {
     setLoading(true)
-    const { error } = await supabase.from('classes').update({
+    const result = await updateClass(cls.id, {
       title: data.title,
       description: data.description,
       region: data.region,
@@ -91,10 +92,10 @@ export default function ClassEditForm({ cls }: { cls: any }) {
         duration_curing: data.duration_curing,
         pickup_method: data.pickup_method,
       },
-    }).eq('id', cls.id)
+    })
     setLoading(false)
 
-    if (error) { toast.error(error.message); return }
+    if (result.error) { toast.error(result.error); return }
     toast.success('수정되었습니다')
     router.push('/studio/classes')
   }

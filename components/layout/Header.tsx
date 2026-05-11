@@ -1,8 +1,8 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ShoppingBag, User, Menu, X, BookOpen, LogOut } from 'lucide-react'
+import { User, Menu, X, BookOpen, LogOut, Heart, ShoppingBag, Calendar, ChevronDown } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Logo from '@/components/brand/Logo'
 import { cn } from '@/lib/utils/cn'
@@ -24,9 +24,11 @@ const navLinks = [
 export default function Header() {
   const [user, setUser] = useState<UserState | null>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const pathname = usePathname()
   const supabase = createClient()
+  const userMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user: u } }) => {
@@ -40,6 +42,16 @@ export default function Header() {
     const handler = () => setScrolled(window.scrollY > 10)
     window.addEventListener('scroll', handler)
     return () => window.removeEventListener('scroll', handler)
+  }, [])
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
   async function handleSignOut() {
@@ -95,19 +107,37 @@ export default function Header() {
                   관리자
                 </Link>
               )}
-              <Link
-                href="/my/bookings"
-                className="flex items-center gap-1.5 text-sm text-brand-ink font-medium px-3 py-1.5 rounded-full hover:bg-brand-bg transition-colors"
-              >
-                <User size={14} />
-                {user.name}
-              </Link>
-              <button
-                onClick={handleSignOut}
-                className="flex items-center gap-1 text-sm text-brand-grey hover:text-brand-deep transition-colors"
-              >
-                <LogOut size={14} />
-              </button>
+              <div ref={userMenuRef} className="relative">
+                <button
+                  onClick={() => setUserMenuOpen(v => !v)}
+                  className="flex items-center gap-1.5 text-sm text-brand-ink font-medium px-3 py-1.5 rounded-full hover:bg-brand-bg transition-colors"
+                >
+                  <User size={14} />
+                  {user.name}
+                  <ChevronDown size={12} className={`transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {userMenuOpen && (
+                  <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-2xl shadow-lg border border-brand-mist/30 py-1.5 z-50">
+                    <Link href="/my/bookings" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-brand-ink hover:bg-brand-bg transition-colors">
+                      <Calendar size={14} className="text-brand-grey" /> 내 예약
+                    </Link>
+                    <Link href="/my/wishlist" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-brand-ink hover:bg-brand-bg transition-colors">
+                      <Heart size={14} className="text-brand-grey" /> 찜 목록
+                    </Link>
+                    <Link href="/my/orders" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-brand-ink hover:bg-brand-bg transition-colors">
+                      <ShoppingBag size={14} className="text-brand-grey" /> 주문 내역
+                    </Link>
+                    <Link href="/my/profile" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-brand-ink hover:bg-brand-bg transition-colors">
+                      <User size={14} className="text-brand-grey" /> 프로필
+                    </Link>
+                    <div className="border-t border-brand-mist/30 mt-1 pt-1">
+                      <button onClick={handleSignOut} className="flex items-center gap-2 px-4 py-2 text-sm text-brand-grey hover:text-red-500 hover:bg-brand-bg transition-colors w-full">
+                        <LogOut size={14} /> 로그아웃
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </>
           ) : (
             <>
@@ -150,25 +180,36 @@ export default function Header() {
               {label}
             </Link>
           ))}
-          <div className="border-t border-brand-mist/30 pt-3 flex gap-2">
+          <div className="border-t border-brand-mist/30 pt-3">
             {user ? (
-              <>
-                <Link href="/my/bookings" onClick={() => setMobileOpen(false)} className="flex-1 text-center text-sm py-2 border border-brand-deep text-brand-deep rounded-full">
-                  마이페이지
+              <div className="space-y-1">
+                <Link href="/my/bookings" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 text-sm py-2 text-brand-ink">
+                  <Calendar size={14} className="text-brand-grey" /> 내 예약
                 </Link>
-                <button onClick={handleSignOut} className="flex-1 text-center text-sm py-2 bg-brand-bg text-brand-grey rounded-full">
-                  로그아웃
-                </button>
-              </>
+                <Link href="/my/wishlist" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 text-sm py-2 text-brand-ink">
+                  <Heart size={14} className="text-brand-grey" /> 찜 목록
+                </Link>
+                <Link href="/my/orders" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 text-sm py-2 text-brand-ink">
+                  <ShoppingBag size={14} className="text-brand-grey" /> 주문 내역
+                </Link>
+                <div className="flex gap-2 pt-2">
+                  <Link href="/my/profile" onClick={() => setMobileOpen(false)} className="flex-1 text-center text-sm py-2 border border-brand-mist text-brand-ink rounded-full">
+                    프로필
+                  </Link>
+                  <button onClick={handleSignOut} className="flex-1 text-center text-sm py-2 bg-brand-bg text-brand-grey rounded-full">
+                    로그아웃
+                  </button>
+                </div>
+              </div>
             ) : (
-              <>
+              <div className="flex gap-2 pt-2">
                 <Link href="/login" onClick={() => setMobileOpen(false)} className="flex-1 text-center text-sm py-2 border border-brand-mist text-brand-ink rounded-full">
                   로그인
                 </Link>
                 <Link href="/signup" onClick={() => setMobileOpen(false)} className="flex-1 text-center text-sm py-2 bg-brand-deep text-white rounded-full">
                   회원가입
                 </Link>
-              </>
+              </div>
             )}
           </div>
         </div>
