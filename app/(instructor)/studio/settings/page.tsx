@@ -1,10 +1,11 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import Hexagon from '@/components/brand/Hexagon'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import { updateInstructorProfile } from '@/app/actions/instructor-profile'
 
 const BANKS = [
   '국민은행', '신한은행', '우리은행', '하나은행', 'IBK기업은행',
@@ -22,6 +23,8 @@ interface Profile {
 
 export default function StudioSettingsPage() {
   const supabase = createClient()
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [instructorId, setInstructorId] = useState<string | null>(null)
   const [profile, setProfile] = useState<Profile>({
     bio: '', region: '', profile_image: '',
     payout_account: null,
@@ -30,12 +33,14 @@ export default function StudioSettingsPage() {
   const [account, setAccount] = useState('')
   const [holder, setHolder] = useState('')
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+      setInstructorId(user.id)
       const { data } = await supabase
         .from('instructor_profiles')
         .select('bio, region, profile_image, payout_account')
@@ -56,26 +61,39 @@ export default function StudioSettingsPage() {
     load()
   }, [])
 
+  async function handlePhotoUpload(file: File) {
+    if (!instructorId) return
+    setUploading(true)
+    const ext = file.name.split('.').pop()
+    const path = `instructors/${instructorId}.${ext}`
+    const { error: upErr } = await supabase.storage
+      .from('instructor-profiles')
+      .upload(path, file, { upsert: true })
+    if (upErr) { toast.error('이미지 업로드 실패: ' + upErr.message); setUploading(false); return }
+    const { data: urlData } = supabase.storage.from('instructor-profiles').getPublicUrl(path)
+    const url = urlData.publicUrl
+    setProfile(p => ({ ...p, profile_image: url }))
+    const result = await updateInstructorProfile(instructorId, { profile_image: url })
+    setUploading(false)
+    if (result.error) toast.error(result.error)
+    else toast.success('프로필 사진이 변경되었습니다')
+  }
+
   async function handleSave() {
+    if (!instructorId) return
     setSaving(true)
-    const body: Record<string, unknown> = {
+    const result = await updateInstructorProfile(instructorId, {
       bio: profile.bio,
       region: profile.region,
-    }
-    if (bank || account || holder) {
-      body.payout_account = { bank, account: account.replace(/\D/g, ''), holder }
-    }
-    const res = await fetch('/api/studio/settings/update', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
     })
-    setSaving(false)
-    if (res.ok) toast.success('설정이 저장되었습니다')
-    else {
-      const json = await res.json()
-      toast.error(json.error ?? '저장 실패')
+    if (!result.error && (bank || account || holder)) {
+      await supabase.from('instructor_profiles').update({
+        payout_account: { bank, account: account.replace(/\D/g, ''), holder },
+      }).eq('instructor_id', instructorId)
     }
+    setSaving(false)
+    if (result.error) toast.error(result.error)
+    else toast.success('설정이 저장되었습니다')
   }
 
   if (!loaded) {
@@ -98,6 +116,42 @@ export default function StudioSettingsPage() {
         {/* 프로필 */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-brand-mist/30 mb-4">
           <h2 className="text-sm font-semibold text-brand-grey uppercase tracking-wider mb-4">강사 프로필</h2>
+
+          {/* 프로필 사진 */}
+          <div className="flex items-center gap-4 mb-6">
+            <div
+              className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-brand-blush to-brand-mist flex-shrink-0 cursor-pointer"
+              onClick={() => fileRef.current?.click()}
+            >
+              {profile.profile_image ? (
+                <img src={profile.profile_image} alt="프로필" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-3xl">👩‍🎨</div>
+              )}
+            </div>
+            <div>
+              <button
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+                className="text-sm font-medium text-brand-deep hover:underline disabled:opacity-50"
+              >
+                {uploading ? '업로드 중...' : '사진 변경'}
+              </button>
+              <p className="text-xs text-brand-grey mt-0.5">JPG, PNG, WEBP (최대 5MB)</p>
+            </div>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={e => {
+                const file = e.target.files?.[0]
+                if (file) handlePhotoUpload(file)
+                e.target.value = ''
+              }}
+            />
+          </div>
+
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium text-brand-ink block mb-1.5">활동 지역</label>

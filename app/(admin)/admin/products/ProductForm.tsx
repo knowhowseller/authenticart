@@ -1,9 +1,11 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { X, Upload, ImageIcon } from 'lucide-react'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
+import { createClient } from '@/lib/supabase/client'
 
 interface ProductFormProps {
   mode: 'new' | 'edit'
@@ -18,13 +20,16 @@ interface ProductFormProps {
     is_active: boolean
     thumbnail_url: string | null
   }
+  categories: string[]
 }
 
-const categories = ['레진', '몰드', '색소', '도구', '패키지', '기타']
-
-export default function ProductForm({ mode, product }: ProductFormProps) {
+export default function ProductForm({ mode, product, categories }: ProductFormProps) {
   const router = useRouter()
+  const supabase = createClient()
+  const fileRef = useRef<HTMLInputElement>(null)
+
   const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [name, setName] = useState(product?.name ?? '')
   const [category, setCategory] = useState(product?.category ?? '')
   const [description, setDescription] = useState(product?.description ?? '')
@@ -33,6 +38,46 @@ export default function ProductForm({ mode, product }: ProductFormProps) {
   const [stockQty, setStockQty] = useState(product?.stock_qty ?? 0)
   const [isActive, setIsActive] = useState(product?.is_active ?? true)
   const [thumbnailUrl, setThumbnailUrl] = useState(product?.thumbnail_url ?? '')
+  const [preview, setPreview] = useState(product?.thumbnail_url ?? '')
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('파일 크기는 5MB 이하여야 합니다')
+      return
+    }
+
+    setUploading(true)
+    const ext = file.name.split('.').pop()
+    const path = `products/${Date.now()}.${ext}`
+
+    const { error } = await supabase.storage
+      .from('product-images')
+      .upload(path, file, { upsert: true })
+
+    if (error) {
+      toast.error('이미지 업로드 실패: ' + error.message)
+      setUploading(false)
+      return
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('product-images')
+      .getPublicUrl(path)
+
+    setThumbnailUrl(publicUrl)
+    setPreview(publicUrl)
+    setUploading(false)
+    toast.success('이미지 업로드 완료')
+  }
+
+  function handleRemoveImage() {
+    setThumbnailUrl('')
+    setPreview('')
+    if (fileRef.current) fileRef.current.value = ''
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -61,10 +106,7 @@ export default function ProductForm({ mode, product }: ProductFormProps) {
     const json = await res.json()
     setLoading(false)
 
-    if (!res.ok) {
-      toast.error(json.error ?? '저장 실패')
-      return
-    }
+    if (!res.ok) { toast.error(json.error ?? '저장 실패'); return }
     toast.success(mode === 'new' ? '상품이 등록되었습니다' : '상품이 수정되었습니다')
     router.push('/admin/products')
     router.refresh()
@@ -109,12 +151,57 @@ export default function ProductForm({ mode, product }: ProductFormProps) {
         </div>
       </div>
 
-      <Input
-        label="썸네일 URL"
-        placeholder="https://..."
-        value={thumbnailUrl}
-        onChange={e => setThumbnailUrl(e.target.value)}
-      />
+      {/* 이미지 업로드 */}
+      <div className="flex flex-col gap-1.5">
+        <label className="text-sm font-medium text-brand-ink">상품 이미지</label>
+        {preview ? (
+          <div className="relative w-40 h-40 rounded-xl overflow-hidden border border-brand-mist group">
+            <img src={preview} alt="preview" className="w-full h-full object-cover" />
+            <button
+              type="button"
+              onClick={handleRemoveImage}
+              className="absolute top-1.5 right-1.5 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <X size={12} />
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            className="w-40 h-40 rounded-xl border-2 border-dashed border-brand-mist flex flex-col items-center justify-center gap-2 text-brand-grey hover:border-brand-amber hover:text-brand-amber transition-colors disabled:opacity-50"
+          >
+            {uploading ? (
+              <span className="text-xs">업로드 중...</span>
+            ) : (
+              <>
+                <ImageIcon size={24} />
+                <span className="text-xs">이미지 추가</span>
+                <span className="text-xs opacity-60">최대 5MB</span>
+              </>
+            )}
+          </button>
+        )}
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+        {/* URL 직접 입력도 유지 */}
+        <div className="flex items-center gap-2 mt-1">
+          <Upload size={13} className="text-brand-grey flex-shrink-0" />
+          <input
+            type="url"
+            placeholder="또는 이미지 URL 직접 입력"
+            value={thumbnailUrl}
+            onChange={e => { setThumbnailUrl(e.target.value); setPreview(e.target.value) }}
+            className="flex-1 text-xs px-3 py-1.5 rounded-lg border border-brand-mist focus:outline-none focus:ring-1 focus:ring-brand-amber text-brand-grey"
+          />
+        </div>
+      </div>
 
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-medium text-brand-ink">상품 설명</label>
@@ -128,28 +215,12 @@ export default function ProductForm({ mode, product }: ProductFormProps) {
       </div>
 
       <div className="grid grid-cols-3 gap-4">
-        <Input
-          label="소비자가 (원)"
-          type="number"
-          placeholder="15000"
-          required
-          value={retailPrice || ''}
-          onChange={e => setRetailPrice(Number(e.target.value))}
-        />
-        <Input
-          label="강사 도매가 (원)"
-          type="number"
-          placeholder="10000"
-          value={wholesalePrice || ''}
-          onChange={e => setWholesalePrice(Number(e.target.value))}
-        />
-        <Input
-          label="재고 수량"
-          type="number"
-          placeholder="100"
-          value={stockQty || ''}
-          onChange={e => setStockQty(Number(e.target.value))}
-        />
+        <Input label="소비자가 (원)" type="number" placeholder="15000" required
+          value={retailPrice || ''} onChange={e => setRetailPrice(Number(e.target.value))} />
+        <Input label="강사 도매가 (원)" type="number" placeholder="10000"
+          value={wholesalePrice || ''} onChange={e => setWholesalePrice(Number(e.target.value))} />
+        <Input label="재고 수량" type="number" placeholder="100"
+          value={stockQty || ''} onChange={e => setStockQty(Number(e.target.value))} />
       </div>
 
       <div className="flex gap-3 pt-2">

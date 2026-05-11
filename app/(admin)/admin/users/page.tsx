@@ -100,7 +100,7 @@ export default async function AdminUsersPage({
                     {new Date(u.created_at).toLocaleDateString('ko-KR')}
                   </td>
                   <td className="px-4 py-3">
-                    <UserRoleEditor userId={u.id} currentRole={u.role as UserRole} />
+                    <UserRoleEditor userId={u.id} currentRole={u.role as UserRole} userName={u.name} />
                   </td>
                 </tr>
               ))}

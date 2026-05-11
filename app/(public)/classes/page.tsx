@@ -16,9 +16,9 @@ interface SearchParams {
 
 const regions = ['서울', '인천', '경기', '부산', '대구', '광주', '대전', '울산', '강릉', '제주']
 const difficulties = [
-  { value: 'beginner', label: '입문' },
-  { value: 'intermediate', label: '중급' },
-  { value: 'advanced', label: '고급' },
+  { value: 'beginner',     label: '입문', dot: 'bg-brand-amber' },
+  { value: 'intermediate', label: '중급', dot: 'bg-pink-400' },
+  { value: 'advanced',     label: '고급', dot: 'bg-purple-400' },
 ]
 const sortOptions = [
   { value: 'newest', label: '최신순' },
@@ -118,9 +118,9 @@ export default async function ClassesPage({
                     <a
                       key={d.value}
                       href={`/classes?difficulty=${d.value}${params.region ? `&region=${params.region}` : ''}`}
-                      className={`text-sm px-2 py-1 rounded flex items-center gap-2 ${params.difficulty === d.value ? 'bg-brand-amber/10 text-brand-amber font-medium' : 'text-brand-ink hover:text-brand-deep'}`}
+                      className={`text-sm px-2 py-1 rounded flex items-center gap-2 ${params.difficulty === d.value ? 'bg-brand-amber/10 font-medium' : 'text-brand-ink hover:text-brand-deep'}`}
                     >
-                      <Hexagon color="amber" size={12} />
+                      <span className={`w-2.5 h-2.5 rounded-full ${d.dot}`} />
                       {d.label}
                     </a>
                   ))}

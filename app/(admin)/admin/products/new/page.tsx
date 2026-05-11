@@ -10,6 +10,9 @@ export default async function AdminProductNewPage() {
   const { data: u } = await supabase.from('users').select('role').eq('id', user.id).single()
   if (u?.role !== 'admin') redirect('/')
 
+  const { data: catRows } = await supabase.from('product_categories').select('name').order('id')
+  const categories = (catRows ?? []).map((r: any) => r.name as string)
+
   return (
     <div className="min-h-screen bg-brand-bg">
       <div className="max-w-2xl mx-auto px-4 py-8">
@@ -18,7 +21,7 @@ export default async function AdminProductNewPage() {
           <span className="text-xs font-medium text-brand-amber uppercase tracking-wider">Admin</span>
         </div>
         <h1 className="text-2xl font-bold text-brand-ink mb-8">상품 등록</h1>
-        <ProductForm mode="new" />
+        <ProductForm mode="new" categories={categories} />
       </div>
     </div>
   )

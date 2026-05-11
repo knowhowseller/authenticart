@@ -8,13 +8,12 @@ export default async function ClassEditPage({ params }: { params: Promise<{ id: 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+  const { data: userRow } = await supabase.from('users').select('role').eq('id', user.id).single()
+  const isPrivileged = ['admin', 'branch_manager'].includes(userRow?.role ?? '')
 
-  const { data: cls } = await supabase
-    .from('classes')
-    .select('*')
-    .eq('id', id)
-    .eq('instructor_id', user.id)
-    .single()
+  const baseQuery = supabase.from('classes').select('*').eq('id', id)
+  const finalQuery = isPrivileged ? baseQuery : baseQuery.eq('instructor_id', user.id)
+  const { data: cls } = await finalQuery.single()
 
   if (!cls) notFound()
 

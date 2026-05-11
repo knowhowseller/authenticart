@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import Link from 'next/link'
 import { toast } from 'sonner'
 
 interface Profile {
@@ -64,29 +65,37 @@ export default function InstructorApprovalList({
                 {p.approved_at && ` · 승인일: ${new Date(p.approved_at).toLocaleDateString('ko-KR')}`}
               </p>
             </div>
-            {mode === 'pending' && (
-              <div className="flex gap-2 flex-shrink-0">
-                <button
-                  onClick={() => handleAction(p.id, p.instructor_id, 'reject')}
-                  disabled={loading === p.id}
-                  className="px-3 py-1.5 text-xs font-medium rounded-lg border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50 transition-colors"
-                >
-                  거절
-                </button>
-                <button
-                  onClick={() => handleAction(p.id, p.instructor_id, 'approve')}
-                  disabled={loading === p.id}
-                  className="px-3 py-1.5 text-xs font-medium rounded-lg bg-brand-deep text-white hover:bg-brand-deep/90 disabled:opacity-50 transition-colors"
-                >
-                  {loading === p.id ? '처리중...' : '승인'}
-                </button>
-              </div>
-            )}
-            {mode === 'approved' && (
-              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-50 text-green-600 flex-shrink-0">
-                승인됨
-              </span>
-            )}
+            <div className="flex gap-2 flex-shrink-0 items-center">
+              <Link
+                href={`/admin/instructors/${p.instructor_id}/edit`}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg border border-brand-mist text-brand-grey hover:bg-brand-bg transition-colors"
+              >
+                편집
+              </Link>
+              {mode === 'pending' && (
+                <>
+                  <button
+                    onClick={() => handleAction(p.id, p.instructor_id, 'reject')}
+                    disabled={loading === p.id}
+                    className="px-3 py-1.5 text-xs font-medium rounded-lg border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50 transition-colors"
+                  >
+                    거절
+                  </button>
+                  <button
+                    onClick={() => handleAction(p.id, p.instructor_id, 'approve')}
+                    disabled={loading === p.id}
+                    className="px-3 py-1.5 text-xs font-medium rounded-lg bg-brand-deep text-white hover:bg-brand-deep/90 disabled:opacity-50 transition-colors"
+                  >
+                    {loading === p.id ? '처리중...' : '승인'}
+                  </button>
+                </>
+              )}
+              {mode === 'approved' && (
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-50 text-green-600">
+                  승인됨
+                </span>
+              )}
+            </div>
           </div>
         </div>
       ))}

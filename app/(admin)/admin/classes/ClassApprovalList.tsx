@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import Link from 'next/link'
 import { toast } from 'sonner'
 import { formatPrice } from '@/lib/utils/format'
 
@@ -60,6 +61,12 @@ export default function ClassApprovalList({
                 </p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
+                <Link
+                  href={`/admin/classes/${c.id}/edit`}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg border border-brand-mist text-brand-grey hover:bg-brand-bg transition-colors"
+                >
+                  수정
+                </Link>
                 {mode === 'draft' && (
                   <>
                     <button

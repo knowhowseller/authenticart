@@ -19,9 +19,9 @@ interface ClassCardProps {
 }
 
 const difficultyBadge = {
-  beginner:     { label: '입문',  color: 'bg-brand-blush text-brand-ink' },
-  intermediate: { label: '중급',  color: 'bg-brand-sage/20 text-brand-deep' },
-  advanced:     { label: '고급',  color: 'bg-brand-deep/10 text-brand-deep' },
+  beginner:     { label: '입문', color: 'bg-brand-amber text-white' },
+  intermediate: { label: '중급', color: 'bg-pink-100 text-pink-600' },
+  advanced:     { label: '고급', color: 'bg-purple-100 text-purple-700' },
 }
 
 export default function ClassCard({

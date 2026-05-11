@@ -10,18 +10,18 @@ async function getAdminStats() {
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
 
-  const [userCount, instructorCount, gmv, pendingPayouts] = await Promise.all([
+  const [userCount, instructorCount, classCount, gmv] = await Promise.all([
     supabase.from('users').select('id', { count: 'exact', head: true })
       .then(r => r.count ?? 0),
-    supabase.from('users').select('id', { count: 'exact', head: true }).eq('role', 'instructor')
+    supabase.from('instructor_profiles').select('id', { count: 'exact', head: true }).eq('status', 'approved')
+      .then(r => r.count ?? 0),
+    supabase.from('classes').select('id', { count: 'exact', head: true }).eq('status', 'published')
       .then(r => r.count ?? 0),
     supabase.from('bookings').select('gross_amount').eq('status', 'paid').gte('created_at', monthStart)
       .then(({ data }) => (data ?? []).reduce((s: number, b: any) => s + b.gross_amount, 0)),
-    supabase.from('payouts').select('total_payout').eq('status', 'pending')
-      .then(({ data }) => (data ?? []).reduce((s: number, p: any) => s + p.total_payout, 0)),
   ])
 
-  return { userCount, instructorCount, gmv, pendingPayouts }
+  return { userCount, instructorCount, classCount, gmv }
 }
 
 export default async function AdminPage() {
@@ -34,10 +34,10 @@ export default async function AdminPage() {
   const stats = await getAdminStats()
 
   const kpis = [
-    { title: '전체 사용자', value: `${stats.userCount}명`, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', href: '/admin/instructors' },
-    { title: '활성 강사', value: `${stats.instructorCount}명`, icon: BookOpen, color: 'text-green-600', bg: 'bg-green-50', href: '/admin/instructors' },
+    { title: '전체 회원', value: `${stats.userCount}명`, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', href: '/admin/users' },
+    { title: '승인 강사', value: `${stats.instructorCount}명`, icon: BookOpen, color: 'text-green-600', bg: 'bg-green-50', href: '/admin/instructors' },
+    { title: '게시 클래스', value: `${stats.classCount}개`, icon: ShoppingBag, color: 'text-orange-500', bg: 'bg-orange-50', href: '/admin/classes' },
     { title: '이번달 GMV', value: formatPrice(stats.gmv), icon: TrendingUp, color: 'text-brand-deep', bg: 'bg-brand-deep/5', href: '/admin/bookings' },
-    { title: '정산 예정', value: formatPrice(stats.pendingPayouts), icon: ShoppingBag, color: 'text-orange-500', bg: 'bg-orange-50', href: '/admin/payouts' },
   ]
 
   const menus = [

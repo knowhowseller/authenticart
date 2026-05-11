@@ -1,26 +1,23 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Hexagon from '@/components/brand/Hexagon'
-import ProductForm from '../../ProductForm'
+import AdminClassEditForm from './AdminClassEditForm'
 
-export default async function AdminProductEditPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function AdminClassEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
   const { data: u } = await supabase.from('users').select('role').eq('id', user.id).single()
-  if (u?.role !== 'admin') redirect('/')
+  if (!['admin', 'branch_manager'].includes(u?.role ?? '')) redirect('/')
 
-  const { data: product } = await supabase
-    .from('products')
-    .select('id, name, category, description, retail_price, wholesale_price, stock_qty, is_active, thumbnail_url')
+  const { data: cls } = await supabase
+    .from('classes')
+    .select('*, users!instructor_id(name)')
     .eq('id', id)
     .single()
 
-  if (!product) notFound()
-
-  const { data: catRows } = await supabase.from('product_categories').select('name').order('id')
-  const categories = (catRows ?? []).map((r: any) => r.name as string)
+  if (!cls) notFound()
 
   return (
     <div className="min-h-screen bg-brand-bg">
@@ -29,8 +26,8 @@ export default async function AdminProductEditPage({ params }: { params: Promise
           <Hexagon color="amber" size={16} />
           <span className="text-xs font-medium text-brand-amber uppercase tracking-wider">Admin</span>
         </div>
-        <h1 className="text-2xl font-bold text-brand-ink mb-8">상품 수정</h1>
-        <ProductForm mode="edit" product={product as any} categories={categories} />
+        <h1 className="text-2xl font-bold text-brand-ink mb-8">클래스 편집</h1>
+        <AdminClassEditForm cls={cls} instructorName={(cls.users as any)?.name ?? ''} />
       </div>
     </div>
   )
