@@ -60,7 +60,9 @@ export default function BookingSection({ classId, price, confirmationMode, sched
 
       // instant: 토스 결제 실행
       await loadTossPayments()
-      const tossPayments = (window as any).TossPayments(process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? '')
+      const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY
+      if (!clientKey) throw new Error('결제 설정 오류. 관리자에게 문의해주세요.')
+      const tossPayments = (window as any).TossPayments(clientKey)
       await tossPayments.requestPayment('카드', {
         amount: price,
         orderId: bookingData.booking_id,

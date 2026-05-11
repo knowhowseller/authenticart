@@ -50,12 +50,19 @@ async function getCurrentUser() {
 
 async function getMyBooking(classId: string, userId: string) {
   const supabase = await createClient()
+  // bookings에는 class_id가 없으므로 schedule을 통해 조회
+  const { data: schedules } = await supabase
+    .from('class_schedules')
+    .select('id')
+    .eq('class_id', classId)
+  if (!schedules || schedules.length === 0) return null
+  const scheduleIds = schedules.map(s => s.id)
   const { data } = await supabase
     .from('bookings')
     .select('id, status')
-    .eq('class_id', classId)
     .eq('student_id', userId)
-    .in('status', ['confirmed', 'completed'])
+    .in('schedule_id', scheduleIds)
+    .in('status', ['paid', 'completed'])
     .limit(1)
     .maybeSingle()
   return data
