@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import ShopOrderSection from '@/components/shop/ShopOrderSection'
+import ProductImageGallery from '@/components/shop/ProductImageGallery'
 import { formatPrice } from '@/lib/utils/format'
 import Hexagon from '@/components/brand/Hexagon'
 
@@ -44,13 +45,7 @@ export default async function ShopDetailPage({ params }: { params: Promise<{ id:
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* 이미지 */}
           <div>
-            <div className="aspect-square bg-white rounded-2xl overflow-hidden shadow-sm border border-brand-mist/30">
-              {product.images && product.images.length > 0 ? (
-                <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-6xl opacity-20">📦</div>
-              )}
-            </div>
+            <ProductImageGallery images={product.images ?? []} name={product.name} />
           </div>
 
           {/* 상세 */}
