@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/client'
 import Logo from '@/components/brand/Logo'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import SocialLoginButtons from '@/components/auth/SocialLoginButtons'
 
 const schema = z.object({
   name: z.string().min(2, '이름은 2자 이상이어야 합니다'),
@@ -72,6 +73,18 @@ export default function SignupPage() {
             </Link>
             <h1 className="text-xl font-bold text-brand-ink">회원가입</h1>
             <p className="text-sm text-brand-grey mt-1">예술적 삶을 시작해보세요</p>
+          </div>
+
+          {/* 소셜 로그인 */}
+          <SocialLoginButtons />
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-brand-mist/50" />
+            </div>
+            <div className="relative flex justify-center text-xs text-brand-grey bg-white px-2">
+              또는 이메일로 가입
+            </div>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
