@@ -1,8 +1,30 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
 import Hexagon from '@/components/brand/Hexagon'
 import ClassCard from '@/components/class/ClassCard'
 import { Star, BookOpen, Users, MapPin } from 'lucide-react'
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('instructor_profiles')
+    .select('bio, profile_image, users!instructor_id(name)')
+    .eq('instructor_id', id)
+    .eq('status', 'approved')
+    .single()
+  if (!data) return { title: '강사' }
+  const name = (data as any).users?.name ?? '강사'
+  return {
+    title: `${name} 강사`,
+    description: (data as any).bio?.slice(0, 160) ?? `오센틱아트 ${name} 강사의 클래스를 만나보세요`,
+    openGraph: {
+      title: `${name} 강사`,
+      images: (data as any).profile_image ? [(data as any).profile_image] : [],
+    },
+  }
+}
 
 async function getInstructorData(id: string) {
   const supabase = await createClient()

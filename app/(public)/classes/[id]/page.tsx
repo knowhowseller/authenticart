@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import ClassBadges from '@/components/brand/ClassBadges'
 import BookingSection from '@/components/class/BookingSection'
@@ -9,6 +10,26 @@ import Hexagon from '@/components/brand/Hexagon'
 import { formatPrice, formatDateTime } from '@/lib/utils/format'
 import { Star } from 'lucide-react'
 import type { ClassAttributes } from '@/types/database'
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params
+  const supabase = await createClient()
+  const { data: cls } = await supabase
+    .from('classes')
+    .select('title, description, thumbnail_url, price, region')
+    .eq('id', id)
+    .single()
+  if (!cls) return { title: '클래스' }
+  return {
+    title: cls.title,
+    description: cls.description?.slice(0, 160) ?? `${cls.region} 공예 클래스`,
+    openGraph: {
+      title: cls.title,
+      description: cls.description?.slice(0, 160) ?? `${cls.region} 공예 클래스`,
+      images: cls.thumbnail_url ? [cls.thumbnail_url] : [],
+    },
+  }
+}
 
 async function getClass(id: string) {
   const supabase = await createClient()
