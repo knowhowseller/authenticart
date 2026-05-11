@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { MapPin, Clock, Users } from 'lucide-react'
+import { MapPin, Clock, Star } from 'lucide-react'
 import { formatPrice, formatDuration } from '@/lib/utils/format'
 import type { ClassAttributes, ConfirmationMode } from '@/types/database'
 
@@ -14,6 +14,8 @@ interface ClassCardProps {
   confirmation_mode: ConfirmationMode
   attributes: ClassAttributes
   available_seats?: number
+  avg_rating?: number
+  review_count?: number
 }
 
 const difficultyBadge = {
@@ -25,6 +27,7 @@ const difficultyBadge = {
 export default function ClassCard({
   id, title, instructorName, region, price,
   thumbnail_url, confirmation_mode, attributes, available_seats,
+  avg_rating, review_count,
 }: ClassCardProps) {
   const diff = attributes.difficulty
   const badge = diff ? difficultyBadge[diff] : null
@@ -77,9 +80,18 @@ export default function ClassCard({
       {/* 콘텐츠 */}
       <div className="p-4">
         <p className="text-xs text-brand-grey mb-1">{instructorName}</p>
-        <h3 className="text-sm font-semibold text-brand-ink line-clamp-2 leading-snug mb-2.5 group-hover:text-brand-deep transition-colors">
+        <h3 className="text-sm font-semibold text-brand-ink line-clamp-2 leading-snug mb-2 group-hover:text-brand-deep transition-colors">
           {title}
         </h3>
+        {avg_rating !== undefined && (
+          <div className="flex items-center gap-1 mb-2">
+            <Star size={11} className="text-brand-amber fill-brand-amber" />
+            <span className="text-xs font-bold text-brand-deep">{avg_rating.toFixed(1)}</span>
+            {review_count !== undefined && (
+              <span className="text-xs text-brand-grey">후기 {review_count}</span>
+            )}
+          </div>
+        )}
         <div className="flex items-center gap-3 text-xs text-brand-grey mb-3">
           <span className="flex items-center gap-1">
             <MapPin size={11} />
