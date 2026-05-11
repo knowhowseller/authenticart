@@ -69,7 +69,7 @@ export default function BookingSection({ classId, price, confirmationMode, sched
         orderName: `클래스 예약`,
         customerName: user.email,
         successUrl: `${window.location.origin}/api/payments/toss-success?type=booking`,
-        failUrl: `${window.location.origin}/classes/${classId}?payment=fail`,
+        failUrl: `${window.location.origin}/payment/fail`,
       })
     } catch (err: any) {
       toast.error(err.message ?? '결제 중 오류가 발생했습니다')
@@ -79,11 +79,12 @@ export default function BookingSection({ classId, price, confirmationMode, sched
   }
 
   function loadTossPayments(): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       if ((window as any).TossPayments) { resolve(); return }
       const script = document.createElement('script')
       script.src = 'https://js.tosspayments.com/v1/payment'
       script.onload = () => resolve()
+      script.onerror = () => reject(new Error('결제 모듈 로드 실패. 잠시 후 다시 시도해주세요.'))
       document.head.appendChild(script)
     })
   }

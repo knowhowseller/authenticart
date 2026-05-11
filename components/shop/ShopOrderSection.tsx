@@ -57,7 +57,7 @@ export default function ShopOrderSection({ productId, productName, price }: Shop
         orderName: productName,
         customerName: user.email,
         successUrl: `${window.location.origin}/api/payments/toss-success?type=order`,
-        failUrl: `${window.location.origin}/shop/${productId}?payment=fail`,
+        failUrl: `${window.location.origin}/payment/fail`,
       })
     } catch (err: any) {
       toast.error(err.message ?? '결제 중 오류가 발생했습니다')
@@ -67,11 +67,12 @@ export default function ShopOrderSection({ productId, productName, price }: Shop
   }
 
   function loadTossPayments(): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       if ((window as any).TossPayments) { resolve(); return }
       const script = document.createElement('script')
       script.src = 'https://js.tosspayments.com/v1/payment'
       script.onload = () => resolve()
+      script.onerror = () => reject(new Error('결제 모듈 로드 실패. 잠시 후 다시 시도해주세요.'))
       document.head.appendChild(script)
     })
   }

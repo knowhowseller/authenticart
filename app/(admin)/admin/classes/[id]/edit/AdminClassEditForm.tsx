@@ -1,11 +1,12 @@
 'use client'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import { X, ImagePlus } from 'lucide-react'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 
@@ -35,7 +36,31 @@ const statusOptions = [
 export default function AdminClassEditForm({ cls, instructorName }: { cls: any; instructorName: string }) {
   const router = useRouter()
   const supabase = createClient()
+  const fileRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
+  const [images, setImages] = useState<string[]>((cls.images as string[]) ?? (cls.thumbnail_url ? [cls.thumbnail_url] : []))
+  const [thumbnailIdx, setThumbnailIdx] = useState(0)
+  const [uploading, setUploading] = useState(false)
+
+  async function handleImageFiles(files: FileList) {
+    setUploading(true)
+    const urls: string[] = []
+    for (const file of Array.from(files)) {
+      const ext = file.name.split('.').pop()
+      const path = `classes/${cls.id}/${Date.now()}.${ext}`
+      const { error } = await supabase.storage.from('class-images').upload(path, file, { upsert: true })
+      if (error) { toast.error('이미지 업로드 실패: ' + error.message); continue }
+      const { data } = supabase.storage.from('class-images').getPublicUrl(path)
+      urls.push(data.publicUrl)
+    }
+    setImages(prev => [...prev, ...urls])
+    setUploading(false)
+  }
+
+  function removeImage(idx: number) {
+    setImages(prev => prev.filter((_, i) => i !== idx))
+    if (thumbnailIdx >= idx && thumbnailIdx > 0) setThumbnailIdx(t => t - 1)
+  }
 
   const { register, handleSubmit, formState: { errors }, watch } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -66,6 +91,8 @@ export default function AdminClassEditForm({ cls, instructorName }: { cls: any; 
       capacity: data.capacity,
       confirmation_mode: data.confirmation_mode,
       status: data.status,
+      thumbnail_url: images[thumbnailIdx] ?? null,
+      images: images,
       attributes: {
         difficulty: data.difficulty,
         duration_active: data.duration_active,
@@ -85,6 +112,35 @@ export default function AdminClassEditForm({ cls, instructorName }: { cls: any; 
       <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-mist/30">
         <p className="text-xs text-brand-grey mb-1">강사</p>
         <p className="text-sm font-semibold text-brand-ink">{instructorName}</p>
+      </div>
+
+      {/* 이미지 업로드 */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-brand-mist/30 space-y-4">
+        <h2 className="text-sm font-semibold text-brand-grey uppercase tracking-wider">클래스 이미지</h2>
+        <div className="grid grid-cols-3 gap-3">
+          {images.map((url, i) => (
+            <div key={url} className="relative aspect-square rounded-xl overflow-hidden border-2 border-brand-mist group">
+              <img src={url} alt={`이미지 ${i + 1}`} className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
+                <button type="button" onClick={() => setThumbnailIdx(i)}
+                  className={`text-xs px-2 py-0.5 rounded-full font-medium ${thumbnailIdx === i ? 'bg-brand-amber text-white' : 'bg-white text-brand-ink'}`}>
+                  {thumbnailIdx === i ? '대표' : '대표 설정'}
+                </button>
+                <button type="button" onClick={() => removeImage(i)} className="text-white"><X size={16} /></button>
+              </div>
+              {thumbnailIdx === i && (
+                <span className="absolute top-1 left-1 bg-brand-amber text-white text-xs px-1.5 py-0.5 rounded-full font-medium">대표</span>
+              )}
+            </div>
+          ))}
+          <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading}
+            className="aspect-square rounded-xl border-2 border-dashed border-brand-mist flex flex-col items-center justify-center gap-1 hover:border-brand-amber transition-colors disabled:opacity-50">
+            <ImagePlus size={24} className="text-brand-grey" />
+            <span className="text-xs text-brand-grey">{uploading ? '업로드 중...' : '이미지 추가'}</span>
+          </button>
+        </div>
+        <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden"
+          onChange={e => { if (e.target.files) { handleImageFiles(e.target.files); e.target.value = '' } }} />
       </div>
 
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-brand-mist/30 space-y-4">

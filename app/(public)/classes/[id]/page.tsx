@@ -4,6 +4,7 @@ import ClassBadges from '@/components/brand/ClassBadges'
 import BookingSection from '@/components/class/BookingSection'
 import ReviewSection from '@/components/class/ReviewSection'
 import RefundPolicyBox from '@/components/class/RefundPolicyBox'
+import ClassImageGallery from '@/components/class/ClassImageGallery'
 import Hexagon from '@/components/brand/Hexagon'
 import { formatPrice, formatDateTime } from '@/lib/utils/format'
 import { Star } from 'lucide-react'
@@ -13,7 +14,7 @@ async function getClass(id: string) {
   const supabase = await createClient()
   const { data } = await supabase
     .from('classes')
-    .select(`*, users!instructor_id(id, name, region), instructor_profiles!instructor_id(bio, profile_image)`)
+    .select(`*, users!instructor_id(id, name, region), instructor_profiles!instructor_id(bio, profile_image, status)`)
     .eq('id', id)
     .single()
   return data
@@ -44,17 +45,14 @@ async function getCurrentUser() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
-  const { data } = await supabase.from('users').select('id, name').eq('id', user.id).single()
+  const { data } = await supabase.from('users').select('id, name, role').eq('id', user.id).single()
   return data
 }
 
 async function getMyBooking(classId: string, userId: string) {
   const supabase = await createClient()
-  // bookings에는 class_id가 없으므로 schedule을 통해 조회
   const { data: schedules } = await supabase
-    .from('class_schedules')
-    .select('id')
-    .eq('class_id', classId)
+    .from('class_schedules').select('id').eq('class_id', classId)
   if (!schedules || schedules.length === 0) return null
   const scheduleIds = schedules.map(s => s.id)
   const { data } = await supabase
@@ -77,7 +75,12 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
     getCurrentUser(),
   ])
 
-  if (!cls || cls.status !== 'published') notFound()
+  if (!cls) notFound()
+
+  const isOwner = cls.instructor_id === currentUser?.id
+  const isPrivileged = isOwner || ['admin', 'branch_manager'].includes(currentUser?.role ?? '')
+
+  if (cls.status !== 'published' && !isPrivileged) notFound()
 
   const myBooking = currentUser ? await getMyBooking(id, currentUser.id) : null
   const hasReviewed = reviews.some((r) => r.student_id === currentUser?.id)
@@ -85,6 +88,8 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
   const attrs = cls.attributes as ClassAttributes
   const instructor = cls.users as any
   const profile = (cls as any).instructor_profiles as any
+  const images: string[] = (cls as any).images ?? []
+  const thumbnailUrl: string | null = cls.thumbnail_url
 
   const avgRating = reviews.length
     ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
@@ -96,18 +101,25 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
 
   return (
     <div className="min-h-screen bg-brand-bg">
+      {/* 비공개 미리보기 배너 */}
+      {cls.status !== 'published' && (
+        <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-2 text-center">
+          <p className="text-xs text-yellow-700 font-medium">
+            {cls.status === 'draft' ? '⚠️ 검수 대기 중인 클래스입니다 (강사/관리자 미리보기)' : '마감된 클래스입니다'}
+          </p>
+        </div>
+      )}
+
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left: Main content */}
           <div className="lg:col-span-2 space-y-5">
-            {/* 썸네일 */}
-            <div className="aspect-video bg-gradient-to-br from-brand-blush/30 to-brand-mist/30 rounded-2xl overflow-hidden">
-              {cls.thumbnail_url ? (
-                <img src={cls.thumbnail_url} alt={cls.title} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-6xl opacity-30">🎨</div>
-              )}
-            </div>
+            {/* 이미지 갤러리 */}
+            <ClassImageGallery
+              images={images}
+              thumbnailUrl={thumbnailUrl}
+              title={cls.title}
+            />
 
             {/* 제목 + 강사 + 가격 */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-brand-mist/30">
@@ -121,11 +133,6 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
                     {minSeats !== null && minSeats <= 3 && minSeats > 0 && (
                       <span className="text-xs font-medium text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
                         잔여 {minSeats}석
-                      </span>
-                    )}
-                    {minSeats !== null && minSeats <= 5 && (
-                      <span className="text-xs font-medium text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200">
-                        이번 달 마감 임박
                       </span>
                     )}
                   </div>
@@ -163,13 +170,15 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
             </div>
 
             {/* 클래스 정보 배지 */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-brand-mist/30">
-              <div className="flex items-center gap-2 mb-4">
-                <Hexagon color="amber" size={16} />
-                <h2 className="text-base font-semibold text-brand-ink">클래스 정보</h2>
+            {Object.keys(attrs ?? {}).length > 0 && (
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-brand-mist/30">
+                <div className="flex items-center gap-2 mb-4">
+                  <Hexagon color="amber" size={16} />
+                  <h2 className="text-base font-semibold text-brand-ink">클래스 정보</h2>
+                </div>
+                <ClassBadges attributes={attrs} />
               </div>
-              <ClassBadges attributes={attrs} />
-            </div>
+            )}
 
             {/* 상세 설명 */}
             {cls.description && (
@@ -190,7 +199,7 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
             {/* 환불 정책 */}
             <RefundPolicyBox />
 
-            {/* 리뷰 섹션 */}
+            {/* 리뷰 */}
             <ReviewSection
               classId={cls.id}
               reviews={reviews as any}
@@ -202,17 +211,23 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
 
           {/* Right: 예약 섹션 */}
           <div className="lg:col-span-1">
-            <BookingSection
-              classId={cls.id}
-              price={cls.price}
-              confirmationMode={cls.confirmation_mode as 'instant' | 'request'}
-              schedules={schedules.map((s: any) => ({
-                id: s.id,
-                start_at: s.start_at,
-                end_at: s.end_at,
-                available_seats: (s.max_students ?? 0) - (s.booked_count ?? 0),
-              }))}
-            />
+            {cls.status === 'published' ? (
+              <BookingSection
+                classId={cls.id}
+                price={cls.price}
+                confirmationMode={cls.confirmation_mode as 'instant' | 'request'}
+                schedules={schedules.map((s: any) => ({
+                  id: s.id,
+                  start_at: s.start_at,
+                  end_at: s.end_at,
+                  available_seats: (s.max_students ?? 0) - (s.booked_count ?? 0),
+                }))}
+              />
+            ) : (
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-mist/30 text-center text-sm text-brand-grey">
+                검수 승인 후 예약 가능합니다
+              </div>
+            )}
           </div>
         </div>
       </div>
