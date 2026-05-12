@@ -1,5 +1,5 @@
 -- 작품 마켓
-CREATE TABLE artworks (
+CREATE TABLE IF NOT EXISTS artworks (
   id          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   seller_id   uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   title       text NOT NULL,
@@ -16,7 +16,7 @@ CREATE TABLE artworks (
   updated_at  timestamptz DEFAULT now() NOT NULL
 );
 
-CREATE TABLE artwork_orders (
+CREATE TABLE IF NOT EXISTS artwork_orders (
   id              uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   artwork_id      uuid NOT NULL REFERENCES artworks(id),
   buyer_id        uuid NOT NULL REFERENCES users(id),
@@ -32,18 +32,29 @@ CREATE TABLE artwork_orders (
 );
 
 ALTER TABLE artworks ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "artworks_public_read" ON artworks;
+DROP POLICY IF EXISTS "artworks_seller_ins"  ON artworks;
+DROP POLICY IF EXISTS "artworks_seller_upd"  ON artworks;
+DROP POLICY IF EXISTS "artworks_seller_del"  ON artworks;
+
 CREATE POLICY "artworks_public_read"  ON artworks FOR SELECT USING (status != 'hidden' OR auth.uid() = seller_id);
 CREATE POLICY "artworks_seller_ins"   ON artworks FOR INSERT WITH CHECK (auth.uid() = seller_id);
 CREATE POLICY "artworks_seller_upd"   ON artworks FOR UPDATE USING (auth.uid() = seller_id);
 CREATE POLICY "artworks_seller_del"   ON artworks FOR DELETE USING (auth.uid() = seller_id);
 
 ALTER TABLE artwork_orders ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "aw_orders_read"   ON artwork_orders;
+DROP POLICY IF EXISTS "aw_orders_insert" ON artwork_orders;
+DROP POLICY IF EXISTS "aw_orders_update" ON artwork_orders;
+
 CREATE POLICY "aw_orders_read"   ON artwork_orders FOR SELECT USING (auth.uid() = buyer_id OR auth.uid() = seller_id OR EXISTS(SELECT 1 FROM users WHERE id=auth.uid() AND role='admin'));
 CREATE POLICY "aw_orders_insert" ON artwork_orders FOR INSERT WITH CHECK (auth.uid() = buyer_id);
 CREATE POLICY "aw_orders_update" ON artwork_orders FOR UPDATE USING (auth.uid() = buyer_id OR auth.uid() = seller_id OR EXISTS(SELECT 1 FROM users WHERE id=auth.uid() AND role='admin'));
 
-CREATE INDEX idx_artworks_status ON artworks(status, created_at DESC);
-CREATE INDEX idx_artworks_seller ON artworks(seller_id);
+CREATE INDEX IF NOT EXISTS idx_artworks_status ON artworks(status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_artworks_seller ON artworks(seller_id);
 
 -- artwork-images 버킷
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
