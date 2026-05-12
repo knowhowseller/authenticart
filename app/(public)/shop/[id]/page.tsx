@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import ShopOrderSection from '@/components/shop/ShopOrderSection'
 import ProductImageGallery from '@/components/shop/ProductImageGallery'
+import CartButton from '@/components/shop/CartButton'
 import { formatPrice } from '@/lib/utils/format'
 import Hexagon from '@/components/brand/Hexagon'
 
@@ -79,11 +80,16 @@ export default async function ShopDetailPage({ params }: { params: Promise<{ id:
             )}
 
             {!isSoldOut ? (
-              <ShopOrderSection
-                productId={product.id}
-                productName={product.name}
-                price={product.price}
-              />
+              <div className="space-y-3">
+                <CartButton
+                  product={{ product_id: product.id, name: product.name, price: product.price, image: product.images?.[0] }}
+                />
+                <ShopOrderSection
+                  productId={product.id}
+                  productName={product.name}
+                  price={product.price}
+                />
+              </div>
             ) : (
               <div className="bg-brand-bg rounded-2xl p-5 text-center border border-brand-mist/30">
                 <p className="text-brand-grey font-medium">현재 품절된 상품입니다</p>

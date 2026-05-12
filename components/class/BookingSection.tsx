@@ -7,6 +7,7 @@ import { formatPrice, formatDateTime } from '@/lib/utils/format'
 import Button from '@/components/ui/Button'
 import Hexagon from '@/components/brand/Hexagon'
 import WaitlistButton from './WaitlistButton'
+import { Tag, X } from 'lucide-react'
 
 interface Schedule {
   id: string
@@ -35,8 +36,30 @@ export default function BookingSection({
   const supabase = createClient()
   const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null)
   const [loading, setLoading] = useState(false)
+  const [couponCode, setCouponCode] = useState('')
+  const [couponLoading, setCouponLoading] = useState(false)
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    coupon_id: string; discount: number; description: string | null
+  } | null>(null)
 
   const waitlistMap = new Map(myWaitlists.map(w => [w.scheduleId, w.position]))
+
+  const finalPrice = Math.max(0, price - (appliedCoupon?.discount ?? 0))
+
+  async function handleApplyCoupon() {
+    if (!couponCode.trim()) return
+    setCouponLoading(true)
+    const res = await fetch('/api/coupons/validate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: couponCode, amount: price }),
+    })
+    const data = await res.json()
+    setCouponLoading(false)
+    if (!res.ok) { toast.error(data.error ?? '쿠폰 오류'); return }
+    setAppliedCoupon({ coupon_id: data.coupon_id, discount: data.discount, description: data.description })
+    toast.success(`쿠폰 적용! ${data.discount.toLocaleString()}원 할인`)
+  }
 
   async function handleBooking() {
     if (!selectedSchedule) return
@@ -57,6 +80,8 @@ export default function BookingSection({
           schedule_id: selectedSchedule.id,
           gross_amount: price,
           confirmation_mode: confirmationMode,
+          coupon_id: appliedCoupon?.coupon_id ?? null,
+          discount_amount: appliedCoupon?.discount ?? 0,
         }),
       })
       const bookingData = await res.json()
@@ -73,7 +98,7 @@ export default function BookingSection({
       if (!clientKey) throw new Error('결제 설정 오류. 관리자에게 문의해주세요.')
       const tossPayments = (window as any).TossPayments(clientKey)
       await tossPayments.requestPayment('카드', {
-        amount: price,
+        amount: finalPrice,
         orderId: bookingData.booking_id,
         orderName: `클래스 예약`,
         customerName: user.email,
@@ -152,7 +177,6 @@ export default function BookingSection({
                   </div>
                 </button>
 
-                {/* 마감 회차 → 대기 버튼 */}
                 {isSoldOut && (
                   <div className="mt-1.5 px-1">
                     <WaitlistButton
@@ -170,14 +194,68 @@ export default function BookingSection({
         <p className="text-sm text-brand-grey text-center py-6">예정된 회차가 없습니다</p>
       )}
 
-      {/* 예약 가능한 회차가 있을 때만 결제 영역 표시 */}
       {!allSoldOut && (
         <>
           {selectedSchedule && (
-            <div className="border-t border-brand-mist/30 pt-4 mb-4">
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-brand-grey">수강료</span>
-                <span className="font-semibold text-brand-ink">{formatPrice(price)}</span>
+            <div className="border-t border-brand-mist/30 pt-4 mb-4 space-y-3">
+              {/* 쿠폰 입력 */}
+              {!appliedCoupon ? (
+                <div className="flex gap-2">
+                  <div className="flex-1 flex items-center gap-2 border border-brand-mist/50 rounded-xl px-3 py-2">
+                    <Tag size={13} className="text-brand-grey flex-shrink-0" />
+                    <input
+                      value={couponCode}
+                      onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                      placeholder="쿠폰 코드 입력"
+                      className="flex-1 text-sm bg-transparent outline-none text-brand-ink placeholder:text-brand-grey"
+                      onKeyDown={e => e.key === 'Enter' && handleApplyCoupon()}
+                    />
+                  </div>
+                  <button
+                    onClick={handleApplyCoupon}
+                    disabled={couponLoading || !couponCode.trim()}
+                    className="px-3 py-2 text-xs font-medium bg-brand-deep text-white rounded-xl hover:bg-brand-deep/90 disabled:opacity-40 transition-colors"
+                  >
+                    {couponLoading ? '확인 중' : '적용'}
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between bg-brand-amber/5 border border-brand-amber/30 rounded-xl px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <Tag size={13} className="text-brand-amber" />
+                    <div>
+                      <p className="text-xs font-medium text-brand-ink">
+                        {appliedCoupon.description ?? '쿠폰 적용됨'}
+                      </p>
+                      <p className="text-xs text-brand-amber">-{appliedCoupon.discount.toLocaleString()}원</p>
+                    </div>
+                  </div>
+                  <button onClick={() => { setAppliedCoupon(null); setCouponCode('') }}>
+                    <X size={14} className="text-brand-grey hover:text-red-500 transition-colors" />
+                  </button>
+                </div>
+              )}
+
+              {/* 금액 요약 */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-sm">
+                  <span className="text-brand-grey">수강료</span>
+                  <span className={`font-medium ${appliedCoupon ? 'line-through text-brand-grey' : 'text-brand-ink'}`}>
+                    {formatPrice(price)}
+                  </span>
+                </div>
+                {appliedCoupon && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-brand-amber">쿠폰 할인</span>
+                    <span className="text-brand-amber font-medium">-{formatPrice(appliedCoupon.discount)}</span>
+                  </div>
+                )}
+                {appliedCoupon && (
+                  <div className="flex justify-between text-sm border-t border-brand-mist/30 pt-1.5">
+                    <span className="font-semibold text-brand-ink">최종 결제</span>
+                    <span className="font-bold text-brand-deep">{formatPrice(finalPrice)}</span>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -190,7 +268,9 @@ export default function BookingSection({
             loading={loading}
             onClick={handleBooking}
           >
-            {confirmationMode === 'instant' ? '바로 결제' : '예약 신청'}
+            {confirmationMode === 'instant'
+              ? `바로 결제 ${selectedSchedule ? formatPrice(finalPrice) : ''}`
+              : '예약 신청'}
           </Button>
 
           {confirmationMode === 'request' && (

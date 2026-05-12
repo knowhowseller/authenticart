@@ -1,12 +1,15 @@
 'use client'
 import { useState, useTransition } from 'react'
-import { Star } from 'lucide-react'
+import { Star, MessageSquare } from 'lucide-react'
+import { toast } from 'sonner'
 import { submitReview, deleteReview } from '@/app/actions/reviews'
 
 interface Review {
   id: string
   rating: number
   content: string | null
+  reply: string | null
+  replied_at: string | null
   created_at: string
   student_id: string
   users?: { name: string } | null
@@ -16,6 +19,8 @@ interface ReviewSectionProps {
   classId: string
   reviews: Review[]
   currentUserId?: string
+  currentUserRole?: string
+  instructorId?: string
   bookingId?: string
   hasReviewed?: boolean
 }
@@ -27,7 +32,7 @@ function StarRating({ value, onChange, readonly }: { value: number; onChange?: (
       {[1, 2, 3, 4, 5].map((star) => (
         <button
           key={star}
-          type={readonly ? 'button' : 'button'}
+          type="button"
           disabled={readonly}
           onClick={() => !readonly && onChange?.(star)}
           onMouseEnter={() => !readonly && setHover(star)}
@@ -37,9 +42,7 @@ function StarRating({ value, onChange, readonly }: { value: number; onChange?: (
           <Star
             size={readonly ? 14 : 24}
             className={`transition-colors ${
-              star <= (hover || value)
-                ? 'text-brand-amber fill-brand-amber'
-                : 'text-brand-mist'
+              star <= (hover || value) ? 'text-brand-amber fill-brand-amber' : 'text-brand-mist'
             }`}
           />
         </button>
@@ -48,13 +51,112 @@ function StarRating({ value, onChange, readonly }: { value: number; onChange?: (
   )
 }
 
+function ReplyBox({ reviewId, existingReply, repliedAt, canReply }: {
+  reviewId: string
+  existingReply: string | null
+  repliedAt: string | null
+  canReply: boolean
+}) {
+  const [showForm, setShowForm] = useState(false)
+  const [text, setText] = useState(existingReply ?? '')
+  const [reply, setReply] = useState(existingReply)
+  const [loading, setLoading] = useState(false)
+
+  async function handleSubmit() {
+    if (!text.trim()) return
+    setLoading(true)
+    const res = await fetch('/api/reviews/reply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ review_id: reviewId, reply: text }),
+    })
+    setLoading(false)
+    if (!res.ok) { toast.error('답글 등록에 실패했습니다'); return }
+    setReply(text)
+    setShowForm(false)
+    toast.success('답글이 등록되었습니다')
+  }
+
+  return (
+    <div className="mt-2 ml-4 pl-3 border-l-2 border-brand-mist/30">
+      {reply ? (
+        <div>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold text-brand-deep">강사 답글</p>
+            {canReply && (
+              <button onClick={() => setShowForm(!showForm)} className="text-xs text-brand-grey hover:text-brand-deep">
+                수정
+              </button>
+            )}
+          </div>
+          {!showForm && <p className="text-sm text-brand-grey mt-1 leading-relaxed">{reply}</p>}
+          {showForm && (
+            <div className="mt-2">
+              <textarea
+                value={text}
+                onChange={e => setText(e.target.value)}
+                rows={2}
+                className="w-full text-sm px-3 py-2 rounded-lg border border-brand-mist focus:outline-none focus:ring-2 focus:ring-brand-amber resize-none"
+              />
+              <div className="flex gap-2 mt-1.5">
+                <button
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  className="text-xs font-medium bg-brand-deep text-white px-3 py-1.5 rounded-lg disabled:opacity-50"
+                >
+                  {loading ? '저장 중...' : '저장'}
+                </button>
+                <button onClick={() => { setShowForm(false); setText(reply) }} className="text-xs text-brand-grey">
+                  취소
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : canReply ? (
+        showForm ? (
+          <div>
+            <textarea
+              value={text}
+              onChange={e => setText(e.target.value)}
+              placeholder="수강생 후기에 답글을 남겨보세요..."
+              rows={2}
+              className="w-full text-sm px-3 py-2 rounded-lg border border-brand-mist focus:outline-none focus:ring-2 focus:ring-brand-amber resize-none"
+            />
+            <div className="flex gap-2 mt-1.5">
+              <button
+                onClick={handleSubmit}
+                disabled={loading || !text.trim()}
+                className="text-xs font-medium bg-brand-deep text-white px-3 py-1.5 rounded-lg disabled:opacity-50"
+              >
+                {loading ? '저장 중...' : '답글 등록'}
+              </button>
+              <button onClick={() => setShowForm(false)} className="text-xs text-brand-grey">취소</button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowForm(true)}
+            className="flex items-center gap-1 text-xs text-brand-grey hover:text-brand-deep transition-colors"
+          >
+            <MessageSquare size={11} />
+            답글 달기
+          </button>
+        )
+      ) : null}
+    </div>
+  )
+}
+
 export default function ReviewSection({
-  classId, reviews, currentUserId, bookingId, hasReviewed,
+  classId, reviews, currentUserId, currentUserRole, instructorId, bookingId, hasReviewed,
 }: ReviewSectionProps) {
   const [rating, setRating] = useState(0)
   const [content, setContent] = useState('')
   const [error, setError] = useState('')
   const [isPending, startTransition] = useTransition()
+
+  const canReply = currentUserId === instructorId || currentUserRole === 'admin'
 
   const avgRating = reviews.length
     ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
@@ -80,8 +182,7 @@ export default function ReviewSection({
   }
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-brand-mist/30">
-      {/* 헤더 */}
+    <div id="reviews" className="bg-white rounded-2xl p-6 shadow-sm border border-brand-mist/30">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-base font-semibold text-brand-ink">
           수강 후기 <span className="text-brand-grey font-normal">({reviews.length})</span>
@@ -94,7 +195,6 @@ export default function ReviewSection({
         )}
       </div>
 
-      {/* 작성 폼 */}
       {currentUserId && bookingId && !hasReviewed && (
         <form onSubmit={handleSubmit} className="mb-6 bg-brand-bg rounded-xl p-4 border border-brand-mist/30">
           <p className="text-sm font-medium text-brand-ink mb-3">후기 작성</p>
@@ -119,13 +219,12 @@ export default function ReviewSection({
         </form>
       )}
 
-      {/* 리뷰 목록 */}
       {reviews.length === 0 ? (
         <p className="text-sm text-brand-grey text-center py-6">아직 후기가 없습니다. 첫 후기를 남겨보세요!</p>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-5">
           {reviews.map((r) => (
-            <div key={r.id} className="border-b border-brand-mist/20 last:border-0 pb-4 last:pb-0">
+            <div key={r.id} className="border-b border-brand-mist/20 last:border-0 pb-5 last:pb-0">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-brand-ink">{r.users?.name ?? '수강생'}</p>
@@ -149,6 +248,12 @@ export default function ReviewSection({
               {r.content && (
                 <p className="text-sm text-brand-grey mt-2 leading-relaxed">{r.content}</p>
               )}
+              <ReplyBox
+                reviewId={r.id}
+                existingReply={r.reply}
+                repliedAt={r.replied_at}
+                canReply={canReply}
+              />
             </div>
           ))}
         </div>

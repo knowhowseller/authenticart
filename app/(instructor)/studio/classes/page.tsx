@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { formatPrice } from '@/lib/utils/format'
 import Button from '@/components/ui/Button'
 import Hexagon from '@/components/brand/Hexagon'
+import CloneButton from '@/components/class/CloneButton'
+import CloseClassButton from '@/components/class/CloseClassButton'
 
 const statusLabel: Record<string, { label: string; color: string }> = {
   draft:     { label: '검수 대기', color: 'bg-yellow-50 text-yellow-600' },
@@ -64,6 +66,8 @@ export default async function StudioClassesPage() {
                     <Link href={`/studio/classes/${cls.id}/edit`} className="text-xs text-brand-deep hover:underline">
                       수정
                     </Link>
+                    <CloneButton classId={cls.id} />
+                    <CloseClassButton classId={cls.id} status={cls.status} />
                   </div>
                 </div>
               )

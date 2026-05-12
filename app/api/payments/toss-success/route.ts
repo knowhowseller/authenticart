@@ -82,6 +82,20 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL('/my/bookings?success=1', request.url))
   }
 
+  // type === 'cart' — multiple orders paid together
+  if (type === 'cart') {
+    const orderIdsParam = url.searchParams.get('orderIds')
+    if (orderIdsParam) {
+      const ids = orderIdsParam.split(',').filter(Boolean)
+      await supabase.from('orders').update({
+        status: 'paid',
+        payment_id: paymentKey,
+        receipt_url: payment.receipt?.url ?? null,
+      }).in('id', ids)
+    }
+    return NextResponse.redirect(new URL('/my/orders?success=1', request.url))
+  }
+
   // type === 'order'
   await supabase.from('orders').update({
     status: 'paid',

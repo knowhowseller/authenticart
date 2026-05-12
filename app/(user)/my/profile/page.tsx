@@ -1,9 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import Hexagon from '@/components/brand/Hexagon'
 import ProfileEditForm from './ProfileEditForm'
 import { formatPrice } from '@/lib/utils/format'
-import { Calendar, Heart, ShoppingBag, BookOpen } from 'lucide-react'
+import { Calendar, Heart, ShoppingBag, BookOpen, ChevronRight } from 'lucide-react'
 
 async function getMyStats(userId: string) {
   const supabase = await createClient()
@@ -28,9 +29,10 @@ export default async function MyProfilePage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: userData }, stats] = await Promise.all([
+  const [{ data: userData }, stats, { data: instructorProfile }] = await Promise.all([
     supabase.from('users').select('name, phone, region, email, role, created_at').eq('id', user.id).single(),
     getMyStats(user.id),
+    supabase.from('instructor_profiles').select('status').eq('instructor_id', user.id).maybeSingle(),
   ])
 
   const memberSince = userData?.created_at
@@ -80,6 +82,31 @@ export default async function MyProfilePage() {
             </a>
           ))}
         </div>
+
+        {/* 강사 신청 현황 링크 */}
+        {userData?.role !== 'instructor' && (
+          <div className="mb-4">
+            <Link
+              href="/my/instructor-status"
+              className="flex items-center justify-between bg-white rounded-2xl px-5 py-4 shadow-sm border border-brand-mist/30 hover:border-brand-deep/30 transition-all"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-xl">👩‍🎨</span>
+                <div>
+                  <p className="text-sm font-medium text-brand-ink">강사 신청</p>
+                  <p className="text-xs text-brand-grey">
+                    {instructorProfile?.status === 'pending'
+                      ? '심사 중 — 현황 확인'
+                      : instructorProfile?.status === 'rejected'
+                      ? '반려됨 — 재신청 가능'
+                      : '나만의 클래스를 열어보세요'}
+                  </p>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-brand-grey" />
+            </Link>
+          </div>
+        )}
 
         <ProfileEditForm user={userData} userId={user.id} />
       </div>

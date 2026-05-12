@@ -77,14 +77,21 @@ export default function LoginPage() {
               {...register('email')}
               error={errors.email?.message}
             />
-            <Input
-              label="비밀번호"
-              type="password"
-              placeholder="비밀번호 입력"
-              required
-              {...register('password')}
-              error={errors.password?.message}
-            />
+            <div>
+              <Input
+                label="비밀번호"
+                type="password"
+                placeholder="비밀번호 입력"
+                required
+                {...register('password')}
+                error={errors.password?.message}
+              />
+              <div className="text-right mt-1">
+                <Link href="/forgot-password" className="text-xs text-brand-grey hover:text-brand-deep">
+                  비밀번호를 잊으셨나요?
+                </Link>
+              </div>
+            </div>
             <Button type="submit" loading={loading} className="w-full" size="lg">
               로그인
             </Button>
@@ -94,6 +101,12 @@ export default function LoginPage() {
             계정이 없으신가요?{' '}
             <Link href="/signup" className="text-brand-deep font-medium hover:underline">
               회원가입
+            </Link>
+          </p>
+          <p className="text-center text-xs text-brand-grey mt-2">
+            인증 메일을 못 받으셨나요?{' '}
+            <Link href="/resend-verification" className="text-brand-grey hover:text-brand-deep underline">
+              재발송
             </Link>
           </p>
         </div>

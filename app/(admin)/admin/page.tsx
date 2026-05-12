@@ -146,6 +146,9 @@ export default async function AdminPage() {
     { href: '/admin/payouts', label: '정산 실행', icon: '💰', desc: '월별 정산 처리 및 입금' },
     { href: '/admin/products', label: '상품 관리', icon: '🛍️', desc: '상품 등록 및 재고 관리' },
     { href: '/admin/branches', label: '지부 관리', icon: '🏢', desc: '지부 생성 및 지부장 지정' },
+    { href: '/admin/coupons', label: '쿠폰 관리', icon: '🏷️', desc: '할인 쿠폰 생성 및 관리' },
+    { href: '/admin/notices', label: '공지사항 관리', icon: '📢', desc: '공지사항 작성 및 공개 설정' },
+    { href: '/admin/stats', label: '통계 차트', icon: '📊', desc: '월별 매출·예약 건수 차트' },
   ]
 
   return (

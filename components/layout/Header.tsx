@@ -2,11 +2,12 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { User, Menu, X, BookOpen, LogOut, Heart, ShoppingBag, Calendar, ChevronDown } from 'lucide-react'
+import { User, Menu, X, BookOpen, LogOut, Heart, ShoppingBag, Calendar, ChevronDown, ShoppingCart } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Logo from '@/components/brand/Logo'
 import { cn } from '@/lib/utils/cn'
 import type { UserRole } from '@/types/database'
+import { getCart } from '@/lib/cart'
 
 interface UserState {
   id: string
@@ -26,6 +27,7 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [cartCount, setCartCount] = useState(0)
   const pathname = usePathname()
   const supabase = createClient()
   const userMenuRef = useRef<HTMLDivElement>(null)
@@ -36,6 +38,10 @@ export default function Header() {
       const { data } = await supabase.from('users').select('name, role').eq('id', u.id).single()
       if (data) setUser({ id: u.id, name: data.name, role: data.role as UserRole })
     })
+    setCartCount(getCart().reduce((s, item) => s + item.quantity, 0))
+    const handler = () => setCartCount(getCart().reduce((s, item) => s + item.quantity, 0))
+    window.addEventListener('storage', handler)
+    return () => window.removeEventListener('storage', handler)
   }, [])
 
   useEffect(() => {
@@ -88,6 +94,14 @@ export default function Header() {
 
         {/* Desktop actions */}
         <div className="hidden md:flex items-center gap-2">
+          <Link href="/cart" className="relative p-2 text-brand-grey hover:text-brand-deep transition-colors">
+            <ShoppingCart size={20} />
+            {cartCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-brand-amber text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                {cartCount > 9 ? '9+' : cartCount}
+              </span>
+            )}
+          </Link>
           {user ? (
             <>
               {user.role === 'instructor' && (

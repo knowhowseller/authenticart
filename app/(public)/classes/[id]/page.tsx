@@ -10,6 +10,7 @@ import Hexagon from '@/components/brand/Hexagon'
 import { formatPrice, formatDateTime } from '@/lib/utils/format'
 import { Star } from 'lucide-react'
 import type { ClassAttributes } from '@/types/database'
+import ShareButton from '@/components/class/ShareButton'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
@@ -56,7 +57,7 @@ async function getReviews(classId: string) {
   const supabase = await createClient()
   const { data } = await supabase
     .from('class_reviews')
-    .select('id, rating, content, created_at, student_id, users!student_id(name)')
+    .select('id, rating, content, reply, replied_at, created_at, student_id, users!student_id(name)')
     .eq('class_id', classId)
     .order('created_at', { ascending: false })
   return data ?? []
@@ -85,6 +86,31 @@ async function getMyBooking(classId: string, userId: string) {
     .limit(1)
     .maybeSingle()
   return data
+}
+
+async function getRelatedClasses(classId: string, instructorId: string, craftType: string | null) {
+  const supabase = await createClient()
+  const byInstructor = await supabase
+    .from('classes')
+    .select('id, title, price, thumbnail_url, region, attributes')
+    .eq('instructor_id', instructorId)
+    .eq('status', 'published')
+    .neq('id', classId)
+    .limit(3)
+
+  const related = byInstructor.data ?? []
+  if (related.length < 3 && craftType) {
+    const { data: byCraft } = await supabase
+      .from('classes')
+      .select('id, title, price, thumbnail_url, region, attributes')
+      .eq('status', 'published')
+      .neq('id', classId)
+      .not('id', 'in', `(${[classId, ...related.map((c: any) => c.id)].join(',')})`)
+      .filter('attributes->craft_type', 'eq', craftType)
+      .limit(3 - related.length)
+    related.push(...(byCraft ?? []))
+  }
+  return related
 }
 
 async function getMyWaitlists(classId: string, userId: string) {
@@ -129,11 +155,16 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
 
   if (cls.status !== 'published' && !isPrivileged) notFound()
 
-  const myBooking = currentUser ? await getMyBooking(id, currentUser.id) : null
-  const myWaitlists = currentUser ? await getMyWaitlists(id, currentUser.id) : []
+  const attrs = cls.attributes as ClassAttributes
+  const craftType = (attrs as any)?.craft_type ?? null
+
+  const [myBooking, myWaitlists, relatedClasses] = await Promise.all([
+    currentUser ? getMyBooking(id, currentUser.id) : Promise.resolve(null),
+    currentUser ? getMyWaitlists(id, currentUser.id) : Promise.resolve([]),
+    getRelatedClasses(id, cls.instructor_id, craftType),
+  ])
   const hasReviewed = reviews.some((r) => r.student_id === currentUser?.id)
 
-  const attrs = cls.attributes as ClassAttributes
   const instructor = cls.users as any
   const profile = (cls as any).instructor_profiles as any
   const images: string[] = (cls as any).images ?? []
@@ -183,6 +214,10 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
                         잔여 {minSeats}석
                       </span>
                     )}
+                    <ShareButton
+                      title={cls.title}
+                      url={`${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/classes/${id}`}
+                    />
                   </div>
                   <h1 className="text-2xl font-bold text-brand-ink leading-snug">{cls.title}</h1>
                   {avgRating && (
@@ -252,9 +287,39 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
               classId={cls.id}
               reviews={reviews as any}
               currentUserId={currentUser?.id}
+              currentUserRole={currentUser?.role}
+              instructorId={cls.instructor_id}
               bookingId={myBooking?.id}
               hasReviewed={hasReviewed}
             />
+
+            {/* 관련 클래스 */}
+            {relatedClasses.length > 0 && (
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-brand-mist/30">
+                <h2 className="text-base font-semibold text-brand-ink mb-4">관련 클래스</h2>
+                <div className="space-y-3">
+                  {relatedClasses.map((rc: any) => (
+                    <a key={rc.id} href={`/classes/${rc.id}`}
+                      className="flex items-center gap-3 group"
+                    >
+                      <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-brand-mist/30">
+                        {rc.thumbnail_url ? (
+                          <img src={rc.thumbnail_url} alt={rc.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-xl">🎨</div>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-brand-ink group-hover:text-brand-deep transition-colors truncate">
+                          {rc.title}
+                        </p>
+                        <p className="text-xs text-brand-grey mt-0.5">{formatPrice(rc.price)}</p>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right: 예약 섹션 */}
