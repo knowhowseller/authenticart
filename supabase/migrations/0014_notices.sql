@@ -11,6 +11,9 @@ CREATE TABLE IF NOT EXISTS public.notices (
 
 ALTER TABLE public.notices ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "notices_public_read" ON public.notices;
+DROP POLICY IF EXISTS "notices_admin_all" ON public.notices;
+
 CREATE POLICY "notices_public_read" ON public.notices
   FOR SELECT USING (is_published = true);
 

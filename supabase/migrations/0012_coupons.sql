@@ -33,6 +33,12 @@ ALTER TABLE bookings ADD COLUMN IF NOT EXISTS discount_amount integer NOT NULL D
 ALTER TABLE coupons ENABLE ROW LEVEL SECURITY;
 ALTER TABLE coupon_uses ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "admin_all_coupons" ON coupons;
+DROP POLICY IF EXISTS "public_read_active_coupons" ON coupons;
+DROP POLICY IF EXISTS "user_own_coupon_uses" ON coupon_uses;
+DROP POLICY IF EXISTS "user_insert_coupon_uses" ON coupon_uses;
+DROP POLICY IF EXISTS "admin_all_coupon_uses" ON coupon_uses;
+
 CREATE POLICY "admin_all_coupons" ON coupons FOR ALL
   USING (EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'));
 CREATE POLICY "public_read_active_coupons" ON coupons FOR SELECT
