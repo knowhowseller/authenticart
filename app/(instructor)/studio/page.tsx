@@ -205,6 +205,7 @@ export default async function StudioPage() {
             { href: '/studio/reviews', label: '수강 후기 관리', icon: '⭐' },
             { href: '/studio/payouts', label: '정산 조회', icon: '💰' },
             { href: '/studio/earnings', label: '수입 현황', icon: '📈' },
+            { href: '/studio/class-requests', label: '클래스 요청 관리', icon: '🙋' },
             { href: '/studio/settings', label: '프로필 & 계좌', icon: '⚙️' },
           ].map(({ href, label, icon }) => (
             <Link

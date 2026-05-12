@@ -24,6 +24,12 @@ interface Profile {
   branch_id: string | null
   payout_account: { bank: string; account: string; holder: string } | null
   portfolio_images: string[]
+  service_regions: string[]
+  group_lesson_available: boolean
+  group_lesson_min: number
+  group_lesson_max: number
+  group_lesson_base_price: number
+  group_lesson_note: string
 }
 
 export default function StudioSettingsPage() {
@@ -34,7 +40,11 @@ export default function StudioSettingsPage() {
   const [profile, setProfile] = useState<Profile>({
     bio: '', region: '', profile_image: '', branch_id: null,
     payout_account: null, portfolio_images: [],
+    service_regions: [], group_lesson_available: false,
+    group_lesson_min: 5, group_lesson_max: 30,
+    group_lesson_base_price: 0, group_lesson_note: '',
   })
+  const [newRegion, setNewRegion] = useState('')
   const [bank, setBank] = useState('')
   const [account, setAccount] = useState('')
   const [holder, setHolder] = useState('')
@@ -52,7 +62,7 @@ export default function StudioSettingsPage() {
       const [{ data }, { data: branchList }] = await Promise.all([
         supabase
           .from('instructor_profiles')
-          .select('bio, region, profile_image, branch_id, payout_account, portfolio_images')
+          .select('bio, region, profile_image, branch_id, payout_account, portfolio_images, service_regions, group_lesson_available, group_lesson_min, group_lesson_max, group_lesson_base_price, group_lesson_note')
           .eq('instructor_id', user.id)
           .single(),
         supabase.from('branches').select('id, name, region').order('region'),
@@ -66,6 +76,12 @@ export default function StudioSettingsPage() {
           branch_id: (data as any).branch_id ?? null,
           payout_account: (data.payout_account as any) ?? null,
           portfolio_images: (data as any).portfolio_images ?? [],
+          service_regions: (data as any).service_regions ?? [],
+          group_lesson_available: (data as any).group_lesson_available ?? false,
+          group_lesson_min: (data as any).group_lesson_min ?? 5,
+          group_lesson_max: (data as any).group_lesson_max ?? 30,
+          group_lesson_base_price: (data as any).group_lesson_base_price ?? 0,
+          group_lesson_note: (data as any).group_lesson_note ?? '',
         })
         const pa = (data.payout_account as any)
         if (pa) { setBank(pa.bank ?? ''); setAccount(pa.account ?? ''); setHolder(pa.holder ?? '') }
@@ -126,6 +142,16 @@ export default function StudioSettingsPage() {
     toast.success('이미지가 삭제되었습니다')
   }
 
+  function addServiceRegion() {
+    const r = newRegion.trim()
+    if (!r || profile.service_regions.includes(r)) return
+    setProfile(p => ({ ...p, service_regions: [...p.service_regions, r] }))
+    setNewRegion('')
+  }
+  function removeServiceRegion(r: string) {
+    setProfile(p => ({ ...p, service_regions: p.service_regions.filter(x => x !== r) }))
+  }
+
   async function handleSave() {
     if (!instructorId) return
     setSaving(true)
@@ -138,6 +164,12 @@ export default function StudioSettingsPage() {
       extraUpdate.payout_account = { bank, account: account.replace(/\D/g, ''), holder }
     }
     extraUpdate.branch_id = profile.branch_id || null
+    extraUpdate.service_regions = profile.service_regions
+    extraUpdate.group_lesson_available = profile.group_lesson_available
+    extraUpdate.group_lesson_min = profile.group_lesson_min
+    extraUpdate.group_lesson_max = profile.group_lesson_max
+    extraUpdate.group_lesson_base_price = profile.group_lesson_base_price
+    extraUpdate.group_lesson_note = profile.group_lesson_note || null
     if (!result.error) {
       await supabase.from('instructor_profiles').update(extraUpdate).eq('instructor_id', instructorId)
     }
@@ -332,6 +364,97 @@ export default function StudioSettingsPage() {
               e.target.value = ''
             }}
           />
+        </div>
+
+        {/* 출강 범위 설정 */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-brand-mist/30 mb-4">
+          <h2 className="text-sm font-semibold text-brand-grey uppercase tracking-wider mb-1">활동 지역 & 출강 범위</h2>
+          <p className="text-xs text-brand-grey mb-4">활동 가능한 지역을 추가하면 클래스 요청 매칭에 활용됩니다</p>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-brand-ink block mb-1.5">활동 지역 추가</label>
+              <div className="flex gap-2">
+                <input
+                  value={newRegion}
+                  onChange={e => setNewRegion(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addServiceRegion())}
+                  placeholder="예: 서울 강남구"
+                  className="flex-1 px-3.5 py-2.5 rounded-xl border border-brand-mist text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber"
+                />
+                <button
+                  onClick={addServiceRegion}
+                  className="px-4 py-2.5 rounded-xl bg-brand-deep text-white text-sm font-medium hover:bg-brand-deep/90"
+                >
+                  추가
+                </button>
+              </div>
+              {profile.service_regions.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {profile.service_regions.map(r => (
+                    <span key={r} className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-deep/10 text-brand-deep rounded-full text-sm">
+                      {r}
+                      <button onClick={() => removeServiceRegion(r)} className="hover:text-red-500 transition-colors">
+                        <X size={12} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 pt-2 border-t border-brand-mist/30">
+              <button
+                onClick={() => setProfile(p => ({ ...p, group_lesson_available: !p.group_lesson_available }))}
+                className={`relative w-10 h-6 rounded-full transition-colors ${profile.group_lesson_available ? 'bg-brand-deep' : 'bg-brand-mist'}`}
+              >
+                <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${profile.group_lesson_available ? 'left-5' : 'left-1'}`} />
+              </button>
+              <label className="text-sm font-medium text-brand-ink">단체 출강 수락 가능</label>
+            </div>
+
+            {profile.group_lesson_available && (
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                <div>
+                  <label className="text-sm font-medium text-brand-ink block mb-1.5">최소 인원</label>
+                  <input
+                    type="number" min={2}
+                    value={profile.group_lesson_min}
+                    onChange={e => setProfile(p => ({ ...p, group_lesson_min: parseInt(e.target.value) || 5 }))}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-brand-mist text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-brand-ink block mb-1.5">최대 인원</label>
+                  <input
+                    type="number" min={2}
+                    value={profile.group_lesson_max}
+                    onChange={e => setProfile(p => ({ ...p, group_lesson_max: parseInt(e.target.value) || 30 }))}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-brand-mist text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-brand-ink block mb-1.5">기본 출강 단가 (원/인)</label>
+                  <input
+                    type="number" min={0}
+                    value={profile.group_lesson_base_price}
+                    onChange={e => setProfile(p => ({ ...p, group_lesson_base_price: parseInt(e.target.value) || 0 }))}
+                    placeholder="예: 30000"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-brand-mist text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-brand-ink block mb-1.5">출강 안내 메모</label>
+                  <input
+                    value={profile.group_lesson_note}
+                    onChange={e => setProfile(p => ({ ...p, group_lesson_note: e.target.value }))}
+                    placeholder="예: 재료비 별도, 강남 이남 가능"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-brand-mist text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         <Button onClick={handleSave} loading={saving} className="w-full">

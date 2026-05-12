@@ -104,6 +104,31 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL('/my/bookings?success=1', request.url))
   }
 
+  // type === 'artwork'
+  if (type === 'artwork') {
+    const { error } = await supabase.from('artwork_orders').update({
+      status: 'paid',
+      payment_id: paymentKey,
+      receipt_url: payment.receipt?.url ?? null,
+    }).eq('id', orderId)
+
+    if (error) {
+      return NextResponse.redirect(new URL('/payment/fail?reason=db_update_failed', request.url))
+    }
+
+    const { data: artworkOrder } = await supabase
+      .from('artwork_orders')
+      .select('artwork_id, buyer_id')
+      .eq('id', orderId)
+      .single()
+
+    if (artworkOrder) {
+      await supabase.from('artworks').update({ status: 'sold_out' }).eq('id', (artworkOrder as any).artwork_id)
+    }
+
+    return NextResponse.redirect(new URL('/my/orders?success=1&type=artwork', request.url))
+  }
+
   // type === 'cart' — multiple orders paid together
   if (type === 'cart') {
     const orderIdsParam = url.searchParams.get('orderIds')
