@@ -43,7 +43,7 @@ export default async function InstructorStatusPage() {
               수강생들과 함께 창작의 즐거움을 나눌 수 있습니다.
             </p>
             <Link
-              href="/become-instructor"
+              href="/signup/instructor"
               className="inline-flex items-center gap-2 bg-brand-deep text-white text-sm font-medium px-6 py-2.5 rounded-full hover:bg-brand-deep/90 transition-colors"
             >
               강사 신청하기 <ChevronRight size={14} />
@@ -117,7 +117,7 @@ export default async function InstructorStatusPage() {
             </p>
             <div className="flex gap-3">
               <Link
-                href="/become-instructor"
+                href="/signup/instructor"
                 className="flex-1 text-center bg-brand-deep text-white text-sm font-medium px-4 py-2.5 rounded-full hover:bg-brand-deep/90 transition-colors"
               >
                 재신청하기

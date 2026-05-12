@@ -37,7 +37,11 @@ export default function WishlistButton({
       router.push('/login')
       return
     }
-    if (!res.ok) return
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      toast.error(err.error ?? '찜 처리 중 오류가 발생했습니다')
+      return
+    }
 
     const data = await res.json()
     setWishlisted(data.wishlisted)

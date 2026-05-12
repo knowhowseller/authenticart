@@ -25,6 +25,7 @@ export default function CouponManager({ initialCoupons, adminId }: { initialCoup
   const [form, setForm] = useState({
     code: '', type: 'fixed' as 'fixed' | 'percent', value: '',
     min_amount: '0', max_uses: '', valid_until: '', description: '',
+    target_user_email: '',
   })
 
   async function handleCreate() {
@@ -45,6 +46,7 @@ export default function CouponManager({ initialCoupons, adminId }: { initialCoup
         max_uses: form.max_uses ? Number(form.max_uses) : null,
         valid_until: form.valid_until || null,
         description: form.description || null,
+        target_user_email: form.target_user_email.trim() || null,
       }),
     })
     const data = await res.json()
@@ -52,7 +54,7 @@ export default function CouponManager({ initialCoupons, adminId }: { initialCoup
     if (!res.ok) { toast.error(data.error ?? '생성 실패'); return }
     setCoupons(prev => [data.coupon, ...prev])
     setShowForm(false)
-    setForm({ code: '', type: 'fixed', value: '', min_amount: '0', max_uses: '', valid_until: '', description: '' })
+    setForm({ code: '', type: 'fixed', value: '', min_amount: '0', max_uses: '', valid_until: '', description: '', target_user_email: '' })
     toast.success('쿠폰이 생성되었습니다')
   }
 
@@ -146,6 +148,18 @@ export default function CouponManager({ initialCoupons, adminId }: { initialCoup
                 value={form.description}
                 onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                 placeholder="신규 회원 5,000원 할인"
+                className="w-full px-3 py-2 rounded-lg border border-brand-mist text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber"
+              />
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs font-medium text-brand-grey mb-1 block">
+                특정 회원 지정 <span className="text-brand-grey/60">(이메일 입력 시 해당 회원만 사용 가능)</span>
+              </label>
+              <input
+                type="email"
+                value={form.target_user_email}
+                onChange={e => setForm(f => ({ ...f, target_user_email: e.target.value }))}
+                placeholder="user@example.com (비워두면 모든 회원 사용 가능)"
                 className="w-full px-3 py-2 rounded-lg border border-brand-mist text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber"
               />
             </div>

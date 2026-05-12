@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { X, Plus } from 'lucide-react'
 import Hexagon from '@/components/brand/Hexagon'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
@@ -22,21 +23,24 @@ interface Profile {
   profile_image: string
   branch_id: string | null
   payout_account: { bank: string; account: string; holder: string } | null
+  portfolio_images: string[]
 }
 
 export default function StudioSettingsPage() {
   const supabase = createClient()
   const fileRef = useRef<HTMLInputElement>(null)
+  const portfolioRef = useRef<HTMLInputElement>(null)
   const [instructorId, setInstructorId] = useState<string | null>(null)
   const [profile, setProfile] = useState<Profile>({
     bio: '', region: '', profile_image: '', branch_id: null,
-    payout_account: null,
+    payout_account: null, portfolio_images: [],
   })
   const [bank, setBank] = useState('')
   const [account, setAccount] = useState('')
   const [holder, setHolder] = useState('')
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [portfolioUploading, setPortfolioUploading] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const [branches, setBranches] = useState<Branch[]>([])
 
@@ -48,7 +52,7 @@ export default function StudioSettingsPage() {
       const [{ data }, { data: branchList }] = await Promise.all([
         supabase
           .from('instructor_profiles')
-          .select('bio, region, profile_image, branch_id, payout_account')
+          .select('bio, region, profile_image, branch_id, payout_account, portfolio_images')
           .eq('instructor_id', user.id)
           .single(),
         supabase.from('branches').select('id, name, region').order('region'),
@@ -61,6 +65,7 @@ export default function StudioSettingsPage() {
           profile_image: data.profile_image ?? '',
           branch_id: (data as any).branch_id ?? null,
           payout_account: (data.payout_account as any) ?? null,
+          portfolio_images: (data as any).portfolio_images ?? [],
         })
         const pa = (data.payout_account as any)
         if (pa) { setBank(pa.bank ?? ''); setAccount(pa.account ?? ''); setHolder(pa.holder ?? '') }
@@ -86,6 +91,39 @@ export default function StudioSettingsPage() {
     setUploading(false)
     if (result.error) toast.error(result.error)
     else toast.success('프로필 사진이 변경되었습니다')
+  }
+
+  async function handlePortfolioUpload(file: File) {
+    if (!instructorId) return
+    if (profile.portfolio_images.length >= 10) {
+      toast.error('포트폴리오 이미지는 최대 10장까지 등록 가능합니다')
+      return
+    }
+    setPortfolioUploading(true)
+    const ext = file.name.split('.').pop()
+    const path = `instructors/${instructorId}/portfolio/${Date.now()}.${ext}`
+    const { error: upErr } = await supabase.storage
+      .from('instructor-profiles')
+      .upload(path, file, { upsert: false })
+    if (upErr) { toast.error('이미지 업로드 실패: ' + upErr.message); setPortfolioUploading(false); return }
+    const { data: urlData } = supabase.storage.from('instructor-profiles').getPublicUrl(path)
+    const newImages = [...profile.portfolio_images, urlData.publicUrl]
+    setProfile(p => ({ ...p, portfolio_images: newImages }))
+    await supabase.from('instructor_profiles')
+      .update({ portfolio_images: newImages } as any)
+      .eq('instructor_id', instructorId)
+    setPortfolioUploading(false)
+    toast.success('포트폴리오 이미지가 추가되었습니다')
+  }
+
+  async function handlePortfolioRemove(url: string) {
+    if (!instructorId) return
+    const newImages = profile.portfolio_images.filter(u => u !== url)
+    setProfile(p => ({ ...p, portfolio_images: newImages }))
+    await supabase.from('instructor_profiles')
+      .update({ portfolio_images: newImages } as any)
+      .eq('instructor_id', instructorId)
+    toast.success('이미지가 삭제되었습니다')
   }
 
   async function handleSave() {
@@ -248,6 +286,52 @@ export default function StudioSettingsPage() {
               />
             </div>
           </div>
+        </div>
+
+        {/* 포트폴리오 이미지 */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-brand-mist/30 mb-6">
+          <h2 className="text-sm font-semibold text-brand-grey uppercase tracking-wider mb-1">포트폴리오</h2>
+          <p className="text-xs text-brand-grey mb-4">작품 이미지를 등록하면 강사 프로필 페이지에 표시됩니다 (최대 10장)</p>
+          <div className="grid grid-cols-3 gap-3">
+            {profile.portfolio_images.map((url, i) => (
+              <div key={i} className="relative aspect-square rounded-xl overflow-hidden group">
+                <img src={url} alt={`포트폴리오 ${i + 1}`} className="w-full h-full object-cover" />
+                <button
+                  onClick={() => handlePortfolioRemove(url)}
+                  className="absolute top-1.5 right-1.5 w-6 h-6 bg-black/50 hover:bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
+            {profile.portfolio_images.length < 10 && (
+              <button
+                onClick={() => portfolioRef.current?.click()}
+                disabled={portfolioUploading}
+                className="aspect-square rounded-xl border-2 border-dashed border-brand-mist hover:border-brand-amber flex flex-col items-center justify-center gap-1 text-brand-grey hover:text-brand-amber transition-colors disabled:opacity-50"
+              >
+                {portfolioUploading ? (
+                  <span className="text-xs">업로드 중...</span>
+                ) : (
+                  <>
+                    <Plus size={20} />
+                    <span className="text-xs">추가</span>
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+          <input
+            ref={portfolioRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={e => {
+              const file = e.target.files?.[0]
+              if (file) handlePortfolioUpload(file)
+              e.target.value = ''
+            }}
+          />
         </div>
 
         <Button onClick={handleSave} loading={saving} className="w-full">

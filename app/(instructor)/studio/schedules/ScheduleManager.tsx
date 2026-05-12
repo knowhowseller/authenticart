@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { ChevronLeft, ChevronRight, LayoutList, Calendar } from 'lucide-react'
 
 interface ClassOption { id: string; title: string }
 interface Schedule {
@@ -10,6 +11,86 @@ interface Schedule {
   max_students: number
   booked_count: number
   classes: any
+}
+
+function CalendarView({ schedules }: { schedules: Schedule[] }) {
+  const [viewYear, setViewYear] = useState(new Date().getFullYear())
+  const [viewMonth, setViewMonth] = useState(new Date().getMonth())
+
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay()
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate()
+
+  const scheduleMap: Record<number, Schedule[]> = {}
+  for (const s of schedules) {
+    const d = new Date(s.start_at)
+    if (d.getFullYear() === viewYear && d.getMonth() === viewMonth) {
+      const day = d.getDate()
+      if (!scheduleMap[day]) scheduleMap[day] = []
+      scheduleMap[day].push(s)
+    }
+  }
+
+  const prevMonth = () => {
+    if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11) }
+    else setViewMonth(m => m - 1)
+  }
+  const nextMonth = () => {
+    if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0) }
+    else setViewMonth(m => m + 1)
+  }
+
+  const today = new Date()
+  const weeks = Math.ceil((firstDay + daysInMonth) / 7)
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-brand-mist/30 overflow-hidden">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-brand-mist/30">
+        <button onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-brand-bg transition-colors">
+          <ChevronLeft size={16} className="text-brand-grey" />
+        </button>
+        <p className="font-semibold text-brand-ink text-sm">{viewYear}년 {viewMonth + 1}월</p>
+        <button onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-brand-bg transition-colors">
+          <ChevronRight size={16} className="text-brand-grey" />
+        </button>
+      </div>
+      <div className="grid grid-cols-7 border-b border-brand-mist/20">
+        {['일', '월', '화', '수', '목', '금', '토'].map((d, i) => (
+          <div key={d} className={`text-center py-2 text-xs font-medium ${i === 0 ? 'text-red-400' : i === 6 ? 'text-blue-400' : 'text-brand-grey'}`}>
+            {d}
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7">
+        {Array.from({ length: weeks * 7 }).map((_, idx) => {
+          const dayNum = idx - firstDay + 1
+          const isValid = dayNum >= 1 && dayNum <= daysInMonth
+          const isToday = isValid && today.getFullYear() === viewYear && today.getMonth() === viewMonth && today.getDate() === dayNum
+          const daySchedules = isValid ? (scheduleMap[dayNum] ?? []) : []
+          const col = idx % 7
+
+          return (
+            <div key={idx} className={`min-h-[72px] p-1.5 border-b border-r border-brand-mist/10 ${!isValid ? 'bg-brand-bg/30' : ''}`}>
+              {isValid && (
+                <>
+                  <p className={`text-xs font-medium mb-1 w-6 h-6 flex items-center justify-center rounded-full ${isToday ? 'bg-brand-deep text-white' : col === 0 ? 'text-red-400' : col === 6 ? 'text-blue-400' : 'text-brand-grey'}`}>
+                    {dayNum}
+                  </p>
+                  <div className="space-y-0.5">
+                    {daySchedules.map(s => (
+                      <div key={s.id} className="text-[10px] bg-brand-deep/10 text-brand-deep rounded px-1 py-0.5 truncate leading-tight">
+                        {new Date(s.start_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} {s.classes?.title?.slice(0, 6)}
+                        <span className="ml-1 text-brand-grey/70">{s.booked_count}/{s.max_students}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 export default function ScheduleManager({
@@ -26,6 +107,7 @@ export default function ScheduleManager({
   const [maxStudents, setMaxStudents] = useState(8)
   const [loading, setLoading] = useState(false)
   const [actionId, setActionId] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
 
   const now = new Date()
   const upcoming = schedules.filter(s => new Date(s.start_at) > now)
@@ -141,6 +223,31 @@ export default function ScheduleManager({
         )}
       </div>
 
+      {/* 뷰 토글 */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-brand-ink">회차 목록</h2>
+        <div className="flex gap-1 bg-brand-bg rounded-xl p-1">
+          <button
+            onClick={() => setViewMode('list')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${viewMode === 'list' ? 'bg-white text-brand-ink shadow-sm' : 'text-brand-grey'}`}
+          >
+            <LayoutList size={13} /> 목록
+          </button>
+          <button
+            onClick={() => setViewMode('calendar')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${viewMode === 'calendar' ? 'bg-white text-brand-ink shadow-sm' : 'text-brand-grey'}`}
+          >
+            <Calendar size={13} /> 캘린더
+          </button>
+        </div>
+      </div>
+
+      {/* 캘린더 뷰 */}
+      {viewMode === 'calendar' && <CalendarView schedules={schedules} />}
+
+      {/* 리스트 뷰 */}
+      {viewMode === 'list' && <>
+
       {/* 예정 회차 */}
       <div>
         <h2 className="text-sm font-semibold text-brand-ink mb-3">예정 회차 ({upcoming.length})</h2>
@@ -213,6 +320,7 @@ export default function ScheduleManager({
           </div>
         </div>
       )}
+      </>}
     </div>
   )
 }

@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { User, Menu, X, BookOpen, LogOut, Heart, ShoppingBag, Calendar, ChevronDown, ShoppingCart } from 'lucide-react'
+import { User, Menu, X, BookOpen, LogOut, Heart, ShoppingBag, Calendar, ChevronDown, ShoppingCart, Search, Bell } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Logo from '@/components/brand/Logo'
 import { cn } from '@/lib/utils/cn'
@@ -28,6 +28,7 @@ export default function Header() {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [cartCount, setCartCount] = useState(0)
+  const [notifCount, setNotifCount] = useState(0)
   const pathname = usePathname()
   const supabase = createClient()
   const userMenuRef = useRef<HTMLDivElement>(null)
@@ -37,6 +38,10 @@ export default function Header() {
       if (!u) return
       const { data } = await supabase.from('users').select('name, role').eq('id', u.id).single()
       if (data) setUser({ id: u.id, name: data.name, role: data.role as UserRole })
+      fetch('/api/notifications/unread-count')
+        .then(r => r.json())
+        .then(d => setNotifCount(d.count ?? 0))
+        .catch(() => {})
     })
     setCartCount(getCart().reduce((s, item) => s + item.quantity, 0))
     const handler = () => setCartCount(getCart().reduce((s, item) => s + item.quantity, 0))
@@ -94,6 +99,19 @@ export default function Header() {
 
         {/* Desktop actions */}
         <div className="hidden md:flex items-center gap-2">
+          <Link href="/search" className="p-2 text-brand-grey hover:text-brand-deep transition-colors">
+            <Search size={20} />
+          </Link>
+          {user && (
+            <Link href="/notifications" className="relative p-2 text-brand-grey hover:text-brand-deep transition-colors">
+              <Bell size={20} />
+              {notifCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {notifCount > 9 ? '9+' : notifCount}
+                </span>
+              )}
+            </Link>
+          )}
           <Link href="/cart" className="relative p-2 text-brand-grey hover:text-brand-deep transition-colors">
             <ShoppingCart size={20} />
             {cartCount > 0 && (
@@ -149,6 +167,9 @@ export default function Header() {
                     <Link href="/my/orders" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-brand-ink hover:bg-brand-bg transition-colors">
                       <ShoppingBag size={14} className="text-brand-grey" /> 주문 내역
                     </Link>
+                    <Link href="/my/coupons" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-brand-ink hover:bg-brand-bg transition-colors">
+                      <span className="text-[14px] leading-none">🏷️</span> 내 쿠폰
+                    </Link>
                     <Link href="/my/profile" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-brand-ink hover:bg-brand-bg transition-colors">
                       <User size={14} className="text-brand-grey" /> 프로필
                     </Link>
@@ -179,14 +200,37 @@ export default function Header() {
           )}
         </div>
 
-        {/* Mobile toggle */}
-        <button
-          className="md:hidden p-2 text-brand-ink"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label="메뉴"
-        >
-          {mobileOpen ? <X size={22} /> : <Menu size={22} />}
-        </button>
+        {/* Mobile actions */}
+        <div className="md:hidden flex items-center gap-1">
+          <Link href="/search" className="p-2 text-brand-grey hover:text-brand-deep transition-colors">
+            <Search size={20} />
+          </Link>
+          {user && (
+            <Link href="/notifications" className="relative p-2 text-brand-grey hover:text-brand-deep transition-colors">
+              <Bell size={20} />
+              {notifCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {notifCount > 9 ? '9+' : notifCount}
+                </span>
+              )}
+            </Link>
+          )}
+          <Link href="/cart" className="relative p-2 text-brand-grey hover:text-brand-deep transition-colors">
+            <ShoppingCart size={20} />
+            {cartCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-brand-amber text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                {cartCount > 9 ? '9+' : cartCount}
+              </span>
+            )}
+          </Link>
+          <button
+            className="p-2 text-brand-ink"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label="메뉴"
+          >
+            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu */}

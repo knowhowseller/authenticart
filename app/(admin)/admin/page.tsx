@@ -45,7 +45,7 @@ async function getAdminStats() {
       .order('created_at', { ascending: false }).limit(5)
       .then(r => r.data ?? []),
     supabase.from('orders')
-      .select('id, status, total_amount, created_at, users!user_id(name)')
+      .select('id, status, total_amount, created_at, users!buyer_id(name)')
       .order('created_at', { ascending: false }).limit(5)
       .then(r => r.data ?? []),
   ])

@@ -46,6 +46,14 @@ export async function POST(req: NextRequest) {
         html: instructorApprovedHtml({ name: instructor.name }),
       }).catch(() => {})
     }
+
+    void admin.from('notifications').insert({
+      user_id: instructor_id,
+      type: 'instructor_approved',
+      title: '강사 승인이 완료되었습니다',
+      body: '강사 신청이 승인되었습니다. 이제 클래스를 등록할 수 있습니다.',
+      link: '/studio',
+    } as any)
   } else {
     const { error } = await admin
       .from('instructor_profiles')
@@ -61,6 +69,14 @@ export async function POST(req: NextRequest) {
         html: instructorRejectedHtml({ name: instructor.name }),
       }).catch(() => {})
     }
+
+    void admin.from('notifications').insert({
+      user_id: instructor_id,
+      type: 'instructor_rejected',
+      title: '강사 신청이 반려되었습니다',
+      body: '강사 신청이 반려되었습니다. 자세한 내용은 관리자에게 문의해주세요.',
+      link: '/my/instructor-status',
+    } as any)
   }
 
   await admin.from('audit_logs').insert({

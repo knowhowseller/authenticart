@@ -17,10 +17,12 @@ export async function POST(req: NextRequest) {
     .maybeSingle()
 
   if (existing) {
-    await supabase.from('wishlists').delete().eq('id', existing.id)
+    const { error } = await supabase.from('wishlists').delete().eq('id', existing.id)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ wishlisted: false })
   }
 
-  await supabase.from('wishlists').insert({ user_id: user.id, class_id })
+  const { error } = await supabase.from('wishlists').insert({ user_id: user.id, class_id })
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ wishlisted: true })
 }

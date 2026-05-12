@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { formatPrice } from '@/lib/utils/format'
+import { Download } from 'lucide-react'
 
 interface PayoutItem {
   id: string
@@ -29,6 +30,33 @@ export default function PayoutProcessList({
 }) {
   const [loading, setLoading] = useState<string | null>(null)
   const [list, setList] = useState(payouts)
+
+  function downloadCSV() {
+    const header = ['강사명', '이메일', '기간', '총매출', 'PG수수료', '플랫폼수수료', '정산액', '예약건수', '은행', '계좌번호', '예금주', '상태', '입금일']
+    const rows = list.map(p => [
+      p.users?.name ?? '',
+      p.users?.email ?? '',
+      `${p.period_year}년 ${p.period_month}월`,
+      p.total_gross,
+      p.total_pg_fee,
+      p.total_platform_fee,
+      p.total_payout,
+      p.booking_count,
+      p.instructor_profiles?.payout_account?.bank ?? '',
+      p.instructor_profiles?.payout_account?.account ?? '',
+      p.instructor_profiles?.payout_account?.holder ?? '',
+      p.status,
+      p.paid_at ? new Date(p.paid_at).toLocaleDateString('ko-KR') : '',
+    ])
+    const csvContent = [header, ...rows].map(row => row.join(',')).join('\n')
+    const blob = new Blob(['﻿' + csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `정산내역_${new Date().toLocaleDateString('ko-KR').replace(/\. /g, '-').replace('.', '')}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   async function handlePay(payoutId: string) {
     setLoading(payoutId)
@@ -73,8 +101,14 @@ export default function PayoutProcessList({
 
   return (
     <div>
-      {mode === 'pending' && list.length > 1 && (
-        <div className="mb-3 flex justify-end">
+      <div className="mb-3 flex justify-end gap-2">
+        <button
+          onClick={downloadCSV}
+          className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-xl border border-brand-mist text-brand-grey hover:text-brand-ink hover:border-brand-deep/30 transition-colors"
+        >
+          <Download size={14} /> CSV 내보내기
+        </button>
+        {mode === 'pending' && list.length > 1 && (
           <button
             onClick={handlePayAll}
             disabled={loading !== null}
@@ -82,8 +116,8 @@ export default function PayoutProcessList({
           >
             {loading === 'all' ? '처리중...' : `전체 ${list.length}건 일괄 입금`}
           </button>
-        </div>
-      )}
+        )}
+      </div>
       <div className="space-y-3">
         {list.map(p => (
           <div key={p.id} className="bg-white rounded-2xl p-5 shadow-sm border border-brand-mist/30">

@@ -158,6 +158,27 @@ export default async function InstructorDetailPage({ params }: { params: Promise
           </div>
         </div>
 
+        {/* 포트폴리오 */}
+        {((profile as any).portfolio_images ?? []).length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-5">
+              <Hexagon color="amber" size={14} />
+              <h2 className="text-lg font-bold text-brand-ink">포트폴리오</h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {((profile as any).portfolio_images as string[]).map((url, i) => (
+                <div key={i} className="aspect-square rounded-2xl overflow-hidden bg-brand-mist/20">
+                  <img
+                    src={url}
+                    alt={`포트폴리오 ${i + 1}`}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* 개설 클래스 */}
         {classesWithStats.length > 0 ? (
           <div>

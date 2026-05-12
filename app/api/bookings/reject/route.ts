@@ -11,7 +11,7 @@ export async function POST(request: Request) {
 
   const { data: booking } = await admin
     .from('bookings')
-    .select('id, status, class_schedules!schedule_id(classes!class_id(instructor_id))')
+    .select('id, status, student_id, class_schedules!schedule_id(classes!class_id(instructor_id, title))')
     .eq('id', booking_id)
     .single()
 
@@ -26,6 +26,14 @@ export async function POST(request: Request) {
     status: 'rejected',
     refund_reason: reason,
   }).eq('id', booking_id)
+
+  void admin.from('notifications').insert({
+    user_id: (booking as any).student_id,
+    type: 'booking_rejected',
+    title: '예약이 거절되었습니다',
+    body: `${cls?.title ?? '클래스'} 예약이 거절되었습니다.${reason ? ` 사유: ${reason}` : ''}`,
+    link: `/my/bookings`,
+  } as any)
 
   return NextResponse.json({ ok: true })
 }

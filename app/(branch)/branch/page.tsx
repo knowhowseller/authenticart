@@ -125,11 +125,12 @@ export default async function BranchPage() {
             <h3 className="font-semibold text-brand-ink text-sm">강사 관리</h3>
             <p className="text-xs text-brand-grey mt-0.5">소속 강사 현황 및 신청 검토</p>
           </Link>
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-mist/30 opacity-50">
+          <Link href="/branch/reports"
+            className="bg-white rounded-2xl p-5 shadow-sm border border-brand-mist/30 hover:shadow-md hover:border-brand-deep/30 transition-all">
             <div className="text-2xl mb-2">📊</div>
             <h3 className="font-semibold text-brand-ink text-sm">지부 매출 리포트</h3>
-            <p className="text-xs text-brand-grey mt-0.5">준비 중</p>
-          </div>
+            <p className="text-xs text-brand-grey mt-0.5">월별 매출 및 정산 현황</p>
+          </Link>
         </div>
       </div>
     </div>

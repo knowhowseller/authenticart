@@ -3,6 +3,20 @@ import RequestsList from './RequestsList'
 
 async function getPendingRequests(userId: string) {
   const supabase = await createClient()
+  const { data: myClasses } = await supabase
+    .from('classes')
+    .select('id')
+    .eq('instructor_id', userId)
+  const classIds = (myClasses ?? []).map((c: any) => c.id)
+  if (classIds.length === 0) return []
+
+  const { data: schedules } = await supabase
+    .from('class_schedules')
+    .select('id')
+    .in('class_id', classIds)
+  const scheduleIds = (schedules ?? []).map((s: any) => s.id)
+  if (scheduleIds.length === 0) return []
+
   const { data } = await supabase
     .from('bookings')
     .select(`
@@ -14,6 +28,7 @@ async function getPendingRequests(userId: string) {
       )
     `)
     .eq('status', 'pending_approval')
+    .in('schedule_id', scheduleIds)
     .order('approval_expires_at', { ascending: true })
   return data ?? []
 }

@@ -69,5 +69,13 @@ export async function POST(request: Request) {
     }).catch(() => {})
   }
 
+  void admin.from('notifications').insert({
+    user_id: booking.student_id,
+    type: 'booking_approved',
+    title: '예약이 승인되었습니다',
+    body: `${cls?.title ?? '클래스'} 예약이 승인되었습니다. 24시간 내 결제를 완료해주세요.`,
+    link: `/my/bookings`,
+  } as any)
+
   return NextResponse.json({ ok: true })
 }
