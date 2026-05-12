@@ -113,6 +113,14 @@ export default function Header() {
                   스튜디오
                 </Link>
               )}
+              {user.role === 'branch_manager' && (
+                <Link
+                  href="/branch"
+                  className="flex items-center gap-1.5 text-sm text-brand-sage font-medium px-3 py-1.5 rounded-full border border-brand-sage hover:bg-brand-sage hover:text-white transition-colors"
+                >
+                  지부 관리
+                </Link>
+              )}
               {user.role === 'admin' && (
                 <Link
                   href="/admin"
@@ -197,6 +205,21 @@ export default function Header() {
           <div className="border-t border-brand-mist/30 pt-3">
             {user ? (
               <div className="space-y-1">
+                {user.role === 'instructor' && (
+                  <Link href="/studio" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 text-sm py-2 text-brand-deep font-medium">
+                    <BookOpen size={14} /> 스튜디오
+                  </Link>
+                )}
+                {user.role === 'branch_manager' && (
+                  <Link href="/branch" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 text-sm py-2 text-brand-sage font-medium">
+                    지부 관리
+                  </Link>
+                )}
+                {user.role === 'admin' && (
+                  <Link href="/admin" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 text-sm py-2 text-brand-amber font-medium">
+                    관리자
+                  </Link>
+                )}
                 <Link href="/my/bookings" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 text-sm py-2 text-brand-ink">
                   <Calendar size={14} className="text-brand-grey" /> 내 예약
                 </Link>

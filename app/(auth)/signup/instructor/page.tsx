@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
@@ -18,6 +18,7 @@ const schema = z.object({
   password: z.string().min(8, '비밀번호는 8자 이상이어야 합니다'),
   phone: z.string().min(10, '연락처를 입력해주세요'),
   region: z.string().min(1, '활동 지역을 선택해주세요'),
+  branch_id: z.string().optional(),
   bio: z.string().min(30, '자기소개는 30자 이상 입력해주세요').max(500),
   agree_terms: z.literal(true, { error: '약관에 동의해주세요' }),
 })
@@ -36,14 +37,22 @@ export default function InstructorSignupPage() {
   const router = useRouter()
   const supabase = createClient()
   const [loading, setLoading] = useState(false)
+  const [branches, setBranches] = useState<{ id: string; name: string; region: string }[]>([])
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
   })
 
+  useEffect(() => {
+    supabase
+      .from('branches')
+      .select('id, name, region')
+      .order('region', { ascending: true })
+      .then(({ data }) => setBranches(data ?? []))
+  }, [])
+
   async function onSubmit(data: FormData) {
     setLoading(true)
-    // 1. 회원가입
     const { data: authData, error: signupError } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
@@ -58,10 +67,14 @@ export default function InstructorSignupPage() {
       return
     }
 
-    // 2. instructor_profiles 생성 (pending)
     const { error: profileError } = await supabase
       .from('instructor_profiles')
-      .insert({ instructor_id: authData.user.id, bio: data.bio, region: data.region })
+      .insert({
+        instructor_id: authData.user.id,
+        bio: data.bio,
+        region: data.region,
+        branch_id: data.branch_id || null,
+      })
 
     setLoading(false)
     if (profileError) {
@@ -109,18 +122,33 @@ export default function InstructorSignupPage() {
             <Input label="이메일" type="email" placeholder="example@email.com" required {...register('email')} error={errors.email?.message} />
             <Input label="비밀번호" type="password" placeholder="8자 이상, 영문+숫자" required {...register('password')} error={errors.password?.message} />
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-brand-ink">
-                주요 활동 지역 <span className="text-brand-amber">*</span>
-              </label>
-              <select
-                {...register('region')}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-brand-mist bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber"
-              >
-                <option value="">선택해주세요</option>
-                {regions.map(r => <option key={r} value={r}>{r}</option>)}
-              </select>
-              {errors.region && <p className="text-xs text-red-500">{errors.region.message}</p>}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-brand-ink">
+                  주요 활동 지역 <span className="text-brand-amber">*</span>
+                </label>
+                <select
+                  {...register('region')}
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-brand-mist bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber"
+                >
+                  <option value="">선택해주세요</option>
+                  {regions.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+                {errors.region && <p className="text-xs text-red-500">{errors.region.message}</p>}
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-brand-ink">소속 지부</label>
+                <select
+                  {...register('branch_id')}
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-brand-mist bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber"
+                >
+                  <option value="">없음 (미정)</option>
+                  {branches.map(b => (
+                    <option key={b.id} value={b.id}>{b.name} ({b.region})</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div className="flex flex-col gap-1.5">

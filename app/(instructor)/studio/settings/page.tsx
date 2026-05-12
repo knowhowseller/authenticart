@@ -14,10 +14,13 @@ const BANKS = [
   '경남은행', '제주은행', '수협은행', '우체국',
 ]
 
+interface Branch { id: string; name: string; region: string }
+
 interface Profile {
   bio: string
   region: string
   profile_image: string
+  branch_id: string | null
   payout_account: { bank: string; account: string; holder: string } | null
 }
 
@@ -26,7 +29,7 @@ export default function StudioSettingsPage() {
   const fileRef = useRef<HTMLInputElement>(null)
   const [instructorId, setInstructorId] = useState<string | null>(null)
   const [profile, setProfile] = useState<Profile>({
-    bio: '', region: '', profile_image: '',
+    bio: '', region: '', profile_image: '', branch_id: null,
     payout_account: null,
   })
   const [bank, setBank] = useState('')
@@ -35,22 +38,28 @@ export default function StudioSettingsPage() {
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [loaded, setLoaded] = useState(false)
+  const [branches, setBranches] = useState<Branch[]>([])
 
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       setInstructorId(user.id)
-      const { data } = await supabase
-        .from('instructor_profiles')
-        .select('bio, region, profile_image, payout_account')
-        .eq('instructor_id', user.id)
-        .single()
+      const [{ data }, { data: branchList }] = await Promise.all([
+        supabase
+          .from('instructor_profiles')
+          .select('bio, region, profile_image, branch_id, payout_account')
+          .eq('instructor_id', user.id)
+          .single(),
+        supabase.from('branches').select('id, name, region').order('region'),
+      ])
+      setBranches(branchList ?? [])
       if (data) {
         setProfile({
           bio: data.bio ?? '',
           region: data.region ?? '',
           profile_image: data.profile_image ?? '',
+          branch_id: (data as any).branch_id ?? null,
           payout_account: (data.payout_account as any) ?? null,
         })
         const pa = (data.payout_account as any)
@@ -86,10 +95,13 @@ export default function StudioSettingsPage() {
       bio: profile.bio,
       region: profile.region,
     })
-    if (!result.error && (bank || account || holder)) {
-      await supabase.from('instructor_profiles').update({
-        payout_account: { bank, account: account.replace(/\D/g, ''), holder },
-      }).eq('instructor_id', instructorId)
+    const extraUpdate: Record<string, unknown> = {}
+    if (bank || account || holder) {
+      extraUpdate.payout_account = { bank, account: account.replace(/\D/g, ''), holder }
+    }
+    extraUpdate.branch_id = profile.branch_id || null
+    if (!result.error) {
+      await supabase.from('instructor_profiles').update(extraUpdate).eq('instructor_id', instructorId)
     }
     setSaving(false)
     if (result.error) toast.error(result.error)
@@ -153,13 +165,28 @@ export default function StudioSettingsPage() {
           </div>
 
           <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-brand-ink block mb-1.5">활동 지역</label>
-              <Input
-                value={profile.region}
-                onChange={e => setProfile(p => ({ ...p, region: e.target.value }))}
-                placeholder="예: 서울 강남구"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-brand-ink block mb-1.5">활동 지역</label>
+                <Input
+                  value={profile.region}
+                  onChange={e => setProfile(p => ({ ...p, region: e.target.value }))}
+                  placeholder="예: 서울 강남구"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-brand-ink block mb-1.5">소속 지부</label>
+                <select
+                  value={profile.branch_id ?? ''}
+                  onChange={e => setProfile(p => ({ ...p, branch_id: e.target.value || null }))}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-brand-mist text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber"
+                >
+                  <option value="">없음</option>
+                  {branches.map(b => (
+                    <option key={b.id} value={b.id}>{b.name} ({b.region})</option>
+                  ))}
+                </select>
+              </div>
             </div>
             <div>
               <label className="text-sm font-medium text-brand-ink block mb-1.5">자기소개</label>

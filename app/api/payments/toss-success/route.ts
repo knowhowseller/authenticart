@@ -53,14 +53,25 @@ export async function GET(request: Request) {
     // 좌석 감소
     await supabase.rpc('decrement_seat', { p_booking_id: orderId })
 
-    // 일반회원(member)이 클래스 결제 완료 시 수강생(student)으로 승격
+    // 일반회원(member)이 클래스 결제 완료 시 수강생(student)으로 승격 + 쿠폰 사용 처리
     const { data: paidBooking } = await supabase
-      .from('bookings').select('student_id').eq('id', orderId).single()
+      .from('bookings').select('student_id, coupon_id, discount_amount').eq('id', orderId).single()
     if (paidBooking?.student_id) {
       const { data: paidUser } = await supabase
         .from('users').select('role').eq('id', paidBooking.student_id).single()
       if (paidUser?.role === 'member') {
         await supabase.from('users').update({ role: 'student' }).eq('id', paidBooking.student_id)
+      }
+      // 쿠폰 사용 기록
+      if (paidBooking.coupon_id && paidBooking.discount_amount > 0) {
+        await supabase.from('coupon_uses').insert({
+          coupon_id: paidBooking.coupon_id,
+          user_id: paidBooking.student_id,
+          booking_id: orderId,
+          discount_amount: paidBooking.discount_amount,
+        }).then(() =>
+          supabase.rpc('increment_coupon_count', { p_coupon_id: paidBooking.coupon_id })
+        )
       }
     }
 

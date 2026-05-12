@@ -62,6 +62,7 @@ export interface Database {
           approved_by: string | null
           payout_account: Record<string, string> | null
           rejection_reason: string | null
+          branch_id: string | null
           created_at: string
           updated_at: string
         }
@@ -73,6 +74,7 @@ export interface Database {
           status?: InstructorStatus
           certification_docs?: unknown[]
           payout_account?: Record<string, string> | null
+          branch_id?: string | null
         }
         Update: Partial<Database['public']['Tables']['instructor_profiles']['Insert']>
       }
