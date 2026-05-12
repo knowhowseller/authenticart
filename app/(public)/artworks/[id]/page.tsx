@@ -34,6 +34,17 @@ export default function ArtworkDetailPage() {
     load()
   }, [id])
 
+  function loadTossScript(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if ((window as any).TossPayments) { resolve(); return }
+      const script = document.createElement('script')
+      script.src = 'https://js.tosspayments.com/v1/payment'
+      script.onload = () => resolve()
+      script.onerror = () => reject(new Error('결제 모듈 로드 실패'))
+      document.head.appendChild(script)
+    })
+  }
+
   async function handleBuy() {
     if (!myId) { toast.error('로그인 후 구매 가능합니다'); router.push('/login'); return }
     if (!shipping.name || !shipping.phone || !shipping.address) {
@@ -52,11 +63,10 @@ export default function ArtworkDetailPage() {
     const tossClientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY
     if (!tossClientKey) { toast.error('결제 설정 오류'); return }
 
-    const { loadTossPayments } = await import('@tosspayments/tosspayments-sdk')
-    const toss = await loadTossPayments(tossClientKey)
-    await toss.requestPayment({
-      method: 'CARD',
-      amount: { currency: 'KRW', value: data.amount },
+    await loadTossScript()
+    const tossPayments = (window as any).TossPayments(tossClientKey)
+    await tossPayments.requestPayment('카드', {
+      amount: data.amount,
       orderId: data.order_id,
       orderName: artwork?.title ?? '작품',
       successUrl: `${window.location.origin}/api/payments/toss-success?type=artwork`,

@@ -37,13 +37,26 @@ export default function ClassRequestPayPage() {
     load()
   }, [id])
 
+  function loadTossScript(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if ((window as any).TossPayments) { resolve(); return }
+      const script = document.createElement('script')
+      script.src = 'https://js.tosspayments.com/v1/payment'
+      script.onload = () => resolve()
+      script.onerror = () => reject(new Error('결제 모듈 로드 실패'))
+      document.head.appendChild(script)
+    })
+  }
+
   async function handlePay() {
     if (!req?.price_per_person) { toast.error('결제 금액 정보가 없습니다'); return }
+    const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY
+    if (!clientKey) { toast.error('결제 설정 오류'); return }
     setLoading(true)
     try {
-      const { loadTossPayments } = await import('@tosspayments/payment-sdk')
-      const toss = await loadTossPayments(process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY!)
-      await toss.requestPayment('카드', {
+      await loadTossScript()
+      const tossPayments = (window as any).TossPayments(clientKey)
+      await tossPayments.requestPayment('카드', {
         amount: req.price_per_person,
         orderId: `class-req-${id}-${Date.now()}`,
         orderName: req.title,
