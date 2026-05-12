@@ -23,7 +23,7 @@ export default async function AdminArtworksPage() {
           <span className="text-xs font-medium text-brand-amber uppercase tracking-wider">Admin</span>
         </div>
         <h1 className="text-2xl font-bold text-brand-ink mb-6">작품 마켓 관리</h1>
-        <AdminArtworkList initialArtworks={artworks ?? []} />
+        <AdminArtworkList initialArtworks={(artworks ?? []) as any} />
       </div>
     </div>
   )
