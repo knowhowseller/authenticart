@@ -35,19 +35,35 @@ export default function Header() {
   const userMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user: u } }) => {
-      if (!u) return
-      const { data } = await supabase.from('users').select('name, role').eq('id', u.id).single()
-      if (data) setUser({ id: u.id, name: data.name, role: data.role as UserRole })
+    async function loadUser(uid: string) {
+      const { data } = await supabase.from('users').select('name, role').eq('id', uid).single()
+      if (data) setUser({ id: uid, name: data.name, role: data.role as UserRole })
       fetch('/api/notifications/unread-count')
         .then(r => r.json())
         .then(d => setNotifCount(d.count ?? 0))
         .catch(() => {})
+    }
+
+    supabase.auth.getUser().then(({ data: { user: u } }) => {
+      if (u) loadUser(u.id)
     })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        loadUser(session.user.id)
+      } else {
+        setUser(null)
+        setNotifCount(0)
+      }
+    })
+
     setCartCount(getCart().reduce((s, item) => s + item.quantity, 0))
     const handler = () => setCartCount(getCart().reduce((s, item) => s + item.quantity, 0))
     window.addEventListener('storage', handler)
-    return () => window.removeEventListener('storage', handler)
+    return () => {
+      subscription.unsubscribe()
+      window.removeEventListener('storage', handler)
+    }
   }, [])
 
   useEffect(() => {

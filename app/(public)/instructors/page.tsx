@@ -17,6 +17,7 @@ export default async function InstructorsPage() {
       )
     `)
     .eq('status', 'approved')
+    .eq('is_featured', true)
     .order('created_at', { ascending: false })
 
   return (

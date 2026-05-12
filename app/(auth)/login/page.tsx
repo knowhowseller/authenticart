@@ -40,8 +40,7 @@ export default function LoginPage() {
         : error.message)
       return
     }
-    router.push('/')
-    router.refresh()
+    window.location.href = '/'
   }
 
   return (

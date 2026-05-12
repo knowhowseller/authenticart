@@ -195,7 +195,38 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ─── 4. 클래스 (잔여 좌석 + 긴급성) ─── */}
+      {/* ─── 4. 오센틱아트 배너 ─── */}
+      <section className="py-10 bg-brand-deep">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="text-center md:text-left">
+              <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+                <Hexagon color="amber" size={12} rotate={10} />
+                <span className="text-brand-amber text-xs font-semibold tracking-widest uppercase">Authentic Art</span>
+                <Hexagon color="amber" size={12} rotate={10} />
+              </div>
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-1">
+                오센틱아트와 함께라면
+              </h2>
+              <p className="text-brand-mist text-sm md:text-base">
+                공예 강사 자격 취득 · 클래스 오픈 · 작품 판매 · 재료 도매 — 한 플랫폼에서
+              </p>
+            </div>
+            <div className="flex gap-3 flex-wrap justify-center md:justify-end">
+              <Link href="/classes">
+                <Button variant="accent" size="md">클래스 예약하기</Button>
+              </Link>
+              <Link href="/signup/instructor">
+                <Button variant="outline" size="md" className="border-white text-white hover:bg-white hover:text-brand-deep">
+                  강사 신청하기
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── 5. 클래스 (잔여 좌석 + 긴급성) ─── */}
       <section className="py-16 md:py-24 bg-white">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex items-end justify-between mb-10">
@@ -259,7 +290,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ─── 5. 강사 성공 스토리 ─── */}
+      {/* ─── 6. 강사 성공 스토리 ─── */}
       {instructors.length > 0 && (
         <section className="py-16 md:py-24 bg-brand-deep">
           <div className="max-w-6xl mx-auto px-4">
@@ -317,7 +348,7 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* ─── 6. 강사 자격증 ROI ─── */}
+      {/* ─── 7. 강사 자격증 ROI ─── */}
       <section className="py-16 md:py-24 bg-white">
         <div className="max-w-5xl mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
@@ -372,7 +403,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ─── 7. UGC 갤러리 ─── */}
+      {/* ─── 8. UGC 갤러리 ─── */}
       <section className="py-16 md:py-24 bg-brand-bg">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-10">
@@ -402,7 +433,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ─── 8. 재료 쇼핑 ─── */}
+      {/* ─── 9. 재료 쇼핑 ─── */}
       <section className="py-16 md:py-24 bg-white">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex items-end justify-between mb-10">
@@ -446,7 +477,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ─── 9. 긴급 배너 + CTA ─── */}
+      {/* ─── 10. 긴급 배너 + CTA ─── */}
       <section className="py-16 md:py-24 bg-brand-deep">
         <div className="max-w-6xl mx-auto px-4 text-center">
           <div className="inline-flex items-center gap-2 bg-brand-amber/20 border border-brand-amber/40 text-brand-amber text-sm font-medium px-4 py-2 rounded-full mb-6">

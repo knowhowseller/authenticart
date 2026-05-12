@@ -38,6 +38,19 @@ export default async function BoardPage({ searchParams }: { searchParams: Promis
 
   const { data: posts } = await q
 
+  // 관리자 공지사항을 notices 테이블에서 함께 조회 (전체 탭 또는 공지 탭일 때)
+  let adminNotices: { id: string; title: string; is_pinned: boolean; created_at: string; _source: 'notice' }[] = []
+  if (!tab || tab === 'all' || tab === 'notice') {
+    const { data: notices } = await supabase
+      .from('notices')
+      .select('id, title, is_pinned, created_at')
+      .eq('is_published', true)
+      .order('is_pinned', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(20)
+    adminNotices = (notices ?? []).map(n => ({ ...n, _source: 'notice' as const }))
+  }
+
   return (
     <div className="min-h-screen bg-brand-bg">
       <div className="max-w-4xl mx-auto px-4 py-10">
@@ -81,15 +94,32 @@ export default async function BoardPage({ searchParams }: { searchParams: Promis
 
         {/* 게시글 목록 */}
         <div className="bg-white rounded-2xl shadow-sm border border-brand-mist/30 overflow-hidden">
-          {(posts ?? []).length === 0 ? (
+          {(posts ?? []).length === 0 && adminNotices.length === 0 ? (
             <div className="p-12 text-center">
               <p className="text-brand-grey text-sm">게시글이 없습니다</p>
             </div>
           ) : (
             <div className="divide-y divide-brand-mist/20">
+              {/* 관리자 공지 (notices 테이블) */}
+              {adminNotices.map(n => (
+                <Link key={`notice-${n.id}`} href={`/notices/${n.id}`}
+                  className="flex items-center gap-3 px-5 py-3.5 hover:bg-brand-bg/50 transition-colors bg-brand-amber/5">
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 bg-brand-deep/10 text-brand-deep">
+                    공지
+                  </span>
+                  <div className="flex-1 min-w-0 flex items-center gap-2">
+                    {n.is_pinned && <Pin size={12} className="text-brand-amber flex-shrink-0" />}
+                    <span className="text-sm text-brand-ink truncate font-medium">{n.title}</span>
+                  </div>
+                  <div className="text-xs text-brand-grey flex-shrink-0 hidden md:flex items-center gap-3">
+                    <span>오센틱아트</span>
+                    <span>{new Date(n.created_at).toLocaleDateString('ko-KR')}</span>
+                  </div>
+                </Link>
+              ))}
+              {/* 게시판 일반 게시글 */}
               {(posts ?? []).map((p: any) => {
                 const typeInfo = TYPE_LABELS[p.type]
-                const isLocked = p.is_private && p.author_name !== user?.id
                 return (
                   <Link key={p.id} href={`/board/${p.id}`}
                     className="flex items-center gap-3 px-5 py-3.5 hover:bg-brand-bg/50 transition-colors">

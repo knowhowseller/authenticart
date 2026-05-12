@@ -21,18 +21,27 @@ export default function NewArtworkPage() {
     setUploading(true)
     const urls: string[] = []
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { toast.error('로그인이 필요합니다'); router.push('/login'); return }
+    if (!user) {
+      setUploading(false)
+      toast.error('로그인이 필요합니다')
+      router.push('/login')
+      return
+    }
 
     for (const file of Array.from(files)) {
-      const ext = file.name.split('.').pop()
-      const path = `artworks/${user.id}/${Date.now()}.${ext}`
-      const { error } = await supabase.storage.from('artwork-images').upload(path, file)
-      if (error) { toast.error('이미지 업로드 실패: ' + error.message); continue }
+      const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+      const path = `artworks/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const { error } = await supabase.storage.from('artwork-images').upload(path, file, { upsert: false })
+      if (error) {
+        toast.error(`업로드 실패: ${error.message}`)
+        continue
+      }
       const { data } = supabase.storage.from('artwork-images').getPublicUrl(path)
       urls.push(data.publicUrl)
     }
     setImages(prev => [...prev, ...urls])
     setUploading(false)
+    if (urls.length > 0) toast.success(`${urls.length}장 업로드 완료`)
   }
 
   async function handleSubmit() {
@@ -76,7 +85,7 @@ export default function NewArtworkPage() {
               </button>
             )}
           </div>
-          <input ref={fileRef} type="file" accept="image/*" multiple className="hidden"
+          <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden"
             onChange={e => { if (e.target.files) handleImages(e.target.files); e.target.value = '' }} />
         </div>
 
