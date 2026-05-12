@@ -1,9 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { formatPrice } from '@/lib/utils/format'
 import Hexagon from '@/components/brand/Hexagon'
 import CategoryManager from './CategoryManager'
+import AdminProductList from './AdminProductList'
 
 export default async function AdminProductsPage({
   searchParams,
@@ -88,42 +88,7 @@ export default async function AdminProductsPage({
             </Link>
           </div>
         ) : (
-          <div className="space-y-2">
-            {filtered.map((p: any) => (
-              <div key={p.id} className="bg-white rounded-2xl p-4 shadow-sm border border-brand-mist/30 flex items-center gap-4">
-                {/* 썸네일 */}
-                <div className="w-14 h-14 rounded-xl overflow-hidden bg-brand-bg flex-shrink-0">
-                  {p.thumbnail_url ? (
-                    <img src={p.thumbnail_url} alt={p.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-2xl opacity-30">🛍️</div>
-                  )}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium text-brand-ink text-sm">{p.name}</p>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-brand-bg text-brand-grey border border-brand-mist/40">
-                      {p.category}
-                    </span>
-                    {!p.is_active && (
-                      <span className="text-xs px-1.5 py-0.5 rounded bg-red-50 text-red-500">비활성</span>
-                    )}
-                  </div>
-                  <p className="text-xs text-brand-grey mt-0.5">
-                    소비자가 {formatPrice(p.retail_price)} · 강사가 {formatPrice(p.wholesale_price)} · 재고 {p.stock_qty}개
-                  </p>
-                </div>
-
-                <Link
-                  href={`/admin/products/${p.id}/edit`}
-                  className="text-xs font-medium text-brand-deep hover:underline flex-shrink-0 px-3 py-1.5 rounded-lg border border-brand-deep/20 hover:bg-brand-deep/5 transition-colors"
-                >
-                  수정
-                </Link>
-              </div>
-            ))}
-          </div>
+          <AdminProductList initialProducts={filtered} />
         )}
       </div>
     </div>

@@ -27,6 +27,7 @@ interface ClassRequest {
   price_per_person: number | null
   schedule_date: string | null
   created_at: string
+  reference_images: string[]
   requester: { name: string } | null
 }
 
@@ -53,11 +54,11 @@ export default function StudioClassRequestsPage() {
 
       const [{ data: openReqs }, { data: mineReqs }] = await Promise.all([
         supabase.from('class_open_requests')
-          .select('id, title, preferred_region, preferred_date, message, status, target_capacity, current_count, price_per_person, schedule_date, created_at, requester:users!requester_id(name)')
+          .select('id, title, preferred_region, preferred_date, message, status, target_capacity, current_count, price_per_person, schedule_date, created_at, reference_images, requester:users!requester_id(name)')
           .eq('status', 'open')
           .order('created_at', { ascending: false }),
         supabase.from('class_open_requests')
-          .select('id, title, preferred_region, preferred_date, message, status, target_capacity, current_count, price_per_person, schedule_date, created_at, requester:users!requester_id(name)')
+          .select('id, title, preferred_region, preferred_date, message, status, target_capacity, current_count, price_per_person, schedule_date, created_at, reference_images, requester:users!requester_id(name)')
           .eq('instructor_id', user.id)
           .order('created_at', { ascending: false }),
       ])
@@ -170,6 +171,18 @@ export default function StudioClassRequestsPage() {
                     <div className="px-5 pb-5 border-t border-brand-mist/20">
                       {r.message && (
                         <p className="mt-4 text-sm text-brand-grey bg-brand-bg rounded-lg px-3 py-2 mb-4">{r.message}</p>
+                      )}
+                      {r.reference_images?.length > 0 && (
+                        <div className="mt-3 mb-4">
+                          <p className="text-xs text-brand-grey mb-2">참고 사진</p>
+                          <div className="flex gap-2 flex-wrap">
+                            {r.reference_images.map((url: string, i: number) => (
+                              <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                                <img src={url} alt={`참고 ${i + 1}`} className="w-20 h-20 object-cover rounded-lg border border-brand-mist hover:opacity-80 transition-opacity" />
+                              </a>
+                            ))}
+                          </div>
+                        </div>
                       )}
 
                       {tab === 'mine' ? (

@@ -1,20 +1,40 @@
 'use client'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase/client'
+import { X, Plus, ImageIcon } from 'lucide-react'
 
 const THEMES = ['레진아트', '비즈공예', '자수', '석고아트', '캔들', '페인팅', '미정 (상담 후 결정)']
 
 export default function GroupRequestPage() {
   const router = useRouter()
+  const supabase = createClient()
+  const fileRef = useRef<HTMLInputElement>(null)
   const [form, setForm] = useState({
     org_name: '', contact_name: '', contact_email: '', contact_phone: '',
     region: '', lesson_theme: '', preferred_date: '', participant_count: '',
     message: '',
   })
+  const [images, setImages] = useState<string[]>([])
+  const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
 
   function set(k: string, v: string) { setForm(f => ({ ...f, [k]: v })) }
+
+  async function handleImageUpload(file: File) {
+    if (images.length >= 5) { toast.error('참고 사진은 최대 5장까지 업로드할 수 있습니다'); return }
+    setUploading(true)
+    const ext = file.name.split('.').pop()
+    const path = `group-requests/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+    const { error } = await supabase.storage.from('request-images').upload(path, file, { upsert: false })
+    if (error) { toast.error('업로드 실패: ' + error.message); setUploading(false); return }
+    const { data } = supabase.storage.from('request-images').getPublicUrl(path)
+    setImages(prev => [...prev, data.publicUrl])
+    setUploading(false)
+  }
+
+  function removeImage(url: string) { setImages(prev => prev.filter(u => u !== url)) }
 
   async function handleSubmit() {
     if (!form.org_name || !form.contact_name || !form.contact_email || !form.contact_phone || !form.region || !form.participant_count) {
@@ -25,7 +45,7 @@ export default function GroupRequestPage() {
     const res = await fetch('/api/group-requests/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, reference_images: images }),
     })
     setSaving(false)
     if (!res.ok) { const d = await res.json(); toast.error(d.error ?? '오류'); return }
@@ -106,8 +126,45 @@ export default function GroupRequestPage() {
           <div>
             <label className="text-xs text-brand-grey block mb-1">추가 요청사항</label>
             <textarea value={form.message} onChange={e => set('message', e.target.value)}
-              rows={4} placeholder="특별한 요청이나 질문이 있으시면 입력해주세요"
+              rows={3} placeholder="특별한 요청이나 질문이 있으시면 입력해주세요"
               className="w-full px-3 py-2 rounded-lg border border-brand-mist text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber resize-none" />
+          </div>
+
+          {/* 참고 사진 업로드 */}
+          <div className="border-t border-brand-mist/20 pt-4">
+            <label className="text-xs font-semibold text-brand-grey uppercase tracking-wider flex items-center gap-1 mb-3">
+              <ImageIcon size={11} /> 참고 사진 (선택, 최대 5장)
+            </label>
+            <div className="grid grid-cols-5 gap-2">
+              {images.map((url, i) => (
+                <div key={i} className="relative aspect-square rounded-lg overflow-hidden group">
+                  <img src={url} alt={`참고 ${i + 1}`} className="w-full h-full object-cover" />
+                  <button
+                    onClick={() => removeImage(url)}
+                    className="absolute top-1 right-1 w-5 h-5 bg-black/50 hover:bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X size={10} />
+                  </button>
+                </div>
+              ))}
+              {images.length < 5 && (
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading}
+                  className="aspect-square rounded-lg border-2 border-dashed border-brand-mist hover:border-brand-amber flex flex-col items-center justify-center gap-1 text-brand-grey hover:text-brand-amber transition-colors disabled:opacity-50"
+                >
+                  {uploading ? <span className="text-[9px]">업로드 중</span> : <><Plus size={14} /><span className="text-[9px]">추가</span></>}
+                </button>
+              )}
+            </div>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={e => { const f = e.target.files?.[0]; if (f) handleImageUpload(f); e.target.value = '' }}
+            />
+            <p className="text-[11px] text-brand-grey mt-2">원하는 수업 스타일, 공간 사진 등 참고 이미지를 첨부해주시면 적합한 강사 배정에 도움이 됩니다</p>
           </div>
         </div>
 
@@ -123,7 +180,7 @@ export default function GroupRequestPage() {
 
         <div className="flex gap-3 mt-6">
           <button onClick={() => router.back()} className="flex-1 py-3 rounded-xl border border-brand-mist text-brand-grey text-sm">취소</button>
-          <button onClick={handleSubmit} disabled={saving}
+          <button onClick={handleSubmit} disabled={saving || uploading}
             className="flex-1 py-3 rounded-xl bg-brand-amber text-brand-ink text-sm font-medium hover:bg-brand-amber/90 disabled:opacity-50 transition-colors">
             {saving ? '신청 중...' : '출강 신청하기'}
           </button>

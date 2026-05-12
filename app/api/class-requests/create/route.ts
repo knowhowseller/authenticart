@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
 
-  const { title, preferred_region, preferred_date, message } = await req.json()
+  const { title, preferred_region, preferred_date, message, reference_images } = await req.json()
   if (!title || !preferred_region) {
     return NextResponse.json({ error: 'title, preferred_region required' }, { status: 400 })
   }
@@ -16,6 +16,7 @@ export async function POST(req: NextRequest) {
     requester_id: user.id, title, preferred_region,
     preferred_date: preferred_date ?? null,
     message: message ?? null,
+    reference_images: reference_images ?? [],
   } as any).select('id').single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

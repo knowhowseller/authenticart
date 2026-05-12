@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 
+async function checkArtworkAuth(userId: string, artworkId: string, admin: Awaited<ReturnType<typeof createAdminClient>>) {
+  const { data: existing } = await admin.from('artworks').select('seller_id').eq('id', artworkId).single()
+  if (!existing) return { existing: null, allowed: false }
+  const { data: u } = await admin.from('users').select('role').eq('id', userId).single()
+  const allowed = existing.seller_id === userId || u?.role === 'admin'
+  return { existing, allowed }
+}
+
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
@@ -9,10 +17,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const body = await req.json()
   const admin = await createAdminClient()
-
-  const { data: existing } = await admin.from('artworks').select('seller_id').eq('id', id).single()
+  const { existing, allowed } = await checkArtworkAuth(user.id, id, admin)
   if (!existing) return NextResponse.json({ error: '없음' }, { status: 404 })
-  if (existing.seller_id !== user.id) return NextResponse.json({ error: '권한 없음' }, { status: 403 })
+  if (!allowed) return NextResponse.json({ error: '권한 없음' }, { status: 403 })
 
   const { error } = await admin.from('artworks').update({ ...body, updated_at: new Date().toISOString() }).eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -26,9 +33,9 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
   if (!user) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
 
   const admin = await createAdminClient()
-  const { data: existing } = await admin.from('artworks').select('seller_id').eq('id', id).single()
+  const { existing, allowed } = await checkArtworkAuth(user.id, id, admin)
   if (!existing) return NextResponse.json({ error: '없음' }, { status: 404 })
-  if (existing.seller_id !== user.id) return NextResponse.json({ error: '권한 없음' }, { status: 403 })
+  if (!allowed) return NextResponse.json({ error: '권한 없음' }, { status: 403 })
 
   const { error } = await admin.from('artworks').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

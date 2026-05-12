@@ -17,6 +17,7 @@ interface Request {
   region: string; lesson_theme: string | null; preferred_date: string | null
   participant_count: number; message: string | null; status: string
   assigned_instructor_id: string | null; admin_memo: string | null; created_at: string
+  reference_images: string[]
   users: { name: string } | null
 }
 
@@ -90,6 +91,18 @@ export default function GroupRequestManager({ initialRequests, instructors }: { 
                   <div><span className="text-brand-grey text-xs">희망 일정</span><p className="font-medium">{r.preferred_date ?? '-'}</p></div>
                 </div>
                 {r.message && <p className="text-sm text-brand-grey bg-brand-bg rounded-lg px-3 py-2 mb-4">{r.message}</p>}
+                {r.reference_images?.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-xs text-brand-grey mb-2">참고 사진</p>
+                    <div className="flex gap-2 flex-wrap">
+                      {r.reference_images.map((url, i) => (
+                        <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                          <img src={url} alt={`참고 ${i + 1}`} className="w-20 h-20 object-cover rounded-lg border border-brand-mist hover:opacity-80 transition-opacity" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-3 bg-brand-bg rounded-xl p-4">
                   <p className="text-xs font-semibold text-brand-grey uppercase tracking-wider">관리자 처리</p>

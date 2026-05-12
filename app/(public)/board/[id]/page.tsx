@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Lock, ChevronLeft } from 'lucide-react'
 import BoardReplyBox from './BoardReplyBox'
+import BoardAdminActions from './BoardAdminActions'
 
 async function getPost(id: string) {
   const supabase = await createClient()
@@ -47,9 +48,12 @@ export default async function BoardPostPage({ params }: { params: Promise<{ id: 
   return (
     <div className="min-h-screen bg-brand-bg">
       <div className="max-w-3xl mx-auto px-4 py-10">
-        <Link href="/board" className="flex items-center gap-1 text-sm text-brand-grey hover:text-brand-deep mb-6">
-          <ChevronLeft size={16} /> 게시판으로
-        </Link>
+        <div className="flex items-center justify-between mb-6">
+          <Link href="/board" className="flex items-center gap-1 text-sm text-brand-grey hover:text-brand-deep">
+            <ChevronLeft size={16} /> 게시판으로
+          </Link>
+          {isAdmin && <BoardAdminActions postId={id} />}
+        </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-brand-mist/30 overflow-hidden mb-4">
           {/* 헤더 */}

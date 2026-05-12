@@ -150,6 +150,7 @@ export default async function AdminPage() {
     { href: '/admin/notices', label: '공지사항 관리', icon: '📢', desc: '공지사항 작성 및 공개 설정' },
     { href: '/admin/stats', label: '통계 차트', icon: '📊', desc: '월별 매출·예약 건수 차트' },
     { href: '/admin/group-requests', label: '단체 출강 관리', icon: '🏫', desc: '단체 출강 요청 강사 배정' },
+    { href: '/admin/artworks', label: '작품 마켓 관리', icon: '🎨', desc: '수강생 작품 수정·삭제·상태 관리' },
   ]
 
   return (
