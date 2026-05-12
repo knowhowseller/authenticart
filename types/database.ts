@@ -1,4 +1,4 @@
-export type UserRole = 'student' | 'instructor' | 'admin' | 'branch_manager'
+export type UserRole = 'member' | 'student' | 'instructor' | 'admin' | 'branch_manager'
 export type BookingStatus =
   | 'pending_payment' | 'pending_approval' | 'approved' | 'paid' | 'rejected'
   | 'cancelled' | 'completed' | 'expired' | 'refunded'

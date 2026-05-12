@@ -5,10 +5,11 @@ import { updateUserRole, deleteUser } from '@/app/actions/admin-users'
 import type { UserRole } from '@/types/database'
 
 const ROLES: { value: UserRole; label: string; color: string }[] = [
-  { value: 'student',        label: '수강생',  color: 'bg-gray-100 text-gray-700' },
-  { value: 'instructor',     label: '강사',    color: 'bg-brand-sage/20 text-brand-deep' },
-  { value: 'branch_manager', label: '지부장',  color: 'bg-brand-amber/20 text-brand-ink' },
-  { value: 'admin',          label: '관리자',  color: 'bg-red-50 text-red-600' },
+  { value: 'member',         label: '일반회원', color: 'bg-blue-50 text-blue-600' },
+  { value: 'student',        label: '수강생',   color: 'bg-gray-100 text-gray-700' },
+  { value: 'instructor',     label: '강사',     color: 'bg-brand-sage/20 text-brand-deep' },
+  { value: 'branch_manager', label: '지부장',   color: 'bg-brand-amber/20 text-brand-ink' },
+  { value: 'admin',          label: '관리자',   color: 'bg-red-50 text-red-600' },
 ]
 
 export default function UserRoleEditor({

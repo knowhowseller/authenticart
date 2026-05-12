@@ -53,6 +53,17 @@ export async function GET(request: Request) {
     // 좌석 감소
     await supabase.rpc('decrement_seat', { p_booking_id: orderId })
 
+    // 일반회원(member)이 클래스 결제 완료 시 수강생(student)으로 승격
+    const { data: paidBooking } = await supabase
+      .from('bookings').select('student_id').eq('id', orderId).single()
+    if (paidBooking?.student_id) {
+      const { data: paidUser } = await supabase
+        .from('users').select('role').eq('id', paidBooking.student_id).single()
+      if (paidUser?.role === 'member') {
+        await supabase.from('users').update({ role: 'student' }).eq('id', paidBooking.student_id)
+      }
+    }
+
     // 예약 확정 이메일
     const { data: booking } = await supabase
       .from('bookings')

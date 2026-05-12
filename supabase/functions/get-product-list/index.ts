@@ -29,11 +29,11 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    let role = 'student'
+    let role = 'member'
     if (user) {
       const { data: userData } = await admin
         .from('users').select('role').eq('id', user.id).single()
-      role = userData?.role ?? 'student'
+      role = userData?.role ?? 'member'
     }
 
     let query = admin

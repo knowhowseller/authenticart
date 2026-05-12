@@ -26,7 +26,7 @@ export async function POST(request: Request) {
 
   // 역할 조회도 일반 클라이언트로
   const { data: userData } = await supabase.from('users').select('role').eq('id', user.id).single()
-  const role = userData?.role ?? 'student'
+  const role = userData?.role ?? 'member'
 
   if (product.is_instructor_only && !['instructor', 'admin'].includes(role)) {
     return NextResponse.json({ error: '강사 인증 후 구매 가능합니다' }, { status: 403 })

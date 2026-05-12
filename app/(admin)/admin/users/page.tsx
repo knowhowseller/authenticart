@@ -5,6 +5,7 @@ import UserRoleEditor from './UserRoleEditor'
 import type { UserRole } from '@/types/database'
 
 const ROLE_LABEL: Record<UserRole, string> = {
+  member:         '일반회원',
   student:        '수강생',
   instructor:     '강사',
   branch_manager: '지부장',
@@ -62,6 +63,7 @@ export default async function AdminUsersPage({
             className="text-sm px-3 py-2 rounded-xl border border-brand-mist bg-white focus:outline-none focus:ring-2 focus:ring-brand-amber"
           >
             <option value="">전체 역할</option>
+            <option value="member">일반회원</option>
             <option value="student">수강생</option>
             <option value="instructor">강사</option>
             <option value="branch_manager">지부장</option>

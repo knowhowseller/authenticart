@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
 
   const admin = await createAdminClient()
   const { data: userData } = await supabase.from('users').select('role').eq('id', user.id).single()
-  const role = userData?.role ?? 'student'
+  const role = userData?.role ?? 'member'
 
   const shippingAddress = shipping_info?.address
     ? `[${shipping_info.postcode}] ${shipping_info.address}${shipping_info.memo ? ` (${shipping_info.memo})` : ''}`

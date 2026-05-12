@@ -18,8 +18,10 @@ type FormData = z.infer<typeof schema>
 const regions = ['서울', '인천', '경기', '부산', '대구', '광주', '대전', '울산', '강릉', '제주', '기타']
 
 const roleLabel: Record<string, string> = {
+  member: '일반회원',
   student: '수강생',
   instructor: '강사',
+  branch_manager: '지부장',
   admin: '관리자',
 }
 
@@ -72,7 +74,7 @@ export default function ProfileEditForm({
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold text-brand-grey uppercase tracking-wider">계정 정보</h2>
           <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-brand-deep/10 text-brand-deep">
-            {roleLabel[user?.role ?? 'student'] ?? user?.role}
+            {roleLabel[user?.role ?? 'member'] ?? user?.role}
           </span>
         </div>
         <p className="text-sm text-brand-ink">{user?.email}</p>

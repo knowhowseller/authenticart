@@ -46,14 +46,14 @@ serve(async (req) => {
       })
     }
 
-    let role = 'student'
+    let role = 'member'
     if (user) {
       const { data: userData } = await admin
         .from('users')
         .select('role')
         .eq('id', user.id)
         .single()
-      role = userData?.role ?? 'student'
+      role = userData?.role ?? 'member'
     }
 
     const price = ['instructor', 'admin'].includes(role)

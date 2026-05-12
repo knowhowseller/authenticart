@@ -29,7 +29,7 @@ export async function updateSession(request: NextRequest) {
   let role: string | null = null
   if (user) {
     const { data } = await supabase.from('users').select('role').eq('id', user.id).single()
-    role = data?.role ?? 'student'
+    role = data?.role ?? 'member'
   }
 
   const { pathname } = request.nextUrl
