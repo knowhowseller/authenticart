@@ -3,11 +3,11 @@
   "crons": [
     {
       "path": "/api/cron/expire-bookings",
-      "schedule": "*/30 * * * *"
+      "schedule": "0 0 * * *"
     },
     {
       "path": "/api/cron/escrow-auto-confirm",
-      "schedule": "0 * * * *"
+      "schedule": "0 1 * * *"
     },
     {
       "path": "/api/cron/monthly-payout",
