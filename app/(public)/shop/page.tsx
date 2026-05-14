@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import ProductCard from '@/components/shop/ProductCard'
 import ShopFilterBar from '@/components/shop/ShopFilterBar'
 import Hexagon from '@/components/brand/Hexagon'
+import Link from 'next/link'
+import { Store } from 'lucide-react'
 
 interface SearchParams {
   category?: string
@@ -78,6 +80,22 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
               </div>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* 입점 스토어 배너 */}
+      <div className="bg-brand-sage/5 border-b border-brand-sage/20">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm text-brand-sage">
+            <Store size={15} />
+            <span>입점 스토어에서 더 다양한 브랜드 재료를 만나보세요</span>
+          </div>
+          <Link
+            href="/shop/stores"
+            className="text-xs font-medium text-brand-sage hover:text-brand-deep transition-colors flex items-center gap-0.5"
+          >
+            스토어 보기 →
+          </Link>
         </div>
       </div>
 
