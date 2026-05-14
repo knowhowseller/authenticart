@@ -5,6 +5,8 @@ import { formatPrice, formatDateTime } from '@/lib/utils/format'
 import Hexagon from '@/components/brand/Hexagon'
 import { Package, TrendingUp, Clock, CheckCircle2 } from 'lucide-react'
 import VendorAccountForm from './VendorAccountForm'
+import VendorProfileForm from './VendorProfileForm'
+import VendorBulkUpload from './VendorBulkUpload'
 
 export const metadata = { title: '벤더 대시보드 | 오센틱아트' }
 
@@ -157,6 +159,24 @@ export default async function VendorDashboardPage() {
               </div>
             )}
           </div>
+        )}
+
+        {/* 스토어 프로필 */}
+        {vendor.status === 'approved' && (
+          <VendorProfileForm
+            vendorId={vendor.id}
+            current={{
+              logo_url: vendor.logo_url ?? null,
+              banner_url: vendor.banner_url ?? null,
+              description: vendor.description ?? null,
+              website_url: vendor.website_url ?? null,
+            }}
+          />
+        )}
+
+        {/* 엑셀 일괄 등록 */}
+        {vendor.status === 'approved' && (
+          <VendorBulkUpload />
         )}
 
         {/* 정산 계좌 */}
