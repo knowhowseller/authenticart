@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { calcFees } from '@/lib/utils/fees'
+import { calcBookingFees, calcBranchShare } from '@/lib/utils/fees'
 import { sendEmail } from '@/lib/email/resend'
 import { bookingConfirmedHtml } from '@/lib/email/templates/booking-confirmed'
 import { orderConfirmedHtml } from '@/lib/email/templates/order-confirmed'
@@ -34,15 +34,50 @@ export async function GET(request: Request) {
 
   const supabase = await createAdminClient()
   const parsedAmount = parseInt(amount)
-  const { pg_fee, platform_fee, instructor_payout } = calcFees(parsedAmount)
 
   if (type === 'booking') {
+    // 강사의 에이전시 및 지부 조회
+    const { data: bookingInfo } = await supabase
+      .from('bookings')
+      .select(`
+        class_schedules!schedule_id(
+          classes!class_id(
+            instructor_id,
+            instructor_profiles!instructor_id(
+              agency_id,
+              branch_id,
+              agencies!agency_id(id, commission_rate),
+              branches!branch_id(id)
+            )
+          )
+        )
+      `)
+      .eq('id', orderId)
+      .single()
+
+    const profile = (bookingInfo as any)
+      ?.class_schedules?.classes?.instructor_profiles
+    const agencyId = profile?.agency_id ?? null
+    const agencyRate = profile?.agencies?.commission_rate ?? 0
+    const branchId = profile?.branch_id ?? null
+
+    const { pg_fee, platform_fee, agency_fee, instructor_payout } =
+      calcBookingFees(parsedAmount, agencyRate)
+    const { branch_share, hq_share } = branchId
+      ? calcBranchShare(platform_fee)
+      : { branch_share: 0, hq_share: platform_fee }
+
     const { error } = await supabase.from('bookings').update({
       status: 'paid',
       payment_id: paymentKey,
       pg_fee,
       platform_fee,
       instructor_payout,
+      agency_id: agencyId,
+      agency_fee,
+      agency_rate: agencyRate,
+      branch_commission: branch_share,
+      hq_revenue: hq_share,
       receipt_url: payment.receipt?.url ?? null,
     }).eq('id', orderId)
 
@@ -101,6 +136,16 @@ export async function GET(request: Request) {
       }
     }
 
+    if ((booking as any)?.student_id) {
+      void supabase.from('notifications').insert({
+        user_id: (booking as any).student_id,
+        type: 'booking',
+        title: '예약이 확정되었습니다',
+        body: `${(booking as any)?.class_schedules?.classes?.title ?? '클래스'} 결제가 완료되었습니다.`,
+        link: '/my/bookings',
+      })
+    }
+
     return NextResponse.redirect(new URL('/my/bookings?success=1', request.url))
   }
 
@@ -118,15 +163,91 @@ export async function GET(request: Request) {
 
     const { data: artworkOrder } = await supabase
       .from('artwork_orders')
-      .select('artwork_id, buyer_id')
+      .select('artwork_id, buyer_id, artworks!artwork_id(title, seller_id)')
       .eq('id', orderId)
       .single()
 
     if (artworkOrder) {
       await supabase.from('artworks').update({ status: 'sold_out' }).eq('id', (artworkOrder as any).artwork_id)
+      const artworkTitle = (artworkOrder as any).artworks?.title ?? '작품'
+      const sellerId = (artworkOrder as any).artworks?.seller_id
+      // 구매자 알림
+      void supabase.from('notifications').insert({
+        user_id: (artworkOrder as any).buyer_id,
+        type: 'payment',
+        title: '작품 결제가 완료되었습니다',
+        body: `"${artworkTitle}" 주문이 접수되었습니다.`,
+        link: '/my/artwork-orders',
+      })
+      // 판매자 알림
+      if (sellerId) {
+        void supabase.from('notifications').insert({
+          user_id: sellerId,
+          type: 'order',
+          title: '작품이 판매되었습니다',
+          body: `"${artworkTitle}" 주문이 들어왔습니다.`,
+          link: '/my/artworks',
+        })
+      }
     }
 
-    return NextResponse.redirect(new URL('/my/orders?success=1&type=artwork', request.url))
+    return NextResponse.redirect(new URL('/my/artwork-orders?success=1', request.url))
+  }
+
+  // type === 'class_request'
+  if (type === 'class_request') {
+    const requestId = url.searchParams.get('requestId')
+    const userId    = url.searchParams.get('userId')
+    if (!requestId || !userId) {
+      return NextResponse.redirect(new URL('/payment/fail?reason=invalid_params', request.url))
+    }
+
+    // 참여자 상태를 paid로 업데이트
+    await supabase
+      .from('class_open_request_participants')
+      .update({ status: 'paid' })
+      .eq('request_id', requestId)
+      .eq('user_id', userId)
+      .eq('status', 'payment_requested')
+
+    // 전원 결제 완료 여부 확인
+    const { data: reqData } = await supabase
+      .from('class_open_requests')
+      .select('id, title, target_capacity, requester_id')
+      .eq('id', requestId)
+      .single()
+
+    const { count: paidCount } = await supabase
+      .from('class_open_request_participants')
+      .select('id', { count: 'exact', head: true })
+      .eq('request_id', requestId)
+      .eq('status', 'paid')
+
+    if (reqData && paidCount !== null && paidCount >= (reqData.target_capacity ?? 1)) {
+      await supabase
+        .from('class_open_requests')
+        .update({ status: 'confirmed' })
+        .eq('id', requestId)
+      // 요청자에게 확정 알림
+      void supabase.from('notifications').insert({
+        user_id: reqData.requester_id,
+        type: 'booking',
+        title: '클래스 요청이 확정되었습니다',
+        body: `"${reqData.title}" 모든 참가자가 결제 완료했습니다.`,
+        link: '/my/class-requests',
+      })
+    }
+
+    // 본인 알림
+    void supabase.from('notifications').insert({
+      user_id: userId,
+      type: 'payment',
+      title: '클래스 요청 결제 완료',
+      body: `"${reqData?.title ?? '클래스 요청'}" 결제가 완료되었습니다.`,
+      link: '/my/class-requests',
+    })
+
+    return NextResponse.redirect(new URL('/my/class-requests?success=1', request.url))
   }
 
   // type === 'cart' — multiple orders paid together
@@ -139,6 +260,24 @@ export async function GET(request: Request) {
         payment_id: paymentKey,
         receipt_url: payment.receipt?.url ?? null,
       }).in('id', ids)
+
+      const { data: paidOrders } = await supabase
+        .from('orders')
+        .select('product_id, quantity, buyer_id')
+        .in('id', ids)
+      for (const o of paidOrders ?? []) {
+        await supabase.rpc('decrement_stock', { p_product_id: o.product_id, p_qty: o.quantity })
+      }
+      const buyerId = (paidOrders ?? [])[0]?.buyer_id
+      if (buyerId) {
+        void supabase.from('notifications').insert({
+          user_id: buyerId,
+          type: 'order',
+          title: '주문이 완료되었습니다',
+          body: `${ids.length}개 상품 주문이 접수되었습니다.`,
+          link: '/my/orders',
+        })
+      }
     }
     return NextResponse.redirect(new URL('/my/orders?success=1', request.url))
   }
@@ -152,13 +291,22 @@ export async function GET(request: Request) {
 
   const { data: order } = await supabase
     .from('orders')
-    .select('buyer_id, quantity, total_amount, shipping_name, shipping_address, products!product_id(name)')
+    .select('buyer_id, quantity, total_amount, shipping_name, shipping_address, products!product_id(name), product_id')
     .eq('id', orderId)
     .single()
 
   if (order) {
+    await supabase.rpc('decrement_stock', { p_product_id: (order as any).product_id, p_qty: (order as any).quantity })
     const { data: buyer } = await supabase
       .from('users').select('name, email').eq('id', (order as any).buyer_id).single()
+    // 인앱 알림
+    void supabase.from('notifications').insert({
+      user_id: (order as any).buyer_id,
+      type: 'order',
+      title: '주문이 완료되었습니다',
+      body: `"${(order as any).products?.name ?? '상품'}" 주문이 접수되었습니다.`,
+      link: '/my/orders',
+    })
     if (buyer?.email) {
       await sendEmail({
         to: buyer.email,

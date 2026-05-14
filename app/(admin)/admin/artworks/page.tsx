@@ -12,7 +12,7 @@ export default async function AdminArtworksPage() {
 
   const { data: artworks } = await supabase
     .from('artworks')
-    .select('id, title, price, images, category, status, created_at, seller_id, users!seller_id(name)')
+    .select('id, title, price, images, category, status, is_gallery, created_at, seller_id, users!seller_id(name)')
     .order('created_at', { ascending: false })
 
   return (

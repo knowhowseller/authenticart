@@ -45,6 +45,11 @@ export async function PATCH(
 
   const updateData: Record<string, unknown> = { status: newStatus }
   if (tracking_number?.trim()) updateData.tracking_number = tracking_number.trim()
+  if (newStatus === 'delivered') {
+    const now = new Date()
+    updateData.delivered_at = now.toISOString()
+    updateData.auto_confirm_at = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString()
+  }
 
   const { error } = await admin.from('orders').update(updateData).eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

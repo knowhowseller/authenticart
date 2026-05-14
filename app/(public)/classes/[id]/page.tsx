@@ -34,12 +34,20 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 async function getClass(id: string) {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data: cls } = await supabase
     .from('classes')
-    .select(`*, users!instructor_id(id, name, region), instructor_profiles!instructor_id(bio, profile_image, status)`)
+    .select(`*, users!instructor_id(id, name, region)`)
     .eq('id', id)
     .single()
-  return data
+  if (!cls) return null
+
+  const { data: profile } = await supabase
+    .from('instructor_profiles')
+    .select('bio, profile_image, status')
+    .eq('instructor_id', (cls as any).instructor_id)
+    .maybeSingle()
+
+  return { ...cls, instructor_profiles: profile ?? null }
 }
 
 async function getSchedules(classId: string) {
@@ -126,17 +134,17 @@ async function getMyWaitlists(classId: string, userId: string) {
     .in('schedule_id', scheduleIds)
     .in('status', ['waiting', 'notified'])
   if (!waitlists || waitlists.length === 0) return []
-  const result = await Promise.all(
-    waitlists.map(async (w) => {
-      const { count } = await supabase
-        .from('class_waitlists')
-        .select('id', { count: 'exact', head: true })
-        .eq('schedule_id', w.schedule_id)
-        .eq('status', 'waiting')
-      return { scheduleId: w.schedule_id, position: count }
-    })
-  )
-  return result
+  const myScheduleIds = waitlists.map(w => w.schedule_id)
+  const { data: allWaiting } = await supabase
+    .from('class_waitlists')
+    .select('schedule_id')
+    .in('schedule_id', myScheduleIds)
+    .eq('status', 'waiting')
+  const countMap: Record<string, number> = {}
+  for (const row of allWaiting ?? []) {
+    countMap[row.schedule_id] = (countMap[row.schedule_id] ?? 0) + 1
+  }
+  return waitlists.map(w => ({ scheduleId: w.schedule_id, position: countMap[w.schedule_id] ?? 0 }))
 }
 
 export default async function ClassDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -246,7 +254,12 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
                   )}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-brand-ink">{instructor?.name}</p>
+                  <a
+                    href={`/instructors/${cls.instructor_id}`}
+                    className="text-sm font-medium text-brand-ink hover:text-brand-deep transition-colors"
+                  >
+                    {instructor?.name}
+                  </a>
                   <p className="text-xs text-brand-grey">{instructor?.region} · 인증 강사</p>
                 </div>
               </div>

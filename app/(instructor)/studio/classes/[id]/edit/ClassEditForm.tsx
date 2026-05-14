@@ -1,5 +1,5 @@
 'use client'
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -19,12 +19,15 @@ const schema = z.object({
   price: z.number().min(1000),
   capacity: z.number().min(1).max(50),
   confirmation_mode: z.enum(['instant', 'request']),
+  category_id: z.string().optional(),
   difficulty: z.enum(['beginner', 'intermediate', 'advanced']).optional(),
   duration_active: z.number().optional(),
   duration_curing: z.number().optional(),
   pickup_method: z.enum(['shipping', 'pickup', 'both']).optional(),
 })
 type FormData = z.infer<typeof schema>
+
+interface CraftCategory { id: string; code: string; name: string; parent_id: string | null }
 
 const regions = ['서울', '인천', '경기', '부산', '대구', '광주', '대전', '울산', '강릉', '제주', '기타']
 
@@ -36,8 +39,30 @@ export default function ClassEditForm({ cls }: { cls: any }) {
   const [images, setImages] = useState<string[]>((cls.images as string[]) ?? (cls.thumbnail_url ? [cls.thumbnail_url] : []))
   const [thumbnailIdx, setThumbnailIdx] = useState(0)
   const [uploading, setUploading] = useState(false)
+  const [craftCategories, setCraftCategories] = useState<CraftCategory[]>([])
+  const [selectedParent, setSelectedParent] = useState<string>(() => {
+    if (!cls.category_id) return ''
+    return cls.category_id
+  })
 
-  const { register, handleSubmit, formState: { errors }, watch } = useForm<FormData>({
+  useEffect(() => {
+    supabase
+      .from('craft_categories')
+      .select('id, code, name, parent_id')
+      .eq('is_active', true)
+      .order('sort_order')
+      .then(({ data }) => {
+        const cats = data ?? []
+        setCraftCategories(cats)
+        if (cls.category_id) {
+          const cat = cats.find((c: CraftCategory) => c.id === cls.category_id)
+          if (cat?.parent_id) setSelectedParent(cat.parent_id)
+          else if (cat) setSelectedParent(cat.id)
+        }
+      })
+  }, [])
+
+  const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       title: cls.title,
@@ -47,6 +72,7 @@ export default function ClassEditForm({ cls }: { cls: any }) {
       price: cls.price,
       capacity: cls.capacity,
       confirmation_mode: cls.confirmation_mode,
+      category_id: cls.category_id ?? '',
       difficulty: cls.attributes?.difficulty,
       duration_active: cls.attributes?.duration_active,
       duration_curing: cls.attributes?.duration_curing,
@@ -76,6 +102,7 @@ export default function ClassEditForm({ cls }: { cls: any }) {
 
   async function onSubmit(data: FormData) {
     setLoading(true)
+    const selectedCat = craftCategories.find(c => c.id === data.category_id)
     const result = await updateClass(cls.id, {
       title: data.title,
       description: data.description,
@@ -86,7 +113,9 @@ export default function ClassEditForm({ cls }: { cls: any }) {
       confirmation_mode: data.confirmation_mode,
       thumbnail_url: images[thumbnailIdx] ?? null,
       images: images,
+      category_id: data.category_id || null,
       attributes: {
+        craft_type: selectedCat?.code ?? cls.attributes?.craft_type,
         difficulty: data.difficulty,
         duration_active: data.duration_active,
         duration_curing: data.duration_curing,
@@ -188,6 +217,34 @@ export default function ClassEditForm({ cls }: { cls: any }) {
           </div>
         </div>
       </div>
+
+      {craftCategories.length > 0 && (
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-brand-mist/30 space-y-4">
+          <h2 className="text-sm font-semibold text-brand-grey uppercase tracking-wider">장르</h2>
+          <div className="grid grid-cols-2 gap-2">
+            <select
+              value={selectedParent}
+              onChange={e => { setSelectedParent(e.target.value); setValue('category_id', '', { shouldValidate: false }) }}
+              className="w-full px-3.5 py-2.5 rounded-lg border border-brand-mist text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber"
+            >
+              <option value="">대장르 선택</option>
+              {craftCategories.filter(c => !c.parent_id).map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+            <select
+              {...register('category_id')}
+              disabled={!selectedParent}
+              className="w-full px-3.5 py-2.5 rounded-lg border border-brand-mist text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber disabled:opacity-50"
+            >
+              <option value="">소장르 선택</option>
+              {craftCategories.filter(c => c.parent_id === selectedParent).map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-brand-mist/30 space-y-4">
         <h2 className="text-sm font-semibold text-brand-grey uppercase tracking-wider">예약 방식</h2>

@@ -9,7 +9,7 @@ import Hexagon from '@/components/brand/Hexagon'
 import ClassCard from '@/components/class/ClassCard'
 import Button from '@/components/ui/Button'
 import FloatingCTA from '@/components/home/FloatingCTA'
-import { MapPin, Star, CheckCircle2, TrendingUp, Award, ShoppingBag } from 'lucide-react'
+import { MapPin, Star, CheckCircle2, TrendingUp, Award, ShoppingBag, Search } from 'lucide-react'
 import type { ClassAttributes, ConfirmationMode } from '@/types/database'
 
 async function getFeaturedClasses() {
@@ -34,6 +34,18 @@ async function getFeaturedInstructors() {
     .select('instructor_id, bio, profile_image, users!instructor_id(name, region)')
     .eq('status', 'approved')
     .limit(3)
+  return data ?? []
+}
+
+async function getGalleryArtworks() {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('artworks')
+    .select('id, title, images, category, seller_id, users!seller_id(name)')
+    .eq('is_gallery', true)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(6)
   return data ?? []
 }
 
@@ -92,11 +104,35 @@ const ugcItems = [
   { emoji: '🎨', label: '아크릴 소품', color: 'from-green-100 to-emerald-100' },
 ]
 
+const GENRE_ICONS: Record<string, string> = {
+  resin:    '🫧',
+  candle:   '🕯️',
+  flower:   '🌸',
+  ceramic:  '🏺',
+  jewelry:  '💎',
+  textile:  '🧵',
+  painting: '🎨',
+  craft:    '🪵',
+}
+
+async function getGenreCategories() {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('craft_categories')
+    .select('id, code, name')
+    .is('parent_id', null)
+    .eq('is_active', true)
+    .order('sort_order')
+  return data ?? []
+}
+
 export default async function HomePage() {
-  const [classes, instructors, stats] = await Promise.all([
+  const [classes, instructors, stats, galleryArtworks, genreCategories] = await Promise.all([
     getFeaturedClasses(),
     getFeaturedInstructors(),
     getStats(),
+    getGalleryArtworks(),
+    getGenreCategories(),
   ])
 
   return (
@@ -139,6 +175,24 @@ export default async function HomePage() {
                 </Button>
               </Link>
             </div>
+            {/* 빠른 검색 */}
+            <form action="/classes" method="GET" className="mt-8 w-full max-w-md">
+              <div className="flex items-center bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-4 py-3 gap-3 hover:bg-white/15 focus-within:bg-white/20 focus-within:border-white/40 transition-all">
+                <Search size={16} className="text-brand-mist/60 flex-shrink-0" />
+                <input
+                  name="q"
+                  type="text"
+                  placeholder="레진아트, 캔들, 플라워... 클래스 검색"
+                  className="flex-1 bg-transparent text-white placeholder:text-brand-mist/50 text-sm focus:outline-none"
+                />
+                <button
+                  type="submit"
+                  className="text-brand-amber text-sm font-semibold hover:text-brand-amber/80 transition-colors flex-shrink-0"
+                >
+                  검색
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </MarbleBackground>
@@ -152,7 +206,7 @@ export default async function HomePage() {
             {[
               { num: stats.instructorCount > 0 ? `${stats.instructorCount}명` : '함께 시작 중', label: '인증 강사', icon: <Award size={20} className="text-brand-amber mx-auto mb-1" /> },
               { num: stats.classCount > 0 ? `${stats.classCount}개` : '오픈 준비 중', label: '개설 클래스', icon: <CheckCircle2 size={20} className="text-brand-sage mx-auto mb-1" /> },
-              { num: '6개 지역', label: '운영 지역', icon: <MapPin size={20} className="text-brand-deep mx-auto mb-1" /> },
+              { num: '8개 장르', label: '공예·예술 장르', icon: <MapPin size={20} className="text-brand-deep mx-auto mb-1" /> },
               { num: '40% 절감', label: '도매가 재료비', icon: <TrendingUp size={20} className="text-brand-amber mx-auto mb-1" /> },
             ].map(({ num, label, icon }) => (
               <div key={label} className="py-4">
@@ -225,6 +279,36 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ─── 4-B. 장르 탐색 ─── */}
+      {genreCategories.length > 0 && (
+        <section className="py-14 bg-brand-bg">
+          <div className="max-w-6xl mx-auto px-4">
+            <div className="text-center mb-8">
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <Hexagon color="amber" size={13} />
+                <span className="text-xs font-medium text-brand-amber uppercase tracking-wider">Explore by Genre</span>
+              </div>
+              <h2 className="text-2xl font-bold text-brand-ink">장르별 클래스 찾기</h2>
+              <p className="text-brand-grey text-sm mt-1">내가 배우고 싶은 장르를 선택해보세요</p>
+            </div>
+            <div className="grid grid-cols-4 md:grid-cols-8 gap-3">
+              {(genreCategories as any[]).map((cat) => (
+                <Link
+                  key={cat.code}
+                  href={`/classes?category=${cat.code}`}
+                  className="flex flex-col items-center gap-2 py-4 px-2 rounded-2xl bg-white border border-brand-mist/30 hover:border-brand-amber hover:shadow-md transition-all group"
+                >
+                  <span className="text-3xl">{GENRE_ICONS[cat.code] ?? '✦'}</span>
+                  <span className="text-xs font-medium text-brand-grey group-hover:text-brand-deep transition-colors text-center leading-tight">
+                    {cat.name}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ─── 5. 클래스 (잔여 좌석 + 긴급성) ─── */}
       <section className="py-16 md:py-24 bg-white">
@@ -414,20 +498,48 @@ export default async function HomePage() {
             <h2 className="text-3xl font-bold text-brand-ink">"나도 이걸 만들 수 있어요"</h2>
             <p className="text-brand-grey mt-2">수강생들이 직접 만든 작품들</p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-            {ugcItems.map(({ emoji, label, color }) => (
-              <div
-                key={label}
-                className={`aspect-square rounded-2xl bg-gradient-to-br ${color} flex flex-col items-center justify-center gap-2 border border-brand-mist/20 hover:scale-[1.02] transition-transform cursor-pointer`}
-              >
-                <span className="text-5xl">{emoji}</span>
-                <span className="text-sm font-medium text-brand-grey">{label}</span>
-              </div>
-            ))}
-          </div>
+
+          {galleryArtworks.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+              {(galleryArtworks as any[]).map((artwork) => (
+                <Link
+                  key={artwork.id}
+                  href={`/artworks/${artwork.id}`}
+                  className="group aspect-square rounded-2xl overflow-hidden relative border border-brand-mist/20 hover:scale-[1.02] transition-transform bg-brand-mist/20"
+                >
+                  {artwork.images?.[0] ? (
+                    <img
+                      src={artwork.images[0]}
+                      alt={artwork.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-5xl">🎨</div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
+                    <p className="text-white text-sm font-medium line-clamp-1">{artwork.title}</p>
+                    <p className="text-white/70 text-xs mt-0.5">{(artwork.users as any)?.name}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+              {ugcItems.map(({ emoji, label, color }) => (
+                <div
+                  key={label}
+                  className={`aspect-square rounded-2xl bg-gradient-to-br ${color} flex flex-col items-center justify-center gap-2 border border-brand-mist/20`}
+                >
+                  <span className="text-5xl">{emoji}</span>
+                  <span className="text-sm font-medium text-brand-grey">{label}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="text-center">
-            <Link href="/classes">
-              <Button variant="primary" size="lg">클래스 체험하기 →</Button>
+            <Link href="/artworks">
+              <Button variant="primary" size="lg">작품 마켓 둘러보기 →</Button>
             </Link>
           </div>
         </div>

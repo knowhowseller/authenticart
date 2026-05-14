@@ -16,6 +16,7 @@ interface UserState {
 }
 
 const navLinks = [
+  { href: '/about', label: '오센틱아트 소개' },
   { href: '/classes', label: '클래스' },
   { href: '/artworks', label: '작품 마켓' },
   { href: '/shop', label: '재료 쇼핑' },
@@ -184,6 +185,9 @@ export default function Header() {
                     <Link href="/my/orders" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-brand-ink hover:bg-brand-bg transition-colors">
                       <ShoppingBag size={14} className="text-brand-grey" /> 주문 내역
                     </Link>
+                    <Link href="/my/artwork-orders" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-brand-ink hover:bg-brand-bg transition-colors">
+                      <span className="text-[14px] leading-none">🎨</span> 작품 구매 내역
+                    </Link>
                     <Link href="/my/class-requests" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-brand-ink hover:bg-brand-bg transition-colors">
                       <span className="text-[14px] leading-none">🙋</span> 클래스 요청
                     </Link>
@@ -293,8 +297,14 @@ export default function Header() {
                 <Link href="/my/orders" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 text-sm py-2 text-brand-ink">
                   <ShoppingBag size={14} className="text-brand-grey" /> 주문 내역
                 </Link>
+                <Link href="/my/artwork-orders" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 text-sm py-2 text-brand-ink">
+                  <span className="text-[14px] leading-none">🎨</span> 작품 구매 내역
+                </Link>
                 <Link href="/my/class-requests" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 text-sm py-2 text-brand-ink">
                   <span className="text-[14px] leading-none">🙋</span> 클래스 요청
+                </Link>
+                <Link href="/my/coupons" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 text-sm py-2 text-brand-ink">
+                  <span className="text-[14px] leading-none">🏷️</span> 내 쿠폰
                 </Link>
                 <div className="flex gap-2 pt-2">
                   <Link href="/my/profile" onClick={() => setMobileOpen(false)} className="flex-1 text-center text-sm py-2 border border-brand-mist text-brand-ink rounded-full">

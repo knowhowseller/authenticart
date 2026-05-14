@@ -20,6 +20,8 @@ interface Order {
   quantity: number
   total_amount: number
   status: string
+  escrow_status: string | null
+  confirmed_at: string | null
   receipt_url: string | null
   tracking_number: string | null
   created_at: string
@@ -30,6 +32,21 @@ export default function MyOrdersClient({ orders: initialOrders }: { orders: Orde
   const router = useRouter()
   const [orders, setOrders] = useState(initialOrders)
   const [cancelling, setCancelling] = useState<string | null>(null)
+  const [confirming, setConfirming] = useState<string | null>(null)
+
+  async function handleConfirm(orderId: string) {
+    if (!window.confirm('구매를 확정하시겠습니까? 확정 후에는 반품/환불이 어려울 수 있습니다.')) return
+    setConfirming(orderId)
+    const res = await fetch(`/api/orders/${orderId}/confirm`, { method: 'POST' })
+    setConfirming(null)
+    if (res.ok) {
+      toast.success('구매가 확정되었습니다')
+      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, escrow_status: 'confirmed' } : o))
+    } else {
+      const d = await res.json()
+      toast.error(d.error ?? '처리 중 오류가 발생했습니다')
+    }
+  }
 
   async function handleCancel(orderId: string) {
     if (!window.confirm('주문을 취소하시겠습니까?')) return
@@ -111,6 +128,18 @@ export default function MyOrdersClient({ orders: initialOrders }: { orders: Orde
                   >
                     {cancelling === order.id ? '처리 중...' : '주문 취소'}
                   </button>
+                )}
+                {['delivered', 'shipped'].includes(order.status) && order.escrow_status !== 'confirmed' && (
+                  <button
+                    onClick={() => handleConfirm(order.id)}
+                    disabled={confirming === order.id}
+                    className="text-green-600 font-medium hover:underline disabled:opacity-50"
+                  >
+                    {confirming === order.id ? '처리 중...' : '구매 확정'}
+                  </button>
+                )}
+                {order.escrow_status === 'confirmed' && (
+                  <span className="text-brand-grey">확정 완료</span>
                 )}
                 <Link href={`/my/orders/${order.id}`} className="text-brand-grey hover:text-brand-ink">
                   상세보기

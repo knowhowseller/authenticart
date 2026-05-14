@@ -18,15 +18,24 @@ interface Manager {
   email: string
 }
 
+interface InstructorProfile {
+  instructor_id: string
+  branch_id: string | null
+  users: { name: string; email: string } | null
+}
+
 export default function BranchManager({
   branches: initial,
   managers,
+  instructors,
 }: {
   branches: Branch[]
   managers: Manager[]
+  instructors: InstructorProfile[]
 }) {
   const supabase = createClient()
   const [branches, setBranches] = useState(initial)
+  const [instructorList, setInstructorList] = useState(instructors)
   const [name, setName] = useState('')
   const [region, setRegion] = useState('')
   const [managerId, setManagerId] = useState('')
@@ -65,6 +74,18 @@ export default function BranchManager({
       b.id === branchId
         ? { ...b, manager_id: newManagerId || null, users: managers.find(m => m.id === newManagerId) ? { name: managers.find(m => m.id === newManagerId)!.name, email: managers.find(m => m.id === newManagerId)!.email } : null }
         : b
+    ))
+  }
+
+  async function handleAssignInstructor(instructorId: string, branchId: string | null) {
+    const { error } = await supabase
+      .from('instructor_profiles')
+      .update({ branch_id: branchId })
+      .eq('instructor_id', instructorId)
+    if (error) { toast.error(error.message); return }
+    toast.success(branchId ? '강사가 지부에 배정되었습니다' : '강사 지부 배정이 해제되었습니다')
+    setInstructorList(prev => prev.map(i =>
+      i.instructor_id === instructorId ? { ...i, branch_id: branchId } : i
     ))
   }
 
@@ -116,7 +137,7 @@ export default function BranchManager({
           <div className="space-y-3">
             {branches.map(b => (
               <div key={b.id} className="bg-white rounded-2xl p-5 shadow-sm border border-brand-mist/30">
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start justify-between gap-4 mb-4">
                   <div>
                     <p className="font-semibold text-brand-ink">{b.name}</p>
                     <p className="text-xs text-brand-grey mt-0.5">지역: {b.region} · 커미션: {b.commission_rate}%</p>
@@ -137,6 +158,42 @@ export default function BranchManager({
                         <option key={m.id} value={m.id}>{m.name}</option>
                       ))}
                     </select>
+                  </div>
+                </div>
+
+                {/* 소속 강사 배정 */}
+                <div className="border-t border-brand-mist/30 pt-4">
+                  <p className="text-xs font-semibold text-brand-grey mb-2">소속 강사 배정</p>
+                  <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                    {instructorList
+                      .filter(i => i.branch_id === b.id || i.branch_id === null)
+                      .map(i => (
+                        <div key={i.instructor_id} className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${i.branch_id === b.id ? 'bg-brand-deep' : 'bg-brand-mist'}`} />
+                            <span className="text-xs text-brand-ink truncate">{(i.users as any)?.name}</span>
+                            <span className="text-[10px] text-brand-grey truncate hidden sm:block">({(i.users as any)?.email})</span>
+                          </div>
+                          {i.branch_id === b.id ? (
+                            <button
+                              onClick={() => handleAssignInstructor(i.instructor_id, null)}
+                              className="text-[10px] text-red-400 hover:text-red-600 flex-shrink-0"
+                            >
+                              해제
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleAssignInstructor(i.instructor_id, b.id)}
+                              className="text-[10px] text-brand-deep hover:underline flex-shrink-0"
+                            >
+                              배정
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    {instructorList.filter(i => i.branch_id === b.id || i.branch_id === null).length === 0 && (
+                      <p className="text-[11px] text-brand-grey">배정 가능한 강사가 없습니다</p>
+                    )}
                   </div>
                 </div>
               </div>

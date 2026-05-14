@@ -19,6 +19,7 @@ const difficulties = [
 ]
 const sortOptions = [
   { value: 'newest', label: '최신순' },
+  { value: 'popular', label: '인기순' },
   { value: 'price_asc', label: '가격 낮은순' },
   { value: 'price_desc', label: '가격 높은순' },
 ]
@@ -43,6 +44,14 @@ export default function ClassesFilterBar() {
   const activeCount = ['region', 'craft', 'difficulty', 'min_price', 'max_price', 'q']
     .filter(k => sp.get(k)).length
 
+  const handleSortChange = (val: string) => {
+    const params = new URLSearchParams(sp.toString())
+    params.delete('limit')
+    if (val === 'newest') params.delete('sort')
+    else params.set('sort', val)
+    router.push(`/classes?${params.toString()}`)
+  }
+
   return (
     <div className="bg-white border-b border-brand-mist/30 sticky top-0 z-20">
       <div className="max-w-6xl mx-auto px-4 py-3">
@@ -66,7 +75,7 @@ export default function ClassesFilterBar() {
           {/* 정렬 */}
           <select
             value={sp.get('sort') ?? 'newest'}
-            onChange={e => set('sort', e.target.value === 'newest' ? null : e.target.value)}
+            onChange={e => handleSortChange(e.target.value)}
             className="text-sm border border-brand-mist rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-amber bg-white text-brand-ink"
           >
             {sortOptions.map(o => (

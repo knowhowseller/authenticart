@@ -19,7 +19,7 @@ async function getAdminStats() {
     pendingInstructors, pendingClasses,
     monthGmv, prevMonthGmv,
     monthOrderGmv,
-    pendingBookings, recentBookings, recentOrders,
+    pendingBookings, recentBookings, recentOrders, pendingPayouts,
   ] = await Promise.all([
     supabase.from('users').select('id', { count: 'exact', head: true })
       .then(r => r.count ?? 0),
@@ -48,6 +48,8 @@ async function getAdminStats() {
       .select('id, status, total_amount, created_at, users!buyer_id(name)')
       .order('created_at', { ascending: false }).limit(5)
       .then(r => r.data ?? []),
+    supabase.from('payouts').select('id', { count: 'exact', head: true }).eq('status', 'pending')
+      .then(r => r.count ?? 0),
   ])
 
   const gmvChange = prevMonthGmv > 0
@@ -58,8 +60,18 @@ async function getAdminStats() {
     userCount, instructorCount, classCount,
     pendingInstructors, pendingClasses,
     monthGmv, gmvChange, monthOrderGmv,
-    pendingBookings, recentBookings, recentOrders,
+    pendingBookings, recentBookings, recentOrders, pendingPayouts,
   }
+}
+
+const orderStatusLabel: Record<string, string> = {
+  pending: '결제 전',
+  paid: '결제 완료',
+  preparing: '준비 중',
+  shipped: '배송 중',
+  delivered: '배송 완료',
+  cancelled: '취소됨',
+  refunded: '환불됨',
 }
 
 const bookingStatusColor: Record<string, string> = {
@@ -87,15 +99,12 @@ export default async function AdminPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
   const { data: u } = await supabase.from('users').select('role').eq('id', user.id).single()
-  if (u?.role !== 'admin') redirect('/')
+  const role = u?.role ?? ''
+  if (!['admin', 'branch_manager'].includes(role)) redirect('/')
 
   const stats = await getAdminStats()
 
   const kpis = [
-    {
-      title: '전체 회원', value: `${stats.userCount}명`,
-      icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', href: '/admin/users',
-    },
     {
       title: '승인 강사', value: `${stats.instructorCount}명`,
       icon: BookOpen, color: 'text-green-600', bg: 'bg-green-50', href: '/admin/instructors',
@@ -107,10 +116,14 @@ export default async function AdminPage() {
       badge: stats.pendingClasses > 0 ? `+${stats.pendingClasses} 검수` : null,
     },
     {
-      title: '이번달 클래스 GMV', value: formatPrice(stats.monthGmv),
-      icon: TrendingUp, color: 'text-brand-deep', bg: 'bg-brand-deep/5', href: '/admin/bookings',
+      title: '이번달 통합 GMV', value: formatPrice(stats.monthGmv + stats.monthOrderGmv),
+      icon: TrendingUp, color: 'text-brand-deep', bg: 'bg-brand-deep/5', href: '/admin/stats',
       change: stats.gmvChange,
     },
+    ...(role === 'admin' ? [{
+      title: '전체 회원', value: `${stats.userCount}명`,
+      icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', href: '/admin/users',
+    }] : []),
   ]
 
   const alerts = [
@@ -135,9 +148,25 @@ export default async function AdminPage() {
       bg: 'bg-blue-50 border-blue-200',
       text: `예약 ${stats.pendingBookings}건 승인 대기 중`,
     },
+    stats.pendingPayouts > 0 && {
+      href: '/admin/payouts',
+      icon: AlertCircle,
+      color: 'text-purple-600',
+      bg: 'bg-purple-50 border-purple-200',
+      text: `정산 대기 ${stats.pendingPayouts}명 강사 — 입금 처리 필요`,
+    },
   ].filter(Boolean) as any[]
 
-  const menus = [
+  // 지부장: 강사 관리·클래스 검수·예약·단체 출강·공지사항만 노출
+  const branchManagerMenus = [
+    { href: '/admin/instructors', label: '강사 승인 관리', icon: '👩‍🎨', desc: '신규 강사 신청 검토 및 승인' },
+    { href: '/admin/classes', label: '클래스 검수', icon: '📋', desc: 'draft 클래스 검수 및 게시' },
+    { href: '/admin/bookings', label: '예약 현황', icon: '📅', desc: '클래스 예약 현황 조회' },
+    { href: '/admin/group-requests', label: '단체 출강 관리', icon: '🏫', desc: '단체 출강 요청 강사 배정' },
+    { href: '/admin/notices', label: '공지사항 관리', icon: '📢', desc: '공지사항 작성 및 공개 설정' },
+  ]
+
+  const adminMenus = [
     { href: '/admin/users', label: '회원 관리', icon: '👥', desc: '회원 목록 조회 및 역할 변경' },
     { href: '/admin/instructors', label: '강사 승인 관리', icon: '👩‍🎨', desc: '신규 강사 신청 검토 및 승인' },
     { href: '/admin/classes', label: '클래스 검수', icon: '📋', desc: 'draft 클래스 검수 및 게시' },
@@ -151,16 +180,28 @@ export default async function AdminPage() {
     { href: '/admin/stats', label: '통계 차트', icon: '📊', desc: '월별 매출·예약 건수 차트' },
     { href: '/admin/group-requests', label: '단체 출강 관리', icon: '🏫', desc: '단체 출강 요청 강사 배정' },
     { href: '/admin/artworks', label: '작품 마켓 관리', icon: '🎨', desc: '수강생 작품 수정·삭제·상태 관리' },
+    { href: '/admin/artwork-orders', label: '작품 주문 관리', icon: '🖼️', desc: '작품 주문 배송 처리 및 구매확정' },
+    { href: '/admin/categories', label: '카테고리 관리', icon: '🗂️', desc: '공예·예술 장르 2계층 카테고리 관리' },
+    { href: '/admin/vendors', label: '벤더 관리', icon: '🏪', desc: '상품 입점사 신청 검토 · 수수료 설정' },
+    { href: '/admin/agencies', label: '에이전시 관리', icon: '🏢', desc: '강사 에이전시 신청 검토 · 수수료 설정' },
+    { href: '/admin/disputes', label: '분쟁 관리', icon: '⚖️', desc: '소비자 분쟁 접수 건 검토 및 처리' },
+    { href: '/admin/class-requests', label: '클래스 요청 현황', icon: '🙋', desc: '그룹 클래스 개설 요청 모집·확정 현황' },
   ]
+
+  const menus = role === 'branch_manager' ? branchManagerMenus : adminMenus
 
   return (
     <div className="min-h-screen bg-brand-bg">
       <div className="max-w-5xl mx-auto px-4 py-8">
         <div className="flex items-center gap-2 mb-2">
           <Hexagon color="amber" size={16} />
-          <span className="text-xs font-medium text-brand-amber uppercase tracking-wider">Admin</span>
+          <span className="text-xs font-medium text-brand-amber uppercase tracking-wider">
+            {role === 'branch_manager' ? '지부장' : 'Admin'}
+          </span>
         </div>
-        <h1 className="text-2xl font-bold text-brand-ink mb-6">관리자 대시보드</h1>
+        <h1 className="text-2xl font-bold text-brand-ink mb-6">
+          {role === 'branch_manager' ? '지부 관리 대시보드' : '관리자 대시보드'}
+        </h1>
 
         {/* 알림 배너 */}
         {alerts.length > 0 && (
@@ -204,11 +245,20 @@ export default async function AdminPage() {
 
         {/* 이번달 주문 GMV */}
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-mist/30 mb-6">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-3">
             <Package size={14} className="text-brand-grey" />
-            <span className="text-xs text-brand-grey font-medium">이번달 샵 주문 GMV</span>
+            <span className="text-xs text-brand-grey font-medium">이번달 GMV 구성</span>
           </div>
-          <p className="text-xl font-bold text-brand-ink">{formatPrice(stats.monthOrderGmv)}</p>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs text-brand-grey mb-1">클래스 예약</p>
+              <p className="text-lg font-bold text-brand-deep">{formatPrice(stats.monthGmv)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-brand-grey mb-1">샵 주문</p>
+              <p className="text-lg font-bold text-brand-ink">{formatPrice(stats.monthOrderGmv)}</p>
+            </div>
+          </div>
         </div>
 
         {/* 최근 활동 */}
@@ -265,7 +315,7 @@ export default async function AdminPage() {
                     <p className="text-xs text-brand-grey">{formatDateTime(o.created_at)}</p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-                    <span className="text-xs text-brand-grey">{o.status}</span>
+                    <span className="text-xs text-brand-grey">{orderStatusLabel[o.status] ?? o.status}</span>
                     <span className="text-xs font-semibold text-brand-deep">{formatPrice(o.total_amount)}</span>
                   </div>
                 </div>

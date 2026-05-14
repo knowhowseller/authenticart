@@ -56,6 +56,14 @@ async function getBranchStats(userId: string) {
     .eq('status', 'pending')
     .eq('branch_id', branch.id)
 
+  // 대기 정산액
+  const { data: pendingPayouts } = await supabase
+    .from('branch_payouts')
+    .select('branch_share')
+    .eq('branch_id', branch.id)
+    .eq('status', 'pending')
+  const pendingPayoutAmount = (pendingPayouts ?? []).reduce((s: number, p: any) => s + (p.branch_share ?? 0), 0)
+
   return {
     branch,
     instructors: instructors ?? [],
@@ -63,6 +71,7 @@ async function getBranchStats(userId: string) {
     monthGmv,
     activeClasses: activeClasses ?? 0,
     pendingInstructors: pendingInstructors ?? 0,
+    pendingPayoutAmount,
   }
 }
 
@@ -87,10 +96,11 @@ export default async function BranchPage() {
   }
 
   const kpis = [
-    { title: '이번달 GMV', value: formatPrice(stats.monthGmv), icon: TrendingUp, color: 'text-brand-deep', bg: 'bg-brand-deep/5', href: '/branch/instructors' },
+    { title: '이번달 GMV', value: formatPrice(stats.monthGmv), icon: TrendingUp, color: 'text-brand-deep', bg: 'bg-brand-deep/5', href: '/branch/reports' },
     { title: '활성 강사', value: `${stats.activeCount}명`, icon: Users, color: 'text-green-600', bg: 'bg-green-50', href: '/branch/instructors' },
     { title: '진행 중 클래스', value: `${stats.activeClasses}개`, icon: BookOpen, color: 'text-blue-600', bg: 'bg-blue-50', href: '/branch/instructors' },
     { title: '강사 신청 대기', value: `${stats.pendingInstructors}건`, icon: Clock, color: 'text-orange-500', bg: 'bg-orange-50', href: '/branch/instructors', urgent: stats.pendingInstructors > 0 },
+    { title: '대기 정산액', value: formatPrice(stats.pendingPayoutAmount), icon: TrendingUp, color: 'text-amber-600', bg: 'bg-amber-50', href: '/branch/reports', urgent: stats.pendingPayoutAmount > 0 },
   ]
 
   return (
@@ -105,7 +115,7 @@ export default async function BranchPage() {
           {stats.branch.name} ({stats.branch.region}) · 안녕하세요, {userData?.name}님
         </p>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           {kpis.map(k => (
             <Link key={k.title} href={k.href}
               className={`bg-white rounded-2xl p-5 shadow-sm border ${(k as any).urgent ? 'border-orange-300' : 'border-brand-mist/30'} hover:shadow-md transition-all`}>

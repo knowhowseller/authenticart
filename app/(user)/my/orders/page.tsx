@@ -12,6 +12,7 @@ export default async function MyOrdersPage() {
     .select(`
       id, quantity, total_amount, status, receipt_url,
       tracking_number, shipping_name, shipping_address, created_at,
+      escrow_status, confirmed_at,
       products!product_id(name, thumbnail_url)
     `)
     .eq('buyer_id', user.id)

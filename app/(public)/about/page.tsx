@@ -17,7 +17,7 @@ export default function AboutPage() {
           <h1 className="text-4xl md:text-5xl font-bold mb-6 font-display">오센틱아트</h1>
           <p className="text-lg text-white/80 max-w-2xl mx-auto leading-relaxed">
             진정성 있는 공예의 가치를 나누는 플랫폼.<br />
-            레진 아트 강사와 수강생을 연결합니다.
+            심사를 통해 선발된 아트 강사와 수강생을 연결합니다.
           </p>
         </div>
       </section>
@@ -37,7 +37,7 @@ export default function AboutPage() {
               {
                 icon: '🤝',
                 title: '연결 (Connect)',
-                desc: '숙련된 강사와 배움을 원하는 수강생 사이의 신뢰로운 만남. 검증된 강사들과 함께하는 클래스로 안심하고 배울 수 있습니다.',
+                desc: '숙련된 강사와 배움을 원하는 수강생 사이의 신뢰로운 만남. 서류·포트폴리오 심사와 관리자 승인을 거친 강사들과 함께하는 클래스로 안심하고 배울 수 있습니다.',
               },
               {
                 icon: '✨',

@@ -9,7 +9,8 @@ export default async function MyCouponsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: usedCoupons }, { data: activeCoupons }] = await Promise.all([
+  const now = new Date().toISOString()
+  const [{ data: usedCoupons }, { data: personalCoupons }, { data: publicCoupons }] = await Promise.all([
     supabase
       .from('coupon_uses')
       .select(`
@@ -23,11 +24,23 @@ export default async function MyCouponsPage() {
       .select('id, code, type, value, min_amount, max_uses, used_count, valid_until, description')
       .eq('is_active', true)
       .eq('target_user_id', user.id)
-      .or('valid_until.is.null,valid_until.gt.' + new Date().toISOString()),
+      .or(`valid_until.is.null,valid_until.gt.${now}`),
+    supabase
+      .from('coupons')
+      .select('id, code, type, value, min_amount, max_uses, used_count, valid_until, description')
+      .eq('is_active', true)
+      .is('target_user_id', null)
+      .or(`valid_until.is.null,valid_until.gt.${now}`),
   ])
 
   const usedIds = new Set((usedCoupons ?? []).map((u: any) => u.coupons?.code))
-  const available = (activeCoupons ?? []).filter((c: any) => !usedIds.has(c.code))
+  const allActive = [...(personalCoupons ?? []), ...(publicCoupons ?? [])]
+  const deduped = Array.from(new Map(allActive.map(c => [c.id, c])).values())
+  const available = deduped.filter((c: any) => {
+    if (usedIds.has(c.code)) return false
+    if (c.max_uses && c.used_count >= c.max_uses) return false
+    return true
+  })
 
   return (
     <div className="min-h-screen bg-brand-bg">

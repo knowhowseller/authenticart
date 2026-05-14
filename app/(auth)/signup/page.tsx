@@ -21,6 +21,9 @@ const schema = z.object({
   confirmPassword: z.string(),
   phone: z.string().optional(),
   region: z.string().optional(),
+  age_confirmed: z.literal(true, { error: '만 14세 이상만 가입할 수 있습니다' }),
+  agree_terms: z.literal(true, { error: '이용약관에 동의해주세요' }),
+  agree_privacy: z.literal(true, { error: '개인정보처리방침에 동의해주세요' }),
   marketing_agreed: z.boolean().optional(),
 }).refine(d => d.password === d.confirmPassword, {
   message: '비밀번호가 일치하지 않습니다',
@@ -135,10 +138,36 @@ export default function SignupPage() {
                 {regions.map(r => <option key={r} value={r}>{r}</option>)}
               </select>
             </div>
-            <label className="flex items-start gap-2 cursor-pointer">
-              <input type="checkbox" {...register('marketing_agreed')} className="mt-0.5 accent-brand-amber" />
-              <span className="text-sm text-brand-grey">마케팅 정보 수신에 동의합니다 (선택)</span>
-            </label>
+            <div className="space-y-2 pt-1">
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input type="checkbox" {...register('age_confirmed')} className="mt-0.5 accent-brand-amber" />
+                <span className="text-sm text-brand-grey">
+                  만 14세 이상입니다 <span className="text-brand-amber">*</span>
+                </span>
+              </label>
+              {errors.age_confirmed && <p className="text-xs text-red-500 ml-5">{errors.age_confirmed.message as string}</p>}
+
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input type="checkbox" {...register('agree_terms')} className="mt-0.5 accent-brand-amber" />
+                <span className="text-sm text-brand-grey">
+                  <Link href="/terms" className="underline text-brand-ink hover:text-brand-deep">이용약관</Link>에 동의합니다 <span className="text-brand-amber">*</span>
+                </span>
+              </label>
+              {errors.agree_terms && <p className="text-xs text-red-500 ml-5">{errors.agree_terms.message as string}</p>}
+
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input type="checkbox" {...register('agree_privacy')} className="mt-0.5 accent-brand-amber" />
+                <span className="text-sm text-brand-grey">
+                  <Link href="/privacy" className="underline text-brand-ink hover:text-brand-deep">개인정보처리방침</Link>에 동의합니다 <span className="text-brand-amber">*</span>
+                </span>
+              </label>
+              {errors.agree_privacy && <p className="text-xs text-red-500 ml-5">{errors.agree_privacy.message as string}</p>}
+
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input type="checkbox" {...register('marketing_agreed')} className="mt-0.5 accent-brand-amber" />
+                <span className="text-sm text-brand-grey">마케팅 정보 수신에 동의합니다 (선택)</span>
+              </label>
+            </div>
 
             <Button type="submit" loading={loading} className="w-full mt-2" size="lg">
               회원가입
@@ -146,11 +175,6 @@ export default function SignupPage() {
           </form>
 
           <div className="text-center mt-4 space-y-2">
-            <p className="text-xs text-brand-grey">
-              가입 시{' '}
-              <Link href="/terms" className="underline">이용약관</Link> 및{' '}
-              <Link href="/privacy" className="underline">개인정보처리방침</Link>에 동의하게 됩니다
-            </p>
             <p className="text-sm text-brand-grey">
               이미 계정이 있으신가요?{' '}
               <Link href="/login" className="text-brand-deep font-medium hover:underline">로그인</Link>

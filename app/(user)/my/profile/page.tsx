@@ -29,10 +29,11 @@ export default async function MyProfilePage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: userData }, stats, { data: instructorProfile }] = await Promise.all([
+  const [{ data: userData }, stats, { data: instructorProfile }, { data: vendor }] = await Promise.all([
     supabase.from('users').select('name, phone, region, email, role, created_at').eq('id', user.id).single(),
     getMyStats(user.id),
     supabase.from('instructor_profiles').select('status').eq('instructor_id', user.id).maybeSingle(),
+    supabase.from('vendors').select('id, status').eq('user_id', user.id).maybeSingle(),
   ])
 
   const memberSince = userData?.created_at
@@ -81,6 +82,47 @@ export default async function MyProfilePage() {
               <p className="text-base font-bold text-brand-ink">{value}</p>
             </a>
           ))}
+        </div>
+
+        {/* 빠른 메뉴 */}
+        <div className="mb-4 space-y-2">
+          {[
+            { href: '/my/class-requests', icon: '🙋', title: '클래스 요청', desc: '그룹 클래스 개설 요청 내역' },
+            { href: '/my/artwork-orders', icon: '🎨', title: '작품 구매 내역', desc: '구매한 작품 주문 확인' },
+            { href: '/my/coupons', icon: '🏷️', title: '내 쿠폰', desc: '보유 쿠폰 및 할인 코드' },
+            { href: '/my/artworks', icon: '🖼️', title: '내 작품', desc: '마켓에 등록한 작품 관리' },
+            { href: '/my/disputes', icon: '⚖️', title: '분쟁 내역', desc: '접수한 분쟁 처리 현황' },
+          ].map(({ href, icon, title, desc }) => (
+            <Link
+              key={href}
+              href={href}
+              className="flex items-center justify-between bg-white rounded-2xl px-5 py-4 shadow-sm border border-brand-mist/30 hover:border-brand-deep/30 transition-all"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-xl">{icon}</span>
+                <div>
+                  <p className="text-sm font-medium text-brand-ink">{title}</p>
+                  <p className="text-xs text-brand-grey">{desc}</p>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-brand-grey" />
+            </Link>
+          ))}
+          {vendor && (
+            <Link
+              href="/my/vendor"
+              className="flex items-center justify-between bg-white rounded-2xl px-5 py-4 shadow-sm border border-brand-amber/30 hover:border-brand-amber/60 transition-all"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-xl">🏪</span>
+                <div>
+                  <p className="text-sm font-medium text-brand-ink">벤더 대시보드</p>
+                  <p className="text-xs text-brand-grey">상품 관리 · 주문 · 정산</p>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-brand-grey" />
+            </Link>
+          )}
         </div>
 
         {/* 강사 신청 현황 링크 */}

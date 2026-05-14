@@ -9,14 +9,23 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { data: u } = await supabase.from('users').select('role').eq('id', user.id).single()
-  if (u?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  const actorRole = u?.role ?? ''
+  if (!['admin', 'branch_manager'].includes(actorRole)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const { instructor_id, action } = await req.json()
+  const { instructor_id, action, reason } = await req.json()
   if (!instructor_id || !['approve', 'reject'].includes(action)) {
     return NextResponse.json({ error: 'Invalid params' }, { status: 400 })
   }
 
   const admin = await createAdminClient()
+
+  // 지부장이 승인할 경우 자신의 branch_id를 강사에게 자동 설정
+  let actorBranchId: string | null = null
+  if (actorRole === 'branch_manager') {
+    const { data: branch } = await admin
+      .from('branches').select('id').eq('manager_id', user.id).maybeSingle()
+    actorBranchId = branch?.id ?? null
+  }
 
   const { data: instructor } = await admin
     .from('users')
@@ -25,9 +34,15 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (action === 'approve') {
+    const updatePayload: Record<string, any> = {
+      status: 'approved',
+      approved_at: new Date().toISOString(),
+    }
+    if (actorBranchId) updatePayload.branch_id = actorBranchId
+
     const { error: profileErr } = await admin
       .from('instructor_profiles')
-      .update({ status: 'approved', approved_at: new Date().toISOString() })
+      .update(updatePayload)
       .eq('instructor_id', instructor_id)
 
     if (profileErr) return NextResponse.json({ error: profileErr.message }, { status: 500 })
@@ -74,7 +89,7 @@ export async function POST(req: NextRequest) {
       user_id: instructor_id,
       type: 'instructor_rejected',
       title: '강사 신청이 반려되었습니다',
-      body: '강사 신청이 반려되었습니다. 자세한 내용은 관리자에게 문의해주세요.',
+      body: reason ? `반려 사유: ${reason}` : '강사 신청이 반려되었습니다. 자세한 내용은 관리자에게 문의해주세요.',
       link: '/my/instructor-status',
     } as any)
   }

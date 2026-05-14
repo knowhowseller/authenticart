@@ -21,6 +21,13 @@ export default async function AdminBranchesPage() {
     .eq('role', 'branch_manager')
     .order('name')
 
+  // 강사 배정용: 승인된 강사 목록 (branch_id 포함)
+  const { data: instructors } = await supabase
+    .from('instructor_profiles')
+    .select('instructor_id, branch_id, users!instructor_id(name, email)')
+    .eq('status', 'approved')
+    .order('approved_at', { ascending: false })
+
   return (
     <div className="min-h-screen bg-brand-bg">
       <div className="max-w-5xl mx-auto px-4 py-8">
@@ -29,7 +36,11 @@ export default async function AdminBranchesPage() {
           <span className="text-xs font-medium text-brand-amber uppercase tracking-wider">Admin</span>
         </div>
         <h1 className="text-2xl font-bold text-brand-ink mb-8">지부 관리</h1>
-        <BranchManager branches={branches ?? []} managers={managers ?? []} />
+        <BranchManager
+          branches={branches ?? []}
+          managers={managers ?? []}
+          instructors={(instructors ?? []) as any}
+        />
       </div>
     </div>
   )

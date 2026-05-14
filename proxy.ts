@@ -32,25 +32,44 @@ export async function proxy(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }))
 
-  const { pathname } = request.nextUrl
-
-  const isProtectedRoute =
-    pathname.startsWith('/my') ||
-    pathname.startsWith('/studio') ||
-    pathname.startsWith('/admin') ||
-    pathname.startsWith('/branch') ||
-    pathname.startsWith('/bookings')
-
-  if (!user && isProtectedRoute) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+  let role: string | null = null
+  if (user) {
+    const { data } = await supabase.from('users').select('role').eq('id', user.id).single()
+    role = data?.role ?? 'member'
   }
 
-  if (user && (pathname === '/login' || pathname === '/signup')) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/'
-    return NextResponse.redirect(url)
+  const { pathname } = request.nextUrl
+
+  // /my/* — 로그인 필요 (원래 경로 보존)
+  if (pathname.startsWith('/my') && !user) {
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(loginUrl)
+  }
+
+  // /studio/* — instructor 또는 admin
+  if (pathname.startsWith('/studio') && !['instructor', 'admin'].includes(role ?? '')) {
+    return NextResponse.redirect(new URL('/', request.url))
+  }
+
+  // /admin/* — admin만
+  if (pathname.startsWith('/admin') && role !== 'admin') {
+    return NextResponse.redirect(new URL('/', request.url))
+  }
+
+  // /branch/* — branch_manager 또는 admin
+  if (pathname.startsWith('/branch') && !['branch_manager', 'admin'].includes(role ?? '')) {
+    return NextResponse.redirect(new URL('/', request.url))
+  }
+
+  // /bookings/* — 로그인 필요
+  if (pathname.startsWith('/bookings') && !user) {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  // 로그인 상태에서 /login /signup 접근 → 홈으로
+  if (user && (pathname === '/login' || pathname.startsWith('/signup'))) {
+    return NextResponse.redirect(new URL('/', request.url))
   }
 
   return supabaseResponse

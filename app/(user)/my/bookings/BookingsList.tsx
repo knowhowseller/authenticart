@@ -118,10 +118,14 @@ export default function BookingsList({ bookings }: { bookings: Booking[] }) {
             const canRefund = b.status === 'paid' && startAt
               ? (new Date(startAt).getTime() - Date.now()) / 86400000 >= 1
               : false
+            const classEnded = startAt ? new Date(startAt) < new Date() : false
+            const canWriteReview = (b.status === 'completed') ||
+              (b.status === 'paid' && classEnded)
 
             return (
               <div key={b.id} className="bg-white rounded-2xl p-5 shadow-sm border border-brand-mist/30">
-                <div className="flex items-start justify-between gap-3 mb-3">
+                <Link href={`/my/bookings/${b.id}`} className="block -mx-5 -mt-5 px-5 pt-5 pb-3 hover:bg-brand-bg/50 rounded-t-2xl transition-colors">
+                <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-brand-ink truncate">{classTitle}</h3>
                     {startAt && (
@@ -132,6 +136,7 @@ export default function BookingsList({ bookings }: { bookings: Booking[] }) {
                     {s.label}
                   </span>
                 </div>
+                </Link>
 
                 <div className="flex items-center justify-between pt-3 border-t border-brand-mist/30">
                   <span className="text-sm font-bold text-brand-deep">{formatPrice(b.gross_amount)}</span>
@@ -160,12 +165,20 @@ export default function BookingsList({ bookings }: { bookings: Booking[] }) {
                         결제하기
                       </a>
                     )}
-                    {b.status === 'completed' && classId && (
+                    {b.status === 'paid' && (
                       <Link
-                        href={`/classes/${classId}#reviews`}
-                        className="text-xs font-medium text-brand-deep hover:underline"
+                        href={`/my/bookings/${b.id}/materials`}
+                        className="text-xs font-medium text-green-600 hover:underline"
                       >
-                        후기 작성
+                        📦 준비물 구매
+                      </Link>
+                    )}
+                    {canWriteReview && classId && (
+                      <Link
+                        href={`/my/reviews/write?classId=${classId}&bookingId=${b.id}`}
+                        className="text-xs font-medium text-brand-amber hover:underline"
+                      >
+                        ⭐ 후기 작성
                       </Link>
                     )}
                     {b.status === 'refunded' && b.refund_amount > 0 && (

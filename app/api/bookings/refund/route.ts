@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
 
   const refundAmount = calcRefundAmount(booking.gross_amount, new Date(startAt))
   if (refundAmount === 0) {
-    return NextResponse.json({ error: '환불 기간이 지나 환불이 불가합니다 (3일 이내)' }, { status: 400 })
+    return NextResponse.json({ error: '환불 기간이 지나 환불이 불가합니다 (당일 취소 시 환불 불가)' }, { status: 400 })
   }
 
   const tossSecret = process.env.TOSS_SECRET_KEY!

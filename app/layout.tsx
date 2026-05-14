@@ -14,15 +14,17 @@ const noto = Noto_Sans_KR({
 
 export const metadata: Metadata = {
   title: {
-    default: '오센틱아트 — Starting a second life with Authentic Art',
+    default: '오센틱아트 — 공예·예술 클래스 & 재료 쇼핑 플랫폼',
     template: '%s | 오센틱아트',
   },
-  description: '레진 공예 중심의 강사·수강생 생태계 플랫폼. 클래스를 예약하고, 재료를 구매하세요.',
+  description: '레진아트·캔들·플라워·도자기·주얼리·자수·회화·목공예 — 전 장르 공예·예술 클래스 예약, 재료 구매, 작품 판매를 한 플랫폼에서. 취미를 직업으로.',
+  keywords: '공예 클래스, 원데이클래스, 레진아트, 캔들 만들기, 플라워 클래스, 도자기 체험, 주얼리 공방, 자수 배우기, 수채화 클래스, 목공예, 공예 재료, 강사 자격증',
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://authenticart.kr'),
   openGraph: {
     siteName: '오센틱아트',
     locale: 'ko_KR',
     type: 'website',
+    description: '레진아트·캔들·플라워·도자기·주얼리·자수·회화·목공예 전 장르 공예·예술 플랫폼',
   },
 }
 

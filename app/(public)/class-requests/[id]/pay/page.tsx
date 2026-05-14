@@ -22,17 +22,22 @@ export default function ClassRequestPayPage() {
   const supabase = createClient()
   const [req, setReq] = useState<RequestInfo | null>(null)
   const [loading, setLoading] = useState(false)
+  const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
-      const { data } = await supabase
-        .from('class_open_requests')
-        .select('id, title, price_per_person, target_capacity, current_count, schedule_date, preferred_region, instructor:users!instructor_id(name)')
-        .eq('id', id)
-        .eq('status', 'payment_pending')
-        .single()
+      const [{ data }, { data: { user } }] = await Promise.all([
+        supabase
+          .from('class_open_requests')
+          .select('id, title, price_per_person, target_capacity, current_count, schedule_date, preferred_region, instructor:users!instructor_id(name)')
+          .eq('id', id)
+          .eq('status', 'payment_pending')
+          .single(),
+        supabase.auth.getUser(),
+      ])
       if (data) setReq(data as any)
       else router.push('/class-requests')
+      if (user) setUserId(user.id)
     }
     load()
   }, [id])
@@ -60,7 +65,7 @@ export default function ClassRequestPayPage() {
         amount: req.price_per_person,
         orderId: `class-req-${id}-${Date.now()}`,
         orderName: req.title,
-        successUrl: `${window.location.origin}/api/payments/toss-success?type=class_request&requestId=${id}`,
+        successUrl: `${window.location.origin}/api/payments/toss-success?type=class_request&requestId=${id}&userId=${userId ?? ''}`,
         failUrl: `${window.location.origin}/payment/fail`,
       })
     } catch (e: any) {

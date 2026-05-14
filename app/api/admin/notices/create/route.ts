@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { data: u } = await supabase.from('users').select('role').eq('id', user.id).single()
-  if (u?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!['admin', 'branch_manager'].includes(u?.role ?? '')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const { title, content, is_pinned, is_published } = await req.json()
   if (!title?.trim() || !content?.trim()) return NextResponse.json({ error: '제목과 내용을 입력해주세요' }, { status: 400 })

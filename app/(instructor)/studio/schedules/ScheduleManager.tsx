@@ -142,8 +142,9 @@ export default function ScheduleManager({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ schedule_id: id }),
     })
+    const json2 = await res.json()
     setActionId(null)
-    if (!res.ok) { toast.error('삭제 실패'); return }
+    if (!res.ok) { toast.error(json2.error ?? '삭제 실패'); return }
     toast.success('회차가 삭제되었습니다')
     setSchedules(prev => prev.filter(s => s.id !== id))
   }

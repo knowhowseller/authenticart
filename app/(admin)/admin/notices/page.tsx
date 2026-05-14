@@ -8,11 +8,11 @@ export default async function AdminNoticesPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
   const { data: u } = await supabase.from('users').select('role').eq('id', user.id).single()
-  if (u?.role !== 'admin') redirect('/')
+  if (!['admin', 'branch_manager'].includes(u?.role ?? '')) redirect('/')
 
   const { data: notices } = await supabase
     .from('notices')
-    .select('id, title, is_pinned, is_published, created_at')
+    .select('id, title, content, is_pinned, is_published, created_at')
     .order('is_pinned', { ascending: false })
     .order('created_at', { ascending: false })
 

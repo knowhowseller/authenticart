@@ -100,10 +100,10 @@ export default async function StudioEarningsPage() {
         <h1 className="text-2xl font-bold text-brand-ink mb-8">수입 현황</h1>
 
         {/* 요약 카드 */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
           {[
             { label: '이번달 매출(총)', value: formatPrice(data.thisMonthGross), sub: `${data.thisMonthBookings.length}건`, color: 'text-brand-ink' },
-            { label: '이번달 정산 예정', value: formatPrice(data.thisMonthPayout), sub: 'PG·플랫폼 수수료 제외', color: 'text-brand-deep' },
+            { label: '이번달 정산 예정', value: formatPrice(data.thisMonthPayout), sub: '수수료 공제 후', color: 'text-brand-deep' },
             { label: '누적 정산 수령액', value: formatPrice(data.totalReceived), sub: '입금 완료 기준', color: 'text-green-600' },
           ].map(c => (
             <div key={c.label} className="bg-white rounded-2xl p-5 shadow-sm border border-brand-mist/30">
@@ -113,6 +113,35 @@ export default async function StudioEarningsPage() {
             </div>
           ))}
         </div>
+
+        {/* 수수료 구조 안내 */}
+        {data.thisMonthGross > 0 && (
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-mist/30 mb-8">
+            <p className="text-xs font-semibold text-brand-grey uppercase tracking-wider mb-3">이번달 수수료 계산</p>
+            <div className="flex items-center gap-1 flex-wrap text-sm">
+              <div className="flex flex-col items-center bg-brand-bg rounded-xl px-4 py-2.5 min-w-[90px]">
+                <span className="text-xs text-brand-grey">총 결제액</span>
+                <span className="font-bold text-brand-ink">{formatPrice(data.thisMonthGross)}</span>
+              </div>
+              <span className="text-brand-grey text-lg">−</span>
+              <div className="flex flex-col items-center bg-red-50 rounded-xl px-4 py-2.5 min-w-[90px]">
+                <span className="text-xs text-brand-grey">PG 수수료 3.3%</span>
+                <span className="font-bold text-red-500">−{formatPrice(Math.round(data.thisMonthGross * 0.033))}</span>
+              </div>
+              <span className="text-brand-grey text-lg">−</span>
+              <div className="flex flex-col items-center bg-orange-50 rounded-xl px-4 py-2.5 min-w-[90px]">
+                <span className="text-xs text-brand-grey">플랫폼 10%</span>
+                <span className="font-bold text-orange-500">−{formatPrice(Math.round(data.thisMonthGross * 0.10))}</span>
+              </div>
+              <span className="text-brand-grey text-lg">=</span>
+              <div className="flex flex-col items-center bg-brand-deep/5 rounded-xl px-4 py-2.5 min-w-[90px] border border-brand-deep/20">
+                <span className="text-xs text-brand-grey">정산 예정 (86.7%)</span>
+                <span className="font-bold text-brand-deep">{formatPrice(data.thisMonthPayout)}</span>
+              </div>
+            </div>
+            <p className="text-xs text-brand-grey mt-3">* 매월 1일 마감 기준, 당월 5일 등록 계좌로 입금</p>
+          </div>
+        )}
 
         {/* 이번달 예약 목록 */}
         <div className="mb-8">

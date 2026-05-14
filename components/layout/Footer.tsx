@@ -2,10 +2,36 @@ import Link from 'next/link'
 import Logo from '@/components/brand/Logo'
 import FlowLine from '@/components/brand/FlowLine'
 
+function IconInstagram() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+      <circle cx="12" cy="12" r="4.5"/>
+      <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none"/>
+    </svg>
+  )
+}
+
+function IconKakao() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 3C6.477 3 2 6.582 2 11.002c0 2.838 1.686 5.335 4.236 6.87l-1.079 3.994a.3.3 0 0 0 .46.327l4.603-3.065C10.727 19.043 11.36 19.1 12 19.1c5.523 0 10-3.582 10-8.098C22 6.582 17.523 3 12 3z"/>
+    </svg>
+  )
+}
+
+function IconNaverCafe() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M16.273 12.845 7.376 3H3v18h7.727V11.155l8.897 9.845H24V3h-7.727z"/>
+    </svg>
+  )
+}
+
 const socials = [
-  { label: 'Instagram', href: 'https://instagram.com/authentic_art.rs/', icon: '📷' },
-  { label: 'KakaoTalk', href: 'http://pf.kakao.com/_AaxjDxj', icon: '💬' },
-  { label: '네이버카페', href: 'https://cafe.naver.com/authenticart', icon: '☕' },
+  { label: 'Instagram', href: 'https://instagram.com/authentic_art.rs/', Icon: IconInstagram },
+  { label: 'KakaoTalk', href: 'http://pf.kakao.com/_AaxjDxj', Icon: IconKakao },
+  { label: '네이버카페', href: 'https://cafe.naver.com/authenticart', Icon: IconNaverCafe },
 ]
 
 const footerLinks = [
@@ -40,21 +66,23 @@ export default function Footer() {
           {/* Brand */}
           <div className="md:col-span-2">
             <Logo variant="white" size="md" className="mb-3" />
-            <p className="text-sm text-brand-mist/80 mt-2 leading-relaxed">
-              Starting a second life with Authentic Art<br />
-              레진 공예로 시작하는 예술적 삶
+            <p className="text-xs font-medium text-brand-amber/80 mt-2 tracking-wide uppercase">
+              Starting a second life with authentic Art
             </p>
-            <div className="flex gap-4 mt-4">
-              {socials.map(({ label, href, icon }) => (
+            <p className="text-sm text-brand-mist/80 mt-1 leading-relaxed">
+              진정한 예술로 제2의 삶을 시작하다
+            </p>
+            <div className="flex gap-3 mt-4">
+              {socials.map(({ label, href, Icon }) => (
                 <a
                   key={label}
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-brand-mist hover:text-brand-amber transition-colors text-lg"
                   aria-label={label}
+                  className="w-9 h-9 rounded-xl bg-white/10 hover:bg-brand-amber/20 flex items-center justify-center text-brand-mist hover:text-brand-amber transition-all"
                 >
-                  {icon}
+                  <Icon />
                 </a>
               ))}
             </div>

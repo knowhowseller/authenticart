@@ -34,9 +34,11 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  // /my/* — 로그인 필요
+  // /my/* — 로그인 필요 (원래 경로 보존)
   if (pathname.startsWith('/my') && !user) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(loginUrl)
   }
 
   // /studio/* — instructor 또는 admin
@@ -44,8 +46,8 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url))
   }
 
-  // /admin/* — admin만
-  if (pathname.startsWith('/admin') && role !== 'admin') {
+  // /admin/* — admin 또는 branch_manager
+  if (pathname.startsWith('/admin') && !['admin', 'branch_manager'].includes(role ?? '')) {
     return NextResponse.redirect(new URL('/', request.url))
   }
 

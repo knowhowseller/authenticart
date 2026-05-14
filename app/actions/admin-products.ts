@@ -32,9 +32,12 @@ export async function manageCategory(
   } else if (action === 'rename' && newName) {
     const { error } = await supabase.from('product_categories').update({ name: newName }).eq('name', name)
     if (error) return { error: error.message }
+    // 기존 상품들의 카테고리 필드도 함께 업데이트
+    await supabase.from('products').update({ category: newName }).eq('category', name)
   }
 
   revalidatePath('/admin/products')
+  revalidatePath('/shop')
   const categories = await getCategories(supabase)
   return { categories }
 }

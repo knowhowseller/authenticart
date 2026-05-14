@@ -7,7 +7,7 @@ import { formatPrice, formatDateTime } from '@/lib/utils/format'
 import Button from '@/components/ui/Button'
 import Hexagon from '@/components/brand/Hexagon'
 import WaitlistButton from './WaitlistButton'
-import { Tag, X } from 'lucide-react'
+import { Tag, X, ChevronDown } from 'lucide-react'
 
 interface Schedule {
   id: string
@@ -36,6 +36,11 @@ export default function BookingSection({
   const supabase = createClient()
   const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null)
   const [loading, setLoading] = useState(false)
+  const [showAllSchedules, setShowAllSchedules] = useState(false)
+
+  const VISIBLE_COUNT = 3
+  const visibleSchedules = showAllSchedules ? schedules : schedules.slice(0, VISIBLE_COUNT)
+  const hiddenCount = schedules.length - VISIBLE_COUNT
   const [couponCode, setCouponCode] = useState('')
   const [couponLoading, setCouponLoading] = useState(false)
   const [appliedCoupon, setAppliedCoupon] = useState<{
@@ -71,6 +76,9 @@ export default function BookingSection({
       return
     }
 
+    const { data: profile } = await supabase.from('users').select('name').eq('id', user.id).single()
+    const customerName = profile?.name ?? user.email ?? '고객'
+
     setLoading(true)
     try {
       const res = await fetch('/api/bookings/create', {
@@ -101,7 +109,7 @@ export default function BookingSection({
         amount: finalPrice,
         orderId: bookingData.booking_id,
         orderName: `클래스 예약`,
-        customerName: user.email,
+        customerName,
         successUrl: `${window.location.origin}/api/payments/toss-success?type=booking`,
         failUrl: `${window.location.origin}/payment/fail`,
       })
@@ -133,65 +141,88 @@ export default function BookingSection({
       </div>
 
       {schedules.length > 0 ? (
-        <div className="space-y-2 mb-5">
-          {schedules.map((s) => {
-            const isSoldOut = s.available_seats === 0
-            const isSelected = selectedSchedule?.id === s.id
-            const isWaitlisted = waitlistMap.has(s.id)
-            const waitPosition = waitlistMap.get(s.id)
+        <div className="mb-5">
+          <div className="space-y-2">
+            {visibleSchedules.map((s) => {
+              const isSoldOut = s.available_seats === 0
+              const isSelected = selectedSchedule?.id === s.id
+              const isWaitlisted = waitlistMap.has(s.id)
+              const waitPosition = waitlistMap.get(s.id)
 
-            return (
-              <div key={s.id}>
-                <button
-                  disabled={isSoldOut}
-                  onClick={() => !isSoldOut && setSelectedSchedule(isSelected ? null : s)}
-                  className={`w-full text-left p-3 rounded-xl border transition-all ${
-                    isSoldOut
-                      ? 'border-brand-mist/30 bg-brand-bg cursor-default'
-                      : isSelected
-                      ? 'border-brand-amber bg-brand-amber/5'
-                      : 'border-brand-mist/50 hover:border-brand-deep/30'
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className={`text-sm font-medium ${isSoldOut ? 'text-brand-grey' : 'text-brand-ink'}`}>
-                        {formatDateTime(s.start_at)}
-                      </p>
-                      <p className="text-xs text-brand-grey mt-0.5">
-                        {isSoldOut
-                          ? isWaitlisted
-                            ? `대기 중 (${waitPosition ?? '?'}번째)`
-                            : '마감'
-                          : `잔여 ${s.available_seats}석`}
-                      </p>
+              return (
+                <div key={s.id}>
+                  <button
+                    disabled={isSoldOut}
+                    onClick={() => !isSoldOut && setSelectedSchedule(isSelected ? null : s)}
+                    className={`w-full text-left p-3 rounded-xl border transition-all ${
+                      isSoldOut
+                        ? 'border-brand-mist/30 bg-brand-bg cursor-default'
+                        : isSelected
+                        ? 'border-brand-amber bg-brand-amber/5'
+                        : 'border-brand-mist/50 hover:border-brand-deep/30'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className={`text-sm font-medium ${isSoldOut ? 'text-brand-grey' : 'text-brand-ink'}`}>
+                          {formatDateTime(s.start_at)}
+                        </p>
+                        <p className="text-xs text-brand-grey mt-0.5">
+                          {isSoldOut
+                            ? isWaitlisted
+                              ? `대기 중 (${waitPosition ?? '?'}번째)`
+                              : '마감'
+                            : `잔여 ${s.available_seats}석`}
+                        </p>
+                      </div>
+                      {isSelected && !isSoldOut && (
+                        <span className="text-brand-amber text-xs font-medium">선택됨</span>
+                      )}
+                      {isSoldOut && isWaitlisted && (
+                        <span className="text-xs bg-brand-amber/10 text-brand-amber border border-brand-amber/30 px-2 py-0.5 rounded-full font-medium">
+                          대기 중
+                        </span>
+                      )}
                     </div>
-                    {isSelected && !isSoldOut && (
-                      <span className="text-brand-amber text-xs font-medium">선택됨</span>
-                    )}
-                    {isSoldOut && isWaitlisted && (
-                      <span className="text-xs bg-brand-amber/10 text-brand-amber border border-brand-amber/30 px-2 py-0.5 rounded-full font-medium">
-                        대기 중
-                      </span>
-                    )}
-                  </div>
-                </button>
+                  </button>
 
-                {isSoldOut && (
-                  <div className="mt-1.5 px-1">
-                    <WaitlistButton
-                      scheduleId={s.id}
-                      initialWaitlisted={isWaitlisted}
-                      initialPosition={waitPosition}
-                    />
-                  </div>
-                )}
-              </div>
-            )
-          })}
+                  {isSoldOut && (
+                    <div className="mt-1.5 px-1">
+                      <WaitlistButton
+                        scheduleId={s.id}
+                        initialWaitlisted={isWaitlisted}
+                        initialPosition={waitPosition}
+                      />
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          {hiddenCount > 0 && (
+            <button
+              onClick={() => setShowAllSchedules(v => !v)}
+              className="w-full mt-2 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-brand-grey hover:text-brand-deep border border-brand-mist/50 hover:border-brand-deep/30 rounded-xl transition-all"
+            >
+              <ChevronDown size={14} className={`transition-transform duration-200 ${showAllSchedules ? 'rotate-180' : ''}`} />
+              {showAllSchedules ? '접기' : `나머지 ${hiddenCount}개 회차 더 보기`}
+            </button>
+          )}
         </div>
       ) : (
-        <p className="text-sm text-brand-grey text-center py-6">예정된 회차가 없습니다</p>
+        <div className="py-6 text-center">
+          <p className="text-sm text-brand-grey mb-3">현재 예정된 회차가 없습니다</p>
+          <a
+            href="http://pf.kakao.com/_AaxjDxj"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-deep border border-brand-deep/20 bg-brand-deep/5 hover:bg-brand-deep/10 px-4 py-2 rounded-xl transition-colors"
+          >
+            💬 강사에게 회차 요청하기
+          </a>
+          <p className="text-[11px] text-brand-grey/60 mt-2">카카오 채널로 연결됩니다</p>
+        </div>
       )}
 
       {!allSoldOut && (
@@ -274,9 +305,11 @@ export default function BookingSection({
           </Button>
 
           {confirmationMode === 'request' && (
-            <p className="text-xs text-brand-grey text-center mt-2">
-              강사가 24시간 내 응답합니다
-            </p>
+            <div className="mt-3 bg-brand-bg rounded-xl px-4 py-3 text-xs text-brand-grey space-y-1">
+              <p>• 강사가 <strong className="text-brand-ink">24시간 내</strong> 승인/거절 응답합니다</p>
+              <p>• 승인 후 결제 링크가 발송되며, <strong className="text-brand-ink">48시간 내 미결제 시 자동 취소</strong>됩니다</p>
+              <p>• 거절 시 별도 안내드립니다</p>
+            </div>
           )}
         </>
       )}

@@ -75,7 +75,12 @@ export default function ArtworkDetailPage() {
   }
 
   if (loading) return <div className="min-h-screen bg-brand-bg flex items-center justify-center"><p className="text-brand-grey text-sm">불러오는 중...</p></div>
-  if (!artwork) return <div className="min-h-screen bg-brand-bg flex items-center justify-center"><p className="text-brand-grey">작품을 찾을 수 없습니다</p></div>
+  if (!artwork) return (
+    <div className="min-h-screen bg-brand-bg flex items-center justify-center flex-col gap-4">
+      <p className="text-brand-grey">작품을 찾을 수 없습니다</p>
+      <Link href="/artworks" className="text-sm text-brand-deep hover:underline">← 작품 마켓으로 돌아가기</Link>
+    </div>
+  )
 
   const seller = artwork.users
   const images: string[] = artwork.images ?? []

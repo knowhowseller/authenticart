@@ -9,19 +9,35 @@ export default async function AdminInstructorsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
   const { data: u } = await supabase.from('users').select('role').eq('id', user.id).single()
-  if (u?.role !== 'admin') redirect('/')
+  const role = u?.role ?? ''
+  if (!['admin', 'branch_manager'].includes(role)) redirect('/')
 
-  const { data: pending } = await supabase
+  // 지부장이면 자신의 지부 ID만 조회
+  let branchId: string | null = null
+  if (role === 'branch_manager') {
+    const { data: branch } = await supabase
+      .from('branches')
+      .select('id')
+      .eq('manager_id', user.id)
+      .maybeSingle()
+    branchId = branch?.id ?? null
+  }
+
+  const pendingQ = supabase
     .from('instructor_profiles')
     .select('*, users!instructor_id(name, email)')
     .eq('status', 'pending')
     .order('created_at', { ascending: true })
+  if (branchId) pendingQ.eq('branch_id', branchId)
+  const { data: pending } = await pendingQ
 
-  const { data: approved } = await supabase
+  const approvedQ = supabase
     .from('instructor_profiles')
     .select('*, users!instructor_id(name, email)')
     .eq('status', 'approved')
     .order('approved_at', { ascending: false })
+  if (branchId) approvedQ.eq('branch_id', branchId)
+  const { data: approved } = await approvedQ
 
   return (
     <div className="min-h-screen bg-brand-bg">
@@ -30,7 +46,17 @@ export default async function AdminInstructorsPage() {
           <Hexagon color="amber" size={16} />
           <span className="text-xs font-medium text-brand-amber uppercase tracking-wider">Admin</span>
         </div>
-        <h1 className="text-2xl font-bold text-brand-ink mb-8">강사 관리</h1>
+        <h1 className="text-2xl font-bold text-brand-ink mb-4">강사 관리</h1>
+        {role === 'branch_manager' && !branchId && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 mb-6 text-sm text-yellow-700">
+            ⚠️ 아직 배정된 지부가 없습니다. 관리자에게 지부 배정을 요청해주세요.
+          </div>
+        )}
+        {role === 'branch_manager' && branchId && (
+          <div className="bg-brand-deep/5 border border-brand-deep/10 rounded-xl px-4 py-2.5 mb-6 text-sm text-brand-deep">
+            내 지부 강사만 표시됩니다
+          </div>
+        )}
 
         {/* 신청 대기 */}
         {pending && pending.length > 0 && (

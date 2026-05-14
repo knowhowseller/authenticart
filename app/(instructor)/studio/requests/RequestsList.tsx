@@ -47,6 +47,8 @@ function CountDown({ expiresAt }: { expiresAt: string }) {
 export default function RequestsList({ initialRequests }: { initialRequests: Request[] }) {
   const [requests, setRequests] = useState(initialRequests)
   const [processing, setProcessing] = useState<string | null>(null)
+  const [rejectingId, setRejectingId] = useState<string | null>(null)
+  const [rejectReason, setRejectReason] = useState('')
 
   async function handleApprove(bookingId: string) {
     setProcessing(bookingId)
@@ -64,19 +66,27 @@ export default function RequestsList({ initialRequests }: { initialRequests: Req
     }
   }
 
-  async function handleReject(bookingId: string) {
-    const reason = window.prompt('거절 사유를 입력하세요')
-    if (!reason) return
+  function openReject(bookingId: string) {
+    setRejectingId(bookingId)
+    setRejectReason('')
+  }
+
+  async function confirmReject(bookingId: string) {
+    if (!rejectReason.trim()) {
+      toast.error('거절 사유를 입력해주세요')
+      return
+    }
     setProcessing(bookingId)
     const res = await fetch('/api/bookings/reject', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ booking_id: bookingId, reason }),
+      body: JSON.stringify({ booking_id: bookingId, reason: rejectReason.trim() }),
     })
     setProcessing(null)
     if (res.ok) {
-      toast.success('예약 신청을 거절했습니다')
+      toast.success('예약 신청을 거절했습니다. 수강생에게 사유가 전달됩니다.')
       setRequests(prev => prev.filter(r => r.id !== bookingId))
+      setRejectingId(null)
     } else {
       toast.error('처리 중 오류가 발생했습니다')
     }
@@ -93,58 +103,94 @@ export default function RequestsList({ initialRequests }: { initialRequests: Req
 
   return (
     <div className="space-y-4">
-      {requests.map((req) => (
-        <div key={req.id} className="bg-white rounded-2xl p-5 shadow-sm border border-brand-mist/30">
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <div>
-              <p className="font-semibold text-brand-ink">
-                {req.class_schedules?.classes?.title ?? '클래스'}
-              </p>
-              <p className="text-sm text-brand-grey mt-0.5">
-                {req.class_schedules?.start_at && formatDateTime(req.class_schedules.start_at)}
-              </p>
+      {requests.map((req) => {
+        const isRejecting = rejectingId === req.id
+        return (
+          <div key={req.id} className="bg-white rounded-2xl p-5 shadow-sm border border-brand-mist/30">
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div>
+                <p className="font-semibold text-brand-ink">
+                  {req.class_schedules?.classes?.title ?? '클래스'}
+                </p>
+                <p className="text-sm text-brand-grey mt-0.5">
+                  {req.class_schedules?.start_at && formatDateTime(req.class_schedules.start_at)}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="font-bold text-brand-deep">{formatPrice(req.gross_amount)}</p>
+              </div>
             </div>
-            <div className="text-right">
-              <p className="font-bold text-brand-deep">{formatPrice(req.gross_amount)}</p>
-            </div>
-          </div>
 
-          <div className="flex items-center justify-between text-sm mb-4">
-            <div>
-              <p className="text-brand-ink font-medium">{req.users?.name}</p>
-              <p className="text-brand-grey text-xs">{req.users?.email}</p>
-              {req.users?.phone && (
-                <p className="text-brand-grey text-xs mt-0.5">{req.users.phone}</p>
-              )}
+            <div className="flex items-center justify-between text-sm mb-4">
+              <div>
+                <p className="text-brand-ink font-medium">{req.users?.name}</p>
+                <p className="text-brand-grey text-xs">{req.users?.email}</p>
+                {req.users?.phone && (
+                  <p className="text-brand-grey text-xs mt-0.5">{req.users.phone}</p>
+                )}
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-brand-grey mb-0.5">응답 남은 시간</p>
+                {req.approval_expires_at && <CountDown expiresAt={req.approval_expires_at} />}
+              </div>
             </div>
-            <div className="text-right">
-              <p className="text-xs text-brand-grey mb-0.5">응답 남은 시간</p>
-              {req.approval_expires_at && <CountDown expiresAt={req.approval_expires_at} />}
-            </div>
-          </div>
 
-          <div className="flex gap-2">
-            <Button
-              variant="accent"
-              size="sm"
-              className="flex-1"
-              loading={processing === req.id}
-              onClick={() => handleApprove(req.id)}
-            >
-              수락
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1"
-              loading={processing === req.id}
-              onClick={() => handleReject(req.id)}
-            >
-              거절
-            </Button>
+            {isRejecting ? (
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-brand-grey">거절 사유 <span className="text-red-500">*</span></label>
+                <textarea
+                  value={rejectReason}
+                  onChange={e => setRejectReason(e.target.value)}
+                  rows={2}
+                  placeholder="예: 해당 일정에 다른 클래스가 있어 수락이 어렵습니다"
+                  className="w-full px-3 py-2 text-sm border border-brand-mist rounded-xl focus:outline-none focus:ring-2 focus:ring-red-300 resize-none"
+                  autoFocus
+                />
+                <p className="text-xs text-brand-grey">수강생에게 이 사유가 전달됩니다</p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="flex-1 !bg-red-500 hover:!bg-red-600 border-red-500"
+                    loading={processing === req.id}
+                    onClick={() => confirmReject(req.id)}
+                  >
+                    거절 확인
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => { setRejectingId(null); setRejectReason('') }}
+                  >
+                    취소
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Button
+                  variant="accent"
+                  size="sm"
+                  className="flex-1"
+                  loading={processing === req.id}
+                  onClick={() => handleApprove(req.id)}
+                >
+                  수락
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => openReject(req.id)}
+                >
+                  거절
+                </Button>
+              </div>
+            )}
           </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

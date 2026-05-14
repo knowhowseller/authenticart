@@ -9,7 +9,7 @@ async function getPost(id: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  await supabase.from('board_posts').update({ view_count: supabase.rpc('increment' as any, { x: 1 }) as any }).eq('id', id)
+  await supabase.rpc('increment_board_view_count' as any, { p_id: id })
 
   const [{ data: post }, { data: replies }, { data: userData }] = await Promise.all([
     supabase.from('board_posts').select('*').eq('id', id).single(),

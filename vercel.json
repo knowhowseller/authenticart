@@ -1,3 +1,33 @@
 {
-"version": 2
+  "version": 2,
+  "crons": [
+    {
+      "path": "/api/cron/expire-bookings",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/escrow-auto-confirm",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/monthly-payout",
+      "schedule": "0 2 1 * *"
+    },
+    {
+      "path": "/api/cron/vendor-payouts",
+      "schedule": "0 3 1 * *"
+    },
+    {
+      "path": "/api/cron/agency-payouts",
+      "schedule": "0 4 1 * *"
+    },
+    {
+      "path": "/api/cron/branch-payouts",
+      "schedule": "0 5 1 * *"
+    },
+    {
+      "path": "/api/cron/artwork-rate-refresh",
+      "schedule": "0 6 1 * *"
+    }
+  ]
 }

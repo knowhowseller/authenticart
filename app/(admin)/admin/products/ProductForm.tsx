@@ -2,7 +2,7 @@
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { X, Upload, ImageIcon } from 'lucide-react'
+import { X, Upload, ImageIcon, Sparkles } from 'lucide-react'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import { createClient } from '@/lib/supabase/client'
@@ -30,6 +30,7 @@ export default function ProductForm({ mode, product, categories }: ProductFormPr
 
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [aiLoading, setAiLoading] = useState(false)
   const [name, setName] = useState(product?.name ?? '')
   const [category, setCategory] = useState(product?.category ?? '')
   const [description, setDescription] = useState(product?.description ?? '')
@@ -71,6 +72,21 @@ export default function ProductForm({ mode, product, categories }: ProductFormPr
     setPreview(publicUrl)
     setUploading(false)
     toast.success('이미지 업로드 완료')
+  }
+
+  async function generateDescription() {
+    if (!thumbnailUrl) { toast.error('먼저 이미지를 업로드해주세요'); return }
+    setAiLoading(true)
+    const res = await fetch('/api/ai/describe-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageUrl: thumbnailUrl, type: 'product' }),
+    })
+    const data = await res.json()
+    setAiLoading(false)
+    if (!res.ok) { toast.error(data.error ?? 'AI 생성 실패'); return }
+    setDescription(data.description)
+    toast.success('AI 설명이 생성되었습니다. 내용을 확인하고 수정해주세요.')
   }
 
   function handleRemoveImage() {
@@ -204,12 +220,23 @@ export default function ProductForm({ mode, product, categories }: ProductFormPr
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-brand-ink">상품 설명</label>
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium text-brand-ink">상품 설명</label>
+          <button
+            type="button"
+            onClick={generateDescription}
+            disabled={aiLoading || !thumbnailUrl}
+            className="flex items-center gap-1.5 text-xs font-medium text-brand-amber hover:text-brand-amber/80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            <Sparkles size={13} />
+            {aiLoading ? 'AI 생성 중...' : 'AI 설명 자동 생성'}
+          </button>
+        </div>
         <textarea
           value={description}
           onChange={e => setDescription(e.target.value)}
           rows={3}
-          placeholder="상품 설명을 입력해주세요"
+          placeholder="상품 설명을 입력하거나 AI로 자동 생성하세요"
           className="w-full px-3.5 py-2.5 rounded-lg border border-brand-mist text-sm resize-none focus:outline-none focus:ring-2 focus:ring-brand-amber"
         />
       </div>

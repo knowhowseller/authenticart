@@ -53,7 +53,7 @@ export default async function StudioPayoutsPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center mb-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center mb-3">
                   {[
                     { label: '총 매출', value: formatPrice(p.total_gross) },
                     { label: 'PG 수수료', value: `-${formatPrice(p.total_pg_fee)}` },
@@ -69,8 +69,25 @@ export default async function StudioPayoutsPage() {
                   ))}
                 </div>
 
+                {(p.total_agency_fee > 0 || p.total_artwork_payout > 0) && (
+                  <div className="grid grid-cols-2 gap-3 text-center mb-3">
+                    {p.total_agency_fee > 0 && (
+                      <div className="bg-orange-50 rounded-lg p-2.5">
+                        <p className="text-xs text-orange-600">에이전시 수수료</p>
+                        <p className="text-sm text-orange-700 mt-0.5">-{formatPrice(p.total_agency_fee)}</p>
+                      </div>
+                    )}
+                    {p.total_artwork_payout > 0 && (
+                      <div className="bg-purple-50 rounded-lg p-2.5">
+                        <p className="text-xs text-purple-600">작품 판매 수익</p>
+                        <p className="text-sm text-purple-700 mt-0.5">+{formatPrice(p.total_artwork_payout)}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between text-xs text-brand-grey pt-3 border-t border-brand-mist/30">
-                  <span>예약 {p.booking_count}건 · 주문 {p.order_count}건</span>
+                  <span>예약 {p.booking_count}건 · 주문 {p.order_count}건{p.artwork_order_count > 0 ? ` · 작품 ${p.artwork_order_count}건` : ''}</span>
                   {p.paid_at && <span>입금일: {new Date(p.paid_at).toLocaleDateString('ko-KR')}</span>}
                 </div>
               </div>

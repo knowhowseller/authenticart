@@ -46,13 +46,8 @@ async function getUserRole() {
 
 async function getCategories() {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from('products')
-    .select('category')
-    .eq('is_active', true)
-    .not('category', 'is', null)
-  const cats = [...new Set((data ?? []).map((p: any) => p.category).filter(Boolean))]
-  return cats as string[]
+  const { data } = await supabase.from('product_categories').select('name').order('id')
+  return (data ?? []).map((r: any) => r.name as string)
 }
 
 export default async function ShopPage({ searchParams }: { searchParams: Promise<SearchParams> }) {

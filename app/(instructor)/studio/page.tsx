@@ -5,6 +5,15 @@ import { formatPrice, formatDateTime } from '@/lib/utils/format'
 import Hexagon from '@/components/brand/Hexagon'
 import { BookOpen, Calendar, Clock, TrendingUp, Star, Users } from 'lucide-react'
 
+async function getClassCount(userId: string) {
+  const supabase = await createClient()
+  const { count } = await supabase
+    .from('classes')
+    .select('*', { count: 'exact', head: true })
+    .eq('instructor_id', userId)
+  return count ?? 0
+}
+
 async function getStudioStats(userId: string) {
   const supabase = await createClient()
   const now = new Date()
@@ -73,7 +82,10 @@ export default async function StudioPage() {
   const { data: userData } = await supabase.from('users').select('role, name').eq('id', user.id).single()
   if (!['instructor', 'admin'].includes(userData?.role ?? '')) redirect('/')
 
-  const stats = await getStudioStats(user.id)
+  const [stats, classCount] = await Promise.all([
+    getStudioStats(user.id),
+    getClassCount(user.id),
+  ])
 
   const cards = [
     {
@@ -123,6 +135,35 @@ export default async function StudioPage() {
             </div>
           )}
         </div>
+
+        {/* 신규 강사 온보딩 */}
+        {classCount === 0 && (
+          <div className="bg-brand-deep text-white rounded-2xl p-5 mb-6">
+            <p className="text-sm font-bold mb-1">🎉 오센틱아트 강사가 되신 걸 환영합니다!</p>
+            <p className="text-xs text-brand-mist/80 mb-4">첫 클래스를 등록하고 수강생을 모집해보세요.</p>
+            <ol className="text-xs text-brand-mist/90 space-y-2 mb-4">
+              {[
+                { step: '1', label: '⚙️ 프로필 사진 & 정산 계좌 등록', href: '/studio/settings' },
+                { step: '2', label: '✏️ 첫 클래스 등록 (검수 1~2 영업일)', href: '/studio/classes/new' },
+                { step: '3', label: '🗓️ 회차(일정) 추가', href: '/studio/schedules' },
+                { step: '4', label: '🎯 수강생 예약 오픈!', href: null },
+              ].map(({ step, label, href }) => (
+                <li key={step} className="flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold flex-shrink-0">{step}</span>
+                  {href ? (
+                    <Link href={href} className="hover:text-brand-amber transition-colors underline underline-offset-2">{label}</Link>
+                  ) : (
+                    <span className="text-brand-mist/60">{label}</span>
+                  )}
+                </li>
+              ))}
+            </ol>
+            <Link href="/studio/classes/new"
+              className="inline-block px-4 py-2 bg-brand-amber text-brand-ink text-sm font-bold rounded-xl hover:bg-brand-amber/90 transition-colors">
+              첫 클래스 등록하기 →
+            </Link>
+          </div>
+        )}
 
         {/* 대기 알림 */}
         {stats.pendingRequests > 0 && (
@@ -206,6 +247,7 @@ export default async function StudioPage() {
             { href: '/studio/payouts', label: '정산 조회', icon: '💰' },
             { href: '/studio/earnings', label: '수입 현황', icon: '📈' },
             { href: '/studio/class-requests', label: '클래스 요청 관리', icon: '🙋' },
+            { href: '/studio/agency', label: '에이전시', icon: '🏢' },
             { href: '/studio/settings', label: '프로필 & 계좌', icon: '⚙️' },
           ].map(({ href, label, icon }) => (
             <Link

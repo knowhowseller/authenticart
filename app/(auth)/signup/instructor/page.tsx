@@ -12,6 +12,16 @@ import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Hexagon from '@/components/brand/Hexagon'
 
+const CRAFT_TYPES = [
+  { value: 'resin', label: '레진아트' },
+  { value: 'candle', label: '캔들' },
+  { value: 'flower', label: '플라워' },
+  { value: 'ceramic', label: '도자기' },
+  { value: 'jewelry', label: '주얼리' },
+  { value: 'fabric', label: '패브릭' },
+  { value: 'other', label: '기타' },
+]
+
 const schema = z.object({
   name: z.string().min(2, '이름은 2자 이상이어야 합니다'),
   email: z.string().email('올바른 이메일을 입력해주세요'),
@@ -19,8 +29,10 @@ const schema = z.object({
   phone: z.string().min(10, '연락처를 입력해주세요'),
   region: z.string().min(1, '활동 지역을 선택해주세요'),
   branch_id: z.string().optional(),
+  craft_types: z.array(z.string()).min(1, '전문 공예 분야를 1개 이상 선택해주세요'),
   bio: z.string().min(30, '자기소개는 30자 이상 입력해주세요').max(500),
   agree_terms: z.literal(true, { error: '약관에 동의해주세요' }),
+  agree_payout: z.literal(true, { error: '정산 약관에 동의해주세요' }),
 })
 type FormData = z.infer<typeof schema>
 
@@ -74,7 +86,8 @@ export default function InstructorSignupPage() {
         bio: data.bio,
         region: data.region,
         branch_id: data.branch_id || null,
-      })
+        craft_types: data.craft_types,
+      } as any)
 
     setLoading(false)
     if (profileError) {
@@ -111,6 +124,15 @@ export default function InstructorSignupPage() {
           <p className="text-xs text-brand-grey mt-3">
             * 관리자 검토 후 1~3 영업일 내 승인 처리됩니다.
           </p>
+          <div className="mt-3 pt-3 border-t border-brand-deep/10">
+            <p className="text-xs font-semibold text-brand-deep mb-2">승인 후 시작 순서</p>
+            <ol className="text-xs text-brand-grey space-y-1 list-decimal list-inside">
+              <li>승인 이메일 수신 → 스튜디오 접속</li>
+              <li>프로필 사진 & 정산 계좌 등록</li>
+              <li>첫 클래스 등록 (검수 1~2 영업일)</li>
+              <li>회차 추가 → 수강생 예약 오픈</li>
+            </ol>
+          </div>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-brand-mist/30 p-8">
@@ -151,6 +173,31 @@ export default function InstructorSignupPage() {
               </div>
             </div>
 
+            {/* 전문 공예 분야 */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-brand-ink">
+                전문 공예 분야 <span className="text-brand-amber">*</span>
+                <span className="text-xs font-normal text-brand-grey ml-1">(복수 선택 가능)</span>
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {CRAFT_TYPES.map(ct => {
+                  const fieldName = 'craft_types' as const
+                  return (
+                    <label key={ct.value} className="flex items-center gap-1.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        value={ct.value}
+                        {...register(fieldName)}
+                        className="accent-brand-amber"
+                      />
+                      <span className="text-sm text-brand-ink">{ct.label}</span>
+                    </label>
+                  )
+                })}
+              </div>
+              {errors.craft_types && <p className="text-xs text-red-500">{errors.craft_types.message}</p>}
+            </div>
+
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-brand-ink">
                 자기소개 <span className="text-brand-amber">*</span>
@@ -164,15 +211,32 @@ export default function InstructorSignupPage() {
               {errors.bio && <p className="text-xs text-red-500">{errors.bio.message}</p>}
             </div>
 
-            <label className="flex items-start gap-2 cursor-pointer">
-              <input type="checkbox" {...register('agree_terms')} className="mt-0.5 accent-brand-amber" />
-              <span className="text-sm text-brand-grey">
-                <Link href="/terms" className="underline text-brand-ink">이용약관</Link>,{' '}
-                <Link href="/privacy" className="underline text-brand-ink">개인정보처리방침</Link>,{' '}
-                강사 정산 약관에 동의합니다 <span className="text-brand-amber">*</span>
-              </span>
-            </label>
-            {errors.agree_terms && <p className="text-xs text-red-500">{errors.agree_terms.message}</p>}
+            {/* 약관 동의 */}
+            <div className="space-y-2">
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input type="checkbox" {...register('agree_terms')} className="mt-0.5 accent-brand-amber" />
+                <span className="text-sm text-brand-grey">
+                  <Link href="/terms" className="underline text-brand-ink">이용약관</Link>,{' '}
+                  <Link href="/privacy" className="underline text-brand-ink">개인정보처리방침</Link>에 동의합니다
+                  <span className="text-brand-amber"> *</span>
+                </span>
+              </label>
+              {errors.agree_terms && <p className="text-xs text-red-500">{errors.agree_terms.message}</p>}
+
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input type="checkbox" {...register('agree_payout')} className="mt-0.5 accent-brand-amber" />
+                <span className="text-sm text-brand-grey">
+                  강사 정산 약관에 동의합니다
+                  <span className="text-brand-amber"> *</span>
+                </span>
+              </label>
+              <div className="ml-5 bg-brand-bg rounded-xl p-3 text-xs text-brand-grey space-y-0.5">
+                <p>• 정산율: <strong className="text-brand-ink">결제금액의 86.7%</strong> (PG수수료 3.3% + 플랫폼수수료 10% 공제)</p>
+                <p>• 정산 주기: 매월 1일 마감 → 당월 5일 등록 계좌 입금</p>
+                <p>• 환불 발생 시 해당 정산액에서 차감</p>
+              </div>
+              {errors.agree_payout && <p className="text-xs text-red-500">{errors.agree_payout.message}</p>}
+            </div>
 
             <Button type="submit" loading={loading} className="w-full" size="lg">
               강사 신청하기
