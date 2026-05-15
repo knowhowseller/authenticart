@@ -166,15 +166,7 @@ INSERT INTO public.class_schedules (class_id, start_at, end_at, max_students, bo
   ('c0000000-0000-0000-0000-000000000003', now() + interval '19 days' + interval '11 hours', now() + interval '19 days' + interval '13 hours', 5, 0);
 
 -- ─────────────────────────────────────────────
--- 6. products
+-- 6. products (seed disabled — managed via admin panel)
 -- ─────────────────────────────────────────────
-INSERT INTO public.products (name, description, category, retail_price, wholesale_price, is_instructor_only, stock_qty, images, is_active) VALUES
-  ('UV 레진 500g (하드)',       '고강도 UV 경화 레진. 투명도 높음.',              '레진',   28000,  18000, false, 50,  '[]'::jsonb, true),
-  ('AB형 레진 세트 1kg',        '에폭시 AB형 레진 1:1 혼합 세트. 48h 경화.',     '레진',   45000,  30000, false, 30,  '[]'::jsonb, true),
-  ('레진 피그먼트 12색 세트',   '불투명 펄 피그먼트 12색. 10g×12개입.',          '색소',   22000,  14000, false, 80,  '[]'::jsonb, true),
-  ('레진용 글리터 믹스 10종',   '홀로그램+유니콘+별자리 글리터 10종 세트.',       '장식재', 15000,   9500, false, 100, '[]'::jsonb, true),
-  ('실리콘 몰드 코스터 4구',    '4구 원형 코스터 몰드. 재사용 가능.',             '몰드',   12000,   7500, false, 60,  '[]'::jsonb, true),
-  ('실리콘 몰드 귀걸이 세트',   '다양한 형태의 귀걸이 몰드 20종 세트.',           '몰드',   18000,  11000, false, 45,  '[]'::jsonb, true),
-  ('강사 전용 UV램프 36W (프로)', '전문 강사용 고출력 UV 경화기. 36W.',           '장비',   89000,  55000, true,  15,  '[]'::jsonb, true),
-  ('레진 색소 마스터팩 30색',   '강사 전용 30색 대용량 색소 세트. 20g×30.',      '색소',  120000,  75000, true,  20,  '[]'::jsonb, true)
-ON CONFLICT DO NOTHING;
+-- 상품 시드 데이터는 관리자 패널에서 직접 등록합니다.
+-- 이 블록을 재실행해도 아무것도 삽입되지 않습니다.
