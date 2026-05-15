@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import Hexagon from '@/components/brand/Hexagon'
-import { Store, Package, ChevronRight, Mail } from 'lucide-react'
+import { Store, Package, ChevronRight, Mail, Users, Award } from 'lucide-react'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -52,11 +52,11 @@ export default async function StoresPage() {
               <p className="text-brand-grey text-sm mt-1">오센틱아트와 함께하는 공예 재료 전문 스토어</p>
             </div>
             <Link
-              href="mailto:authenticresinmaster@gmail.com?subject=입점 문의"
-              className="hidden md:flex items-center gap-2 px-4 py-2 border border-brand-deep text-brand-deep text-sm font-medium rounded-full hover:bg-brand-deep hover:text-white transition-colors"
+              href="/my/vendor/apply"
+              className="hidden md:flex items-center gap-2 px-4 py-2 bg-brand-deep text-white text-sm font-medium rounded-full hover:bg-brand-deep/90 transition-colors"
             >
-              <Mail size={14} />
-              입점 문의하기
+              <Store size={14} />
+              벤더 입점 신청
             </Link>
           </div>
         </div>
@@ -65,6 +65,7 @@ export default async function StoresPage() {
       <div className="max-w-6xl mx-auto px-4 py-10">
         {vendors.length === 0 ? (
           /* 입점사 없을 때 */
+          <>
           <div className="max-w-xl mx-auto text-center py-20">
             <div className="w-20 h-20 rounded-2xl bg-brand-deep/5 flex items-center justify-center mx-auto mb-6">
               <Store size={36} className="text-brand-deep/40" />
@@ -90,14 +91,46 @@ export default async function StoresPage() {
               ))}
             </div>
 
+            <div className="flex gap-3 justify-center flex-wrap">
+              <Link
+                href="/my/vendor/apply"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-brand-deep text-white rounded-full text-sm font-semibold hover:bg-brand-deep/90 transition-colors"
+              >
+                <Store size={15} />
+                벤더 입점 신청하기
+              </Link>
+              <Link
+                href="mailto:authenticresinmaster@gmail.com?subject=입점 문의"
+                className="inline-flex items-center gap-2 px-6 py-3 border border-brand-deep text-brand-deep rounded-full text-sm font-medium hover:bg-brand-deep/5 transition-colors"
+              >
+                <Mail size={15} />
+                이메일 문의
+              </Link>
+            </div>
+          </div>
+
+          {/* 에이전시 신청 섹션 */}
+          <div className="max-w-xl mx-auto mt-12 bg-brand-deep/5 border border-brand-deep/15 rounded-2xl p-8 text-center">
+            <div className="w-14 h-14 rounded-xl bg-brand-deep/10 flex items-center justify-center mx-auto mb-4">
+              <Users size={28} className="text-brand-deep/60" />
+            </div>
+            <h3 className="text-lg font-bold text-brand-ink mb-2">에이전시 파트너 신청</h3>
+            <p className="text-sm text-brand-grey leading-relaxed mb-2">
+              공방·스튜디오·에이전시 단위로 소속 강사를 모집하고<br />
+              플랫폼에서 통합 관리할 수 있습니다.
+            </p>
+            <p className="text-xs text-brand-grey/70 mb-6">
+              ※ 에이전시 신청은 오센틱아트 인증 강사만 가능합니다
+            </p>
             <Link
-              href="mailto:authenticresinmaster@gmail.com?subject=입점 문의"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-brand-deep text-white rounded-full text-sm font-medium hover:bg-brand-deep/90 transition-colors"
+              href="/studio/agency/apply"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-brand-amber text-brand-ink rounded-full text-sm font-semibold hover:bg-brand-amber/90 transition-colors"
             >
-              <Mail size={15} />
-              입점 문의하기
+              <Award size={15} />
+              에이전시 신청하기 (강사 전용)
             </Link>
           </div>
+          </>
         ) : (
           <>
             <p className="text-sm text-brand-grey mb-6">
@@ -148,17 +181,41 @@ export default async function StoresPage() {
               ))}
             </div>
 
-            {/* 하단 입점 문의 배너 */}
-            <div className="mt-12 bg-brand-deep rounded-2xl p-6 text-center text-white">
-              <p className="font-bold mb-1">공예 재료 전문 업체이신가요?</p>
-              <p className="text-sm text-brand-mist/80 mb-4">오센틱아트 입점으로 강사·수강생 고객을 만나보세요</p>
-              <Link
-                href="mailto:authenticresinmaster@gmail.com?subject=입점 문의"
-                className="inline-flex items-center gap-2 px-5 py-2 bg-brand-amber text-brand-ink text-sm font-bold rounded-full hover:bg-brand-amber/90 transition-colors"
-              >
-                <Mail size={14} />
-                입점 문의하기
-              </Link>
+            {/* 하단 입점/에이전시 배너 */}
+            <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="bg-brand-deep rounded-2xl p-6 text-white">
+                <Store size={22} className="text-brand-amber mb-3" />
+                <p className="font-bold mb-1">공예 재료 전문 업체이신가요?</p>
+                <p className="text-sm text-brand-mist/80 mb-4">오센틱아트 입점으로 강사·수강생 고객을 만나보세요</p>
+                <div className="flex gap-2 flex-wrap">
+                  <Link
+                    href="/my/vendor/apply"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-amber text-brand-ink text-sm font-bold rounded-full hover:bg-brand-amber/90 transition-colors"
+                  >
+                    <Store size={13} />
+                    벤더 신청하기
+                  </Link>
+                  <Link
+                    href="mailto:authenticresinmaster@gmail.com?subject=입점 문의"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-white/10 text-white text-sm font-medium rounded-full hover:bg-white/20 transition-colors"
+                  >
+                    <Mail size={13} />
+                    이메일 문의
+                  </Link>
+                </div>
+              </div>
+              <div className="bg-brand-deep/10 border border-brand-deep/20 rounded-2xl p-6">
+                <Users size={22} className="text-brand-deep mb-3" />
+                <p className="font-bold text-brand-ink mb-1">에이전시 파트너 신청</p>
+                <p className="text-sm text-brand-grey mb-4">공방·스튜디오·에이전시 단위로 강사를 모집하고 통합 관리하세요</p>
+                <Link
+                  href="/studio/agency/apply"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-deep text-white text-sm font-bold rounded-full hover:bg-brand-deep/90 transition-colors"
+                >
+                  <Award size={13} />
+                  에이전시 신청 (강사 전용)
+                </Link>
+              </div>
             </div>
           </>
         )}
