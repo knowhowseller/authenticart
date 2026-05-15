@@ -1,18 +1,50 @@
 import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import ProductCard from '@/components/shop/ProductCard'
-import ShopFilterBar from '@/components/shop/ShopFilterBar'
+import ShopFilterBar, { CategoryNode } from '@/components/shop/ShopFilterBar'
 import Hexagon from '@/components/brand/Hexagon'
 import Link from 'next/link'
 import { Store } from 'lucide-react'
 
 interface SearchParams {
-  category?: string
+  parent?: string
+  sub?: string
   sort?: string
   q?: string
 }
 
-async function getProductsWithPrices(role: string, params: SearchParams) {
+async function getCategories(): Promise<CategoryNode[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('product_categories')
+    .select('id, name, parent_id, sort_order')
+    .order('sort_order')
+
+  if (!data) return []
+
+  const parents = (data as any[]).filter(d => !d.parent_id)
+  return parents.map(p => ({
+    name: p.name as string,
+    children: (data as any[])
+      .filter(d => d.parent_id === p.id)
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map(c => c.name as string),
+  }))
+}
+
+async function getUserRole() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return 'guest'
+  const { data } = await supabase.from('users').select('role').eq('id', user.id).single()
+  return data?.role ?? 'user'
+}
+
+async function getProductsWithPrices(
+  role: string,
+  params: SearchParams,
+  categoryFilter: string[] | null,
+) {
   const supabase = await createClient()
   let query = supabase
     .from('products')
@@ -20,7 +52,14 @@ async function getProductsWithPrices(role: string, params: SearchParams) {
     .eq('is_active', true)
 
   if (params.q) query = query.ilike('name', `%${params.q}%`)
-  if (params.category) query = query.eq('category', params.category)
+
+  if (categoryFilter) {
+    if (categoryFilter.length === 1) {
+      query = query.eq('category', categoryFilter[0])
+    } else {
+      query = (query as any).in('category', categoryFilter)
+    }
+  }
 
   if (params.sort === 'price_asc') query = query.order('retail_price', { ascending: true })
   else if (params.sort === 'price_desc') query = query.order('retail_price', { ascending: false })
@@ -38,27 +77,28 @@ async function getProductsWithPrices(role: string, params: SearchParams) {
   }))
 }
 
-async function getUserRole() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return 'guest'
-  const { data } = await supabase.from('users').select('role').eq('id', user.id).single()
-  return data?.role ?? 'user'
-}
-
-async function getCategories() {
-  const supabase = await createClient()
-  const { data } = await supabase.from('product_categories').select('name').order('id')
-  return (data ?? []).map((r: any) => r.name as string)
-}
-
 export default async function ShopPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams
-  const [role, categories] = await Promise.all([
-    getUserRole(),
-    getCategories(),
-  ])
-  const productsWithRole = await getProductsWithPrices(role, params)
+  const [role, categories] = await Promise.all([getUserRole(), getCategories()])
+
+  // 카테고리 필터 계산
+  let categoryFilter: string[] | null = null
+  if (params.sub) {
+    categoryFilter = [params.sub]
+  } else if (params.parent) {
+    const parentNode = categories.find(c => c.name === params.parent)
+    if (parentNode) {
+      categoryFilter = [params.parent, ...parentNode.children]
+    } else {
+      categoryFilter = [params.parent]
+    }
+  }
+
+  const products = await getProductsWithPrices(role, params, categoryFilter)
+
+  const filterLabel = params.sub
+    ? `${params.parent} > ${params.sub}`
+    : params.parent ?? null
 
   return (
     <div className="min-h-screen bg-brand-bg">
@@ -106,12 +146,15 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
 
       <div className="max-w-6xl mx-auto px-4 py-8">
         <p className="text-sm text-brand-grey mb-5">
-          총 <span className="font-semibold text-brand-ink">{productsWithRole.length}</span>개의 상품
+          총 <span className="font-semibold text-brand-ink">{products.length}</span>개의 상품
+          {filterLabel && (
+            <span className="ml-2 text-brand-deep font-medium">{filterLabel}</span>
+          )}
         </p>
 
-        {productsWithRole.length > 0 ? (
+        {products.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {(productsWithRole as any[]).map((product) => (
+            {(products as any[]).map(product => (
               <ProductCard
                 key={product.id}
                 id={product.id}
