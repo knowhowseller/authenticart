@@ -5,6 +5,9 @@
 -- ─────────────────────────────────────────────
 -- 1. reserve_seat
 -- ─────────────────────────────────────────────
+-- 반환 타입 변경 시 OR REPLACE 불가 → 먼저 DROP
+DROP FUNCTION IF EXISTS public.reserve_seat(uuid,uuid,integer,integer,integer,integer,boolean,timestamptz);
+
 CREATE OR REPLACE FUNCTION public.reserve_seat(
   p_schedule_id        uuid,
   p_student_id         uuid,
@@ -71,6 +74,9 @@ $$;
 -- ─────────────────────────────────────────────
 -- 2. decrement_stock
 -- ─────────────────────────────────────────────
+-- 반환 타입 변경 시 OR REPLACE 불가 → 먼저 DROP
+DROP FUNCTION IF EXISTS public.decrement_stock(uuid,integer);
+
 CREATE OR REPLACE FUNCTION public.decrement_stock(
   p_product_id uuid,
   p_quantity   integer
