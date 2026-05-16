@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { User, Menu, X, BookOpen, LogOut, Heart, ShoppingBag, Calendar, ChevronDown, ShoppingCart, Search, Bell } from 'lucide-react'
+import { User, Menu, X, BookOpen, LogOut, Heart, ShoppingBag, Calendar, ChevronDown, ShoppingCart, Search, Bell, Store, Users } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Logo from '@/components/brand/Logo'
 import { cn } from '@/lib/utils/cn'
@@ -13,6 +13,8 @@ interface UserState {
   id: string
   name: string
   role: UserRole
+  isApprovedVendor: boolean
+  isApprovedAgency: boolean
 }
 
 const navLinks = [
@@ -38,7 +40,22 @@ export default function Header() {
   useEffect(() => {
     async function loadUser(uid: string) {
       const { data } = await supabase.from('users').select('name, role').eq('id', uid).single()
-      if (data) setUser({ id: uid, name: data.name, role: data.role as UserRole })
+      if (!data) return
+
+      // 벤더/에이전시 승인 상태 병렬 조회 (P1-2, P1-3)
+      const [{ data: vendor }, { data: agency }] = await Promise.all([
+        supabase.from('vendors').select('status').eq('user_id', uid).maybeSingle(),
+        supabase.from('agencies').select('status').eq('user_id', uid).maybeSingle(),
+      ])
+
+      setUser({
+        id: uid,
+        name: data.name,
+        role: data.role as UserRole,
+        isApprovedVendor: vendor?.status === 'approved',
+        isApprovedAgency: agency?.status === 'approved',
+      })
+
       fetch('/api/notifications/unread-count')
         .then(r => r.json())
         .then(d => setNotifCount(d.count ?? 0))
@@ -147,6 +164,24 @@ export default function Header() {
                 >
                   <BookOpen size={14} />
                   스튜디오
+                </Link>
+              )}
+              {user.isApprovedVendor && (
+                <Link
+                  href="/my/vendor"
+                  className="flex items-center gap-1.5 text-sm text-brand-sage font-medium px-3 py-1.5 rounded-full border border-brand-sage hover:bg-brand-sage hover:text-white transition-colors"
+                >
+                  <Store size={14} />
+                  입점사
+                </Link>
+              )}
+              {user.isApprovedAgency && (
+                <Link
+                  href="/studio/agency"
+                  className="flex items-center gap-1.5 text-sm text-purple-600 font-medium px-3 py-1.5 rounded-full border border-purple-300 hover:bg-purple-50 transition-colors"
+                >
+                  <Users size={14} />
+                  에이전시
                 </Link>
               )}
               {user.role === 'branch_manager' && (
@@ -276,6 +311,16 @@ export default function Header() {
                 {user.role === 'instructor' && (
                   <Link href="/studio" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 text-sm py-2 text-brand-deep font-medium">
                     <BookOpen size={14} /> 스튜디오
+                  </Link>
+                )}
+                {user.isApprovedVendor && (
+                  <Link href="/my/vendor" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 text-sm py-2 text-brand-sage font-medium">
+                    <Store size={14} /> 입점사 대시보드
+                  </Link>
+                )}
+                {user.isApprovedAgency && (
+                  <Link href="/studio/agency" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 text-sm py-2 text-purple-600 font-medium">
+                    <Users size={14} /> 에이전시 관리
                   </Link>
                 )}
                 {user.role === 'branch_manager' && (

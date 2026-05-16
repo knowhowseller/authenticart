@@ -33,5 +33,14 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  await admin.from('audit_logs').insert({
+    actor_id: user.id,
+    action: 'product_create',
+    target_type: 'products',
+    target_id: data.id,
+    metadata: { name, category, retail_price, wholesale_price: wholesale_price ?? null },
+  })
+
   return NextResponse.json({ product_id: data.id })
 }

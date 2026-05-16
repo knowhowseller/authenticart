@@ -46,8 +46,8 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url))
   }
 
-  // /admin/* — admin 또는 branch_manager
-  if (pathname.startsWith('/admin') && !['admin', 'branch_manager'].includes(role ?? '')) {
+  // /admin/* — admin 전용 (branch_manager는 /branch/* 경유)
+  if (pathname.startsWith('/admin') && role !== 'admin') {
     return NextResponse.redirect(new URL('/', request.url))
   }
 

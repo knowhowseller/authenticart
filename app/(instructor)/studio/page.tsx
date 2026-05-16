@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { formatPrice, formatDateTime } from '@/lib/utils/format'
 import Hexagon from '@/components/brand/Hexagon'
-import { BookOpen, Calendar, Clock, TrendingUp, Star, Users } from 'lucide-react'
+import { BookOpen, Calendar, Clock, TrendingUp, Star, Users, MessageSquare } from 'lucide-react'
 
 async function getClassCount(userId: string) {
   const supabase = await createClient()
@@ -19,7 +19,7 @@ async function getStudioStats(userId: string) {
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
 
-  const [monthRevenue, upcomingSchedules, pendingRequests, pendingPayout, reviewStats] = await Promise.all([
+  const [monthRevenue, upcomingSchedules, pendingRequests, pendingPayout, reviewStats, unansweredReviews] = await Promise.all([
     supabase
       .from('bookings')
       .select('instructor_payout, class_schedules!schedule_id(classes!class_id(instructor_id))')
@@ -69,9 +69,22 @@ async function getStudioStats(userId: string) {
         const avg = count > 0 ? allReviews.reduce((s: number, r: any) => s + r.rating, 0) / count : null
         return { count, avg }
       }),
+
+    // 미답변 후기 수 (P2-1)
+    supabase
+      .from('classes')
+      .select('id, class_reviews!class_id(id, reply)')
+      .eq('instructor_id', userId)
+      .eq('status', 'published')
+      .then(({ data }) =>
+        (data ?? [])
+          .flatMap((c: any) => c.class_reviews ?? [])
+          .filter((r: any) => !r.reply)
+          .length
+      ),
   ])
 
-  return { monthRevenue, upcomingSchedules, pendingRequests, pendingPayout, reviewStats }
+  return { monthRevenue, upcomingSchedules, pendingRequests, pendingPayout, reviewStats, unansweredReviews }
 }
 
 export default async function StudioPage() {
@@ -112,6 +125,13 @@ export default async function StudioPage() {
       value: formatPrice(stats.pendingPayout),
       icon: BookOpen, color: 'text-purple-600', bg: 'bg-purple-50',
       href: '/studio/payouts',
+    },
+    {
+      title: '미답변 후기',
+      value: `${stats.unansweredReviews}건`,
+      icon: MessageSquare, color: 'text-blue-500', bg: 'bg-blue-50',
+      href: '/studio/reviews',
+      urgent: stats.unansweredReviews > 0,
     },
   ]
 
@@ -163,6 +183,17 @@ export default async function StudioPage() {
               첫 클래스 등록하기 →
             </Link>
           </div>
+        )}
+
+        {/* 미답변 후기 알림 (P2-1) */}
+        {stats.unansweredReviews > 0 && (
+          <Link href="/studio/reviews"
+            className="flex items-center gap-3 px-4 py-3 rounded-xl border border-blue-200 bg-blue-50 text-sm font-medium text-blue-600 mb-4 hover:shadow-sm transition-all"
+          >
+            <MessageSquare size={15} />
+            미답변 후기 {stats.unansweredReviews}건이 있습니다 — 수강생과 소통해보세요
+            <span className="ml-auto text-xs opacity-60">답변 작성하기 →</span>
+          </Link>
         )}
 
         {/* 대기 알림 */}

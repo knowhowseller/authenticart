@@ -18,13 +18,17 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json()
-  const { name, category, description, retail_price, stock_qty, is_active, thumbnail_url } = body
+  const { name, category, description, retail_price, wholesale_price, stock_qty, is_active, thumbnail_url } = body
 
   if (!name || !category || !retail_price) {
     return NextResponse.json({ error: '상품명, 카테고리, 소비자가를 입력해주세요' }, { status: 400 })
   }
   if (retail_price <= 0) {
     return NextResponse.json({ error: '올바른 가격을 입력해주세요' }, { status: 400 })
+  }
+  // 도매가가 지정된 경우 소비자가보다 낮아야 함 (P2-4)
+  if (wholesale_price != null && wholesale_price >= retail_price) {
+    return NextResponse.json({ error: '도매가(강사가)는 소비자가보다 낮아야 합니다' }, { status: 400 })
   }
 
   const admin = await createAdminClient()
@@ -35,7 +39,7 @@ export async function POST(req: NextRequest) {
       category,
       description: description ?? null,
       retail_price,
-      wholesale_price: retail_price,
+      wholesale_price: wholesale_price ?? null,
       stock_qty: stock_qty ?? 0,
       is_active: is_active ?? true,
       thumbnail_url: thumbnail_url ?? null,

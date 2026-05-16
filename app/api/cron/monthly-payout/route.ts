@@ -27,7 +27,7 @@ async function handler(req: NextRequest) {
       gross_amount, pg_fee, platform_fee, instructor_payout, agency_fee, agency_id,
       class_schedules!schedule_id(classes!class_id(instructor_id))
     `)
-    .eq('status', 'paid')
+    .in('status', ['paid', 'completed'])
     .eq('payout_status', 'pending')
     .gte('created_at', monthStart)
     .lt('created_at', monthEnd)
@@ -119,11 +119,11 @@ async function handler(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // 정산된 예약을 processing 상태로 변경
+    // 정산된 예약을 processing 상태로 변경 (paid + completed 모두 처리)
     await supabase
       .from('bookings')
       .update({ payout_status: 'processing' })
-      .eq('status', 'paid')
+      .in('status', ['paid', 'completed'])
       .eq('payout_status', 'pending')
       .gte('created_at', monthStart)
       .lt('created_at', monthEnd)

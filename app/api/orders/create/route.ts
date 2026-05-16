@@ -9,7 +9,6 @@ export async function POST(request: Request) {
   const { product_id, quantity = 1, shipping_info } = await request.json()
   if (!product_id) return NextResponse.json({ error: 'product_id required' }, { status: 400 })
 
-  // 상품 조회는 일반 클라이언트로 (products는 공개 읽기 가능)
   const { data: product, error: productError } = await supabase
     .from('products')
     .select('id, name, retail_price, wholesale_price, is_instructor_only, is_active, stock_qty')
@@ -20,11 +19,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: '상품을 찾을 수 없습니다' }, { status: 404 })
   }
 
-  if ((product.stock_qty ?? 0) < quantity) {
-    return NextResponse.json({ error: '재고가 부족합니다' }, { status: 400 })
-  }
-
-  // 역할 조회도 일반 클라이언트로
   const { data: userData } = await supabase.from('users').select('role').eq('id', user.id).single()
   const role = userData?.role ?? 'member'
 
@@ -38,8 +32,23 @@ export async function POST(request: Request) {
 
   const totalAmount = unitPrice * quantity
 
-  // 주문 insert는 admin client (RLS 우회)
   const admin = await createAdminClient()
+
+  // 재고 확인 + 차감을 atomic RPC로 처리 (P0-2)
+  const { data: stockResult, error: stockError } = await admin.rpc('decrement_stock', {
+    p_product_id: product_id,
+    p_quantity: quantity,
+  })
+
+  if (stockError) {
+    return NextResponse.json({ error: stockError.message }, { status: 500 })
+  }
+
+  const stockData = stockResult as { ok: boolean; error?: string }
+  if (!stockData.ok) {
+    return NextResponse.json({ error: stockData.error ?? '재고가 부족합니다' }, { status: 400 })
+  }
+
   const { data: order, error } = await admin
     .from('orders')
     .insert({
@@ -57,7 +66,11 @@ export async function POST(request: Request) {
     .select('id')
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    // 주문 생성 실패 시 재고 복구
+    await admin.from('products').update({ stock_qty: product.stock_qty }).eq('id', product_id)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
 
   return NextResponse.json({ order_id: order.id })
 }
