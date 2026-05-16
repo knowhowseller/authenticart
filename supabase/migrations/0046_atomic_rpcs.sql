@@ -1,31 +1,13 @@
 -- 목적: race condition 방지를 위한 atomic DB 함수
--- 0027_decrement_stock_fn.sql이 decrement_stock(uuid,integer) RETURNS void로
--- 동일 시그니처를 먼저 생성하므로 CREATE OR REPLACE로 반환 타입 변경 불가.
--- 순수 DDL DROP으로 제거 후 재생성.
+-- 0027이 decrement_stock을 RETURNS jsonb로 생성하므로
+-- 여기서는 CREATE OR REPLACE로 안전하게 덮어씀 (타입 충돌 없음)
 
 -- ─────────────────────────────────────────────
--- STEP 1: 기존 함수 제거 (IF EXISTS → 없으면 무시)
--- DO 블록 없이 순수 DDL로 처리 (EXCEPTION 핸들러가 실제 오류를 숨기는 문제 방지)
+-- reserve_seat: 아직 0027에 없는 신규 함수 → DROP 후 CREATE
 -- ─────────────────────────────────────────────
-
 DROP FUNCTION IF EXISTS public.reserve_seat(uuid,uuid,integer,integer,integer,integer,boolean,timestamptz) CASCADE;
 DROP FUNCTION IF EXISTS        reserve_seat(uuid,uuid,integer,integer,integer,integer,boolean,timestamptz) CASCADE;
 
-DROP FUNCTION IF EXISTS public.increment_stock(uuid,integer) CASCADE;
-DROP FUNCTION IF EXISTS        increment_stock(uuid,integer) CASCADE;
-
-DROP FUNCTION IF EXISTS public.decrement_stock(uuid,integer) CASCADE;
-DROP FUNCTION IF EXISTS        decrement_stock(uuid,integer) CASCADE;
-
--- int4는 integer의 alias — pg_catalog에 따라 다를 수 있어 양쪽 시도
-DROP FUNCTION IF EXISTS public.decrement_stock(uuid,int4) CASCADE;
-DROP FUNCTION IF EXISTS        decrement_stock(uuid,int4) CASCADE;
-DROP FUNCTION IF EXISTS public.increment_stock(uuid,int4) CASCADE;
-DROP FUNCTION IF EXISTS        increment_stock(uuid,int4) CASCADE;
-
--- ─────────────────────────────────────────────
--- STEP 2: reserve_seat
--- ─────────────────────────────────────────────
 CREATE FUNCTION public.reserve_seat(
   p_schedule_id         uuid,
   p_student_id          uuid,
@@ -90,8 +72,13 @@ END;
 $$;
 
 -- ─────────────────────────────────────────────
--- STEP 3: increment_stock (재고 복구)
+-- increment_stock: 신규 함수 → DROP 후 CREATE
 -- ─────────────────────────────────────────────
+DROP FUNCTION IF EXISTS public.increment_stock(uuid,integer) CASCADE;
+DROP FUNCTION IF EXISTS        increment_stock(uuid,integer) CASCADE;
+DROP FUNCTION IF EXISTS public.increment_stock(uuid,int4) CASCADE;
+DROP FUNCTION IF EXISTS        increment_stock(uuid,int4) CASCADE;
+
 CREATE FUNCTION public.increment_stock(
   p_product_id uuid,
   p_quantity   integer
@@ -118,9 +105,9 @@ END;
 $$;
 
 -- ─────────────────────────────────────────────
--- STEP 4: decrement_stock (재고 차감)
+-- decrement_stock: 0027에서 RETURNS jsonb로 이미 생성 → OR REPLACE로 최신화
 -- ─────────────────────────────────────────────
-CREATE FUNCTION public.decrement_stock(
+CREATE OR REPLACE FUNCTION public.decrement_stock(
   p_product_id uuid,
   p_quantity   integer
 ) RETURNS jsonb
