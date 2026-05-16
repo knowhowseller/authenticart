@@ -1,41 +1,27 @@
 -- 목적: race condition 방지를 위한 atomic DB 함수
--- reserve_seat: 좌석 확인 + 예약 생성 + booked_count 증가를 단일 트랜잭션으로 처리
--- decrement_stock / increment_stock: 재고 원자적 차감·복구
+-- 0027_decrement_stock_fn.sql이 decrement_stock(uuid,integer) RETURNS void로
+-- 동일 시그니처를 먼저 생성하므로 CREATE OR REPLACE로 반환 타입 변경 불가.
+-- 순수 DDL DROP으로 제거 후 재생성.
 
 -- ─────────────────────────────────────────────
--- STEP 1: 기존 함수 전체 제거 (반환 타입 변경 대비)
--- 각 DROP을 개별 DO 블록으로 감싸 하나가 실패해도 나머지 계속 실행
+-- STEP 1: 기존 함수 제거 (IF EXISTS → 없으면 무시)
+-- DO 블록 없이 순수 DDL로 처리 (EXCEPTION 핸들러가 실제 오류를 숨기는 문제 방지)
 -- ─────────────────────────────────────────────
 
--- 동적 DROP: pg_get_function_identity_arguments로 정확한 시그니처 확보
-DO $$
-DECLARE
-  r record;
-BEGIN
-  FOR r IN
-    SELECT p.proname,
-           pg_get_function_identity_arguments(p.oid) AS args
-    FROM pg_proc p
-    JOIN pg_namespace n ON n.oid = p.pronamespace
-    WHERE n.nspname = 'public'
-      AND p.proname IN ('reserve_seat', 'increment_stock', 'decrement_stock')
-  LOOP
-    BEGIN
-      EXECUTE format('DROP FUNCTION public.%I(%s) CASCADE', r.proname, r.args);
-    EXCEPTION WHEN OTHERS THEN
-      RAISE NOTICE 'DROP %.%(%s) skipped: %', 'public', r.proname, r.args, SQLERRM;
-    END;
-  END LOOP;
-END;
-$$;
+DROP FUNCTION IF EXISTS public.reserve_seat(uuid,uuid,integer,integer,integer,integer,boolean,timestamptz) CASCADE;
+DROP FUNCTION IF EXISTS        reserve_seat(uuid,uuid,integer,integer,integer,integer,boolean,timestamptz) CASCADE;
 
--- 명시적 DROP (schema 포함 / 미포함 양쪽 시도)
-DO $$ BEGIN DROP FUNCTION IF EXISTS public.reserve_seat(uuid,uuid,integer,integer,integer,integer,boolean,timestamptz) CASCADE; EXCEPTION WHEN OTHERS THEN NULL; END; $$;
-DO $$ BEGIN DROP FUNCTION IF EXISTS reserve_seat(uuid,uuid,integer,integer,integer,integer,boolean,timestamptz) CASCADE; EXCEPTION WHEN OTHERS THEN NULL; END; $$;
-DO $$ BEGIN DROP FUNCTION IF EXISTS public.increment_stock(uuid,integer) CASCADE; EXCEPTION WHEN OTHERS THEN NULL; END; $$;
-DO $$ BEGIN DROP FUNCTION IF EXISTS increment_stock(uuid,integer) CASCADE; EXCEPTION WHEN OTHERS THEN NULL; END; $$;
-DO $$ BEGIN DROP FUNCTION IF EXISTS public.decrement_stock(uuid,integer) CASCADE; EXCEPTION WHEN OTHERS THEN NULL; END; $$;
-DO $$ BEGIN DROP FUNCTION IF EXISTS decrement_stock(uuid,integer) CASCADE; EXCEPTION WHEN OTHERS THEN NULL; END; $$;
+DROP FUNCTION IF EXISTS public.increment_stock(uuid,integer) CASCADE;
+DROP FUNCTION IF EXISTS        increment_stock(uuid,integer) CASCADE;
+
+DROP FUNCTION IF EXISTS public.decrement_stock(uuid,integer) CASCADE;
+DROP FUNCTION IF EXISTS        decrement_stock(uuid,integer) CASCADE;
+
+-- int4는 integer의 alias — pg_catalog에 따라 다를 수 있어 양쪽 시도
+DROP FUNCTION IF EXISTS public.decrement_stock(uuid,int4) CASCADE;
+DROP FUNCTION IF EXISTS        decrement_stock(uuid,int4) CASCADE;
+DROP FUNCTION IF EXISTS public.increment_stock(uuid,int4) CASCADE;
+DROP FUNCTION IF EXISTS        increment_stock(uuid,int4) CASCADE;
 
 -- ─────────────────────────────────────────────
 -- STEP 2: reserve_seat
