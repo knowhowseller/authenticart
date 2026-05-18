@@ -16,12 +16,24 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     .single()
   if (!data) return { title: '강사' }
   const name = (data as any).users?.name ?? '강사'
+  const desc = (data as any).bio?.slice(0, 160) ?? `오센틱아트 ${name} 강사의 공예 클래스를 만나보세요`
+  const profileImage: string | null = (data as any).profile_image ?? null
   return {
     title: `${name} 강사`,
-    description: (data as any).bio?.slice(0, 160) ?? `오센틱아트 ${name} 강사의 클래스를 만나보세요`,
+    description: desc,
+    keywords: `${name} 강사, ${name} 공예 클래스, 오센틱아트 강사, 공방 강사`,
+    alternates: { canonical: `/instructors/${id}` },
     openGraph: {
-      title: `${name} 강사`,
-      images: (data as any).profile_image ? [(data as any).profile_image] : [],
+      title: `${name} 강사 | 오센틱아트`,
+      description: desc,
+      images: profileImage ? [{ url: profileImage, alt: `${name} 강사` }] : [],
+      type: 'profile',
+    },
+    twitter: {
+      card: 'summary',
+      title: `${name} 강사 | 오센틱아트`,
+      description: desc,
+      images: profileImage ? [profileImage] : [],
     },
   }
 }
@@ -98,7 +110,36 @@ export default async function InstructorDetailPage({ params }: { params: Promise
     { icon: Users, label: '후기', value: `${totalReviews}개` },
   ]
 
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://authenticart.kr'
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name: user?.name,
+    description: (profile as any).bio ?? undefined,
+    image: profileImage ?? undefined,
+    url: `${baseUrl}/instructors/${id}`,
+    worksFor: {
+      '@type': 'Organization',
+      name: '오센틱아트',
+      sameAs: baseUrl,
+    },
+    ...(avgRating && totalReviews > 0 ? {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: avgRating.toFixed(1),
+        reviewCount: totalReviews,
+        bestRating: '5',
+        worstRating: '1',
+      },
+    } : {}),
+  }
+
   return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
     <div className="min-h-screen bg-brand-bg">
       <div className="max-w-5xl mx-auto px-4 py-12">
 
@@ -213,5 +254,6 @@ export default async function InstructorDetailPage({ params }: { params: Promise
         )}
       </div>
     </div>
+    </>
   )
 }

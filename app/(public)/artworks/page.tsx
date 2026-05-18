@@ -4,8 +4,15 @@ import { formatPrice } from '@/lib/utils/format'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: '작품 마켓 | 오센틱아트',
-  description: '수강생들이 직접 만든 작품을 만나보세요',
+  title: '작품 마켓',
+  description: '오센틱아트 수강생과 작가들이 직접 만든 공예 작품을 만나보세요. 레진아트·캔들·플라워·도자기·자수·회화 등 다양한 장르의 핸드메이드 작품을 구매할 수 있습니다.',
+  keywords: '공예 작품, 핸드메이드, 레진아트 작품, 캔들 작품, 도자기 작품, 자수 작품, 수채화 작품, 공방 작품 구매',
+  alternates: { canonical: '/artworks' },
+  openGraph: {
+    title: '공예 작품 마켓 | 오센틱아트',
+    description: '핸드메이드 공예 작품 구매 — 레진아트·캔들·도자기·자수·회화',
+    type: 'website',
+  },
 }
 
 async function getCategories() {

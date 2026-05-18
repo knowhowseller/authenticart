@@ -1,10 +1,34 @@
 import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import ShopOrderSection from '@/components/shop/ShopOrderSection'
 import ProductImageGallery from '@/components/shop/ProductImageGallery'
 import CartButton from '@/components/shop/CartButton'
 import { formatPrice } from '@/lib/utils/format'
 import Hexagon from '@/components/brand/Hexagon'
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params
+  const supabase = await createClient()
+  const { data: product } = await supabase
+    .from('products')
+    .select('name, description, retail_price, images, is_active')
+    .eq('id', id)
+    .single()
+  if (!product || !product.is_active) return { title: '상품' }
+  const firstImage = (product.images as string[] | null)?.[0]
+  return {
+    title: product.name,
+    description: product.description?.slice(0, 160) ?? `${product.name} — 오센틱아트 공예 재료 쇼핑`,
+    alternates: { canonical: `/shop/${id}` },
+    openGraph: {
+      title: `${product.name} | 오센틱아트`,
+      description: product.description?.slice(0, 160) ?? `${product.name} — 오센틱아트 공예 재료 쇼핑`,
+      images: firstImage ? [firstImage] : [],
+      type: 'website',
+    },
+  }
+}
 
 async function getProductWithPrice(id: string, role: string) {
   const supabase = await createClient()
@@ -39,8 +63,31 @@ export default async function ShopDetailPage({ params }: { params: Promise<{ id:
   if (!product) notFound()
 
   const isSoldOut = product.stock === 0
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://authenticart.kr'
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.description ?? undefined,
+    image: (product.images as string[] | null)?.[0],
+    offers: {
+      '@type': 'Offer',
+      url: `${baseUrl}/shop/${id}`,
+      priceCurrency: 'KRW',
+      price: product.price,
+      availability: isSoldOut
+        ? 'https://schema.org/OutOfStock'
+        : 'https://schema.org/InStock',
+    },
+  }
 
   return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
     <div className="min-h-screen bg-brand-bg">
       <div className="max-w-5xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -99,5 +146,6 @@ export default async function ShopDetailPage({ params }: { params: Promise<{ id:
         </div>
       </div>
     </div>
+    </>
   )
 }

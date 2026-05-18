@@ -5,8 +5,15 @@ import { Store, Package, ChevronRight, Mail, Users, Award } from 'lucide-react'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: '입점 스토어 | 오센틱아트',
-  description: '오센틱아트 공식 입점 스토어를 만나보세요',
+  title: '입점 스토어',
+  description: '오센틱아트 공식 입점 공방·브랜드 스토어를 만나보세요. 레진아트·캔들·플라워·도자기·주얼리·자수 전문 재료를 직접 제조·공급하는 스토어들을 한곳에서 확인할 수 있습니다.',
+  keywords: '공예 재료 스토어, 공방 입점, 레진아트 재료 브랜드, 캔들 재료 브랜드, 공예 전문몰, 공방 쇼핑',
+  alternates: { canonical: '/shop/stores' },
+  openGraph: {
+    title: '공예 재료 입점 스토어 | 오센틱아트',
+    description: '오센틱아트 공식 입점 공방·브랜드 스토어 목록',
+    type: 'website',
+  },
 }
 
 async function getVendors() {

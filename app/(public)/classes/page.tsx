@@ -1,4 +1,5 @@
 import { Suspense } from 'react'
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import ClassCard from '@/components/class/ClassCard'
 import ClassesFilterBar from '@/components/class/ClassesFilterBar'
@@ -6,6 +7,18 @@ import GenreTabs from '@/components/class/GenreTabs'
 import Hexagon from '@/components/brand/Hexagon'
 import Link from 'next/link'
 import type { ClassAttributes, ConfirmationMode } from '@/types/database'
+
+export const metadata: Metadata = {
+  title: '공예·예술 클래스',
+  description: '레진아트·캔들·플라워·도자기·주얼리·자수·회화·목공예 등 다양한 장르의 공예·예술 클래스를 한눈에. 서울·수도권·전국 강사가 개설한 원데이클래스·정규반·온라인 강좌를 예약하세요.',
+  keywords: '공예 클래스, 원데이클래스 예약, 레진아트 클래스, 캔들 만들기, 플라워 클래스, 도자기 체험, 주얼리 공방, 자수 배우기, 수채화 클래스, 목공예, 공방 수업',
+  alternates: { canonical: '/classes' },
+  openGraph: {
+    title: '공예·예술 클래스 전체 보기 | 오센틱아트',
+    description: '레진아트·캔들·플라워·도자기·주얼리·자수·회화·목공예 클래스 예약',
+    type: 'website',
+  },
+}
 
 const PAGE_SIZE = 40
 

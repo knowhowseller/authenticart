@@ -1,7 +1,20 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import Hexagon from '@/components/brand/Hexagon'
 import { MapPin } from 'lucide-react'
+
+export const metadata: Metadata = {
+  title: '강사 소개',
+  description: '오센틱아트에서 활동 중인 공예·예술 강사를 만나보세요. 레진아트·캔들·플라워·도자기·주얼리·자수·회화·목공예 전문 강사들의 프로필과 클래스를 확인하실 수 있습니다.',
+  keywords: '공예 강사, 원데이클래스 강사, 레진아트 강사, 캔들 강사, 플라워 강사, 도자기 강사, 공방 선생님, 취미 강사',
+  alternates: { canonical: '/instructors' },
+  openGraph: {
+    title: '공예·예술 강사 소개 | 오센틱아트',
+    description: '오센틱아트 공예·예술 강사 전체 목록',
+    type: 'website',
+  },
+}
 
 async function getCraftCategories() {
   const supabase = await createClient()

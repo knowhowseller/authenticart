@@ -1,10 +1,23 @@
 import { Suspense } from 'react'
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import ProductCard from '@/components/shop/ProductCard'
 import ShopFilterBar, { CraftL1 } from '@/components/shop/ShopFilterBar'
 import Hexagon from '@/components/brand/Hexagon'
 import Link from 'next/link'
 import { Store } from 'lucide-react'
+
+export const metadata: Metadata = {
+  title: '재료 쇼핑',
+  description: '레진아트·캔들·플라워·도자기·주얼리·자수·회화·목공예 전문 재료를 한 곳에서. 강사 전용 도매가로 구매 가능하며 입점 공방 스토어도 만나보세요.',
+  keywords: '공예 재료, 레진아트 재료, 캔들 재료, 플라워 재료, 도자기 재료, 공예 도구, 자수 실, 수채화 물감, 강사 도매, 공예 쇼핑몰',
+  alternates: { canonical: '/shop' },
+  openGraph: {
+    title: '공예 재료 쇼핑 | 오센틱아트',
+    description: '공예·예술 전문 재료 & 도구 쇼핑 — 강사 도매가 제공',
+    type: 'website',
+  },
+}
 
 interface SearchParams {
   lv1?: string  // craft_categories level1 code

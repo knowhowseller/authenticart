@@ -1,10 +1,35 @@
 import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import ProductCard from '@/components/shop/ProductCard'
 import Hexagon from '@/components/brand/Hexagon'
 import { Store, Package, Globe, ChevronLeft } from 'lucide-react'
 import { formatPrice } from '@/lib/utils/format'
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('vendors')
+    .select('business_name, description, logo_url')
+    .eq('id', id)
+    .eq('status', 'approved')
+    .single()
+  if (!data) return { title: '스토어' }
+  const desc = data.description?.slice(0, 160) ?? `${data.business_name} — 오센틱아트 공식 입점 스토어`
+  return {
+    title: `${data.business_name} 스토어`,
+    description: desc,
+    alternates: { canonical: `/shop/stores/${id}` },
+    openGraph: {
+      title: `${data.business_name} | 오센틱아트 스토어`,
+      description: desc,
+      images: data.logo_url ? [{ url: data.logo_url, alt: data.business_name }] : [],
+      type: 'website',
+    },
+  }
+}
 
 async function getUserRole() {
   const supabase = await createClient()

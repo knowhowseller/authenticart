@@ -21,12 +21,22 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     .eq('id', id)
     .single()
   if (!cls) return { title: '클래스' }
+  const desc = cls.description?.slice(0, 160) ?? `${cls.region} 공예 클래스 — 오센틱아트`
   return {
     title: cls.title,
-    description: cls.description?.slice(0, 160) ?? `${cls.region} 공예 클래스`,
+    description: desc,
+    keywords: `${cls.title}, ${cls.region} 공예 클래스, 원데이클래스, 공방, 취미 클래스`,
+    alternates: { canonical: `/classes/${id}` },
     openGraph: {
       title: cls.title,
-      description: cls.description?.slice(0, 160) ?? `${cls.region} 공예 클래스`,
+      description: desc,
+      images: cls.thumbnail_url ? [{ url: cls.thumbnail_url, alt: cls.title }] : [],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: cls.title,
+      description: desc,
       images: cls.thumbnail_url ? [cls.thumbnail_url] : [],
     },
   }
@@ -186,7 +196,48 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
     ? Math.min(...schedules.map((s: any) => (s.max_students ?? 0) - (s.booked_count ?? 0)))
     : null
 
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://authenticart.kr'
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Course',
+    name: cls.title,
+    description: cls.description ?? undefined,
+    image: cls.thumbnail_url ?? undefined,
+    url: `${baseUrl}/classes/${id}`,
+    provider: {
+      '@type': 'Organization',
+      name: '오센틱아트',
+      sameAs: baseUrl,
+    },
+    instructor: instructor?.name ? {
+      '@type': 'Person',
+      name: instructor.name,
+      url: `${baseUrl}/instructors/${cls.instructor_id}`,
+    } : undefined,
+    offers: {
+      '@type': 'Offer',
+      priceCurrency: 'KRW',
+      price: cls.price,
+      availability: 'https://schema.org/InStock',
+      url: `${baseUrl}/classes/${id}`,
+    },
+    ...(avgRating && reviews.length > 0 ? {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: avgRating,
+        reviewCount: reviews.length,
+        bestRating: '5',
+        worstRating: '1',
+      },
+    } : {}),
+  }
+
   return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
     <div className="min-h-screen bg-brand-bg">
       {/* 비공개 미리보기 배너 */}
       {cls.status !== 'published' && (
@@ -359,5 +410,6 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
         </div>
       </div>
     </div>
+    </>
   )
 }
