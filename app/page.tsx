@@ -1,8 +1,9 @@
-export const dynamic = 'force-dynamic'
+// 홈은 공개 콘텐츠만 표시 → ISR로 캐싱(10분)하여 TTFB·LCP 개선
+export const revalidate = 600
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/server'
 import MarbleBackground from '@/components/brand/MarbleBackground'
 import FlowLine from '@/components/brand/FlowLine'
 import Hexagon from '@/components/brand/Hexagon'
@@ -20,7 +21,7 @@ import {
 import type { ClassAttributes, ConfirmationMode } from '@/types/database'
 
 async function getStats() {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const [
     { count: instructorCount },
     { count: classCount },
@@ -41,7 +42,7 @@ async function getStats() {
 }
 
 async function getGenreCategories() {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data } = await supabase
     .from('craft_categories')
     .select('id, code, name')
@@ -52,7 +53,7 @@ async function getGenreCategories() {
 }
 
 async function getFeaturedClasses() {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data } = await supabase
     .from('classes')
     .select(`
@@ -67,7 +68,7 @@ async function getFeaturedClasses() {
 }
 
 async function getFeaturedArtworks() {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data } = await supabase
     .from('artworks')
     .select('id, title, images, price, category, status, users!seller_id(name)')
@@ -79,7 +80,7 @@ async function getFeaturedArtworks() {
 }
 
 async function getFeaturedInstructors() {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data: instructors } = await supabase
     .from('instructor_profiles')
     .select('instructor_id, bio, profile_image, users!instructor_id(name, region)')
@@ -107,7 +108,7 @@ async function getFeaturedInstructors() {
 }
 
 async function getApprovedVendors() {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data } = await supabase
     .from('vendors')
     .select('id, business_name, logo_url, slug')
@@ -117,7 +118,7 @@ async function getApprovedVendors() {
 }
 
 async function getFeaturedProducts() {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data } = await supabase
     .from('products')
     .select('id, name, retail_price, wholesale_price, images, stock_qty, is_instructor_only, category')
@@ -129,7 +130,7 @@ async function getFeaturedProducts() {
 }
 
 async function getFeaturedBlogPosts() {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   // 홈 노출(featured) 글 우선, 없으면 최신 발행글로 채움
   const { data } = await supabase
     .from('blog_posts')
@@ -143,7 +144,7 @@ async function getFeaturedBlogPosts() {
 }
 
 async function getHotBoardPosts() {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data } = await supabase
     .from('board_posts')
     .select('id, type, title, author_name, view_count, created_at')
@@ -156,7 +157,7 @@ async function getHotBoardPosts() {
 }
 
 async function getRoiStats() {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const [{ data: classPrices }, { data: priceDiffs }] = await Promise.all([
     supabase.from('classes').select('price').eq('status', 'published'),
     supabase.from('products').select('retail_price, wholesale_price').eq('is_active', true).not('wholesale_price', 'is', null),
