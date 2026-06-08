@@ -41,3 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+# MS Office 임시 잠금 파일
+~$*
+**/~$*
