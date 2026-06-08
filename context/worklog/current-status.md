@@ -54,7 +54,9 @@
   - 관리자: `/admin/blog` CRUD (admin·branch_manager) + AI 생성 마크다운 붙여넣기 지원
   - AEO 인프라: `/llms.txt`, robots AI 크롤러 허용, sitemap·홈 Organization/WebSite 구조화 데이터
   - 빌드/타입체크 통과, `as any` 0건 — 상세는 `20260608-블로그-AEO-worklog.md`
-  - ⚠️ **마이그레이션 0047 DB 미적용** — 적용 전까지 블로그 기능 동작 안 함
+  - ✅ **마이그레이션 0047 운영 DB 적용 완료** (대시보드 SQL 에디터)
+  - ✅ **배포 완료** (commit caea87a → main push → Vercel): `/blog`, `/llms.txt`, 홈 JSON-LD, robots AI 크롤러 라이브 검증
+  - ⚠️ 같은 커밋에 **검토 안 된 결제·주문 변경분 8개**(toss/orders/bookings/cron)가 함께 배포됨 → 결제 흐름 정상 여부 확인 필요
 
 ## 미완료 / 다음 세션 인계 사항
 

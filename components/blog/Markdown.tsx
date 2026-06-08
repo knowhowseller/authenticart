@@ -93,6 +93,55 @@ export default function Markdown({ content }: { content: string }) {
       i++; continue
     }
 
+    // 표 (GFM): 헤더 행 다음 줄이 구분선(|---|---|)일 때
+    if (
+      trimmed.startsWith('|') &&
+      i + 1 < lines.length &&
+      /^\|?[\s:|-]+\|?$/.test(lines[i + 1].trim()) &&
+      lines[i + 1].includes('-')
+    ) {
+      const splitRow = (l: string) => {
+        let s = l.trim()
+        if (s.startsWith('|')) s = s.slice(1)
+        if (s.endsWith('|')) s = s.slice(0, -1)
+        return s.split('|').map((c) => c.trim())
+      }
+      const header = splitRow(trimmed)
+      i += 2 // 헤더 + 구분선 건너뜀
+      const rows: string[][] = []
+      while (i < lines.length && lines[i].trim().startsWith('|')) {
+        rows.push(splitRow(lines[i].trim()))
+        i++
+      }
+      blocks.push(
+        <div key={key++} className="my-6 overflow-x-auto">
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr>
+                {header.map((c, idx) => (
+                  <th key={idx} className="border border-brand-mist/40 bg-brand-bg px-3 py-2 text-left font-semibold text-brand-ink whitespace-nowrap">
+                    {parseInline(c, `th${key}-${idx}`)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r, ri) => (
+                <tr key={ri} className="even:bg-brand-bg/40">
+                  {r.map((c, ci) => (
+                    <td key={ci} className="border border-brand-mist/30 px-3 py-2 align-top text-brand-ink/90">
+                      {parseInline(c, `td${key}-${ri}-${ci}`)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>,
+      )
+      continue
+    }
+
     // 제목
     const h = trimmed.match(/^(#{2,4})\s+(.*)$/)
     if (h) {
@@ -159,6 +208,7 @@ export default function Markdown({ content }: { content: string }) {
       !/^\d+\.\s+/.test(lines[i].trim()) &&
       !/^>\s?/.test(lines[i].trim()) &&
       !/^---+$/.test(lines[i].trim()) &&
+      !lines[i].trim().startsWith('|') &&
       !/^!\[([^\]]*)\]\(([^)]+)\)$/.test(lines[i].trim())
     ) {
       para.push(lines[i].trim())

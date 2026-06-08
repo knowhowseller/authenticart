@@ -1,0 +1,13 @@
+# 세션 메타데이터
+- 세션 ID: 20260608-marketing
+- 시작 시각: 2026-06-08
+- 워크플로우: marketing-sales (키워드 + AEO 블로그 기획)
+- 주요 목표: 오센틱아트 서비스 홍보 키워드 추출 + AI 검색(AEO) 노출용 블로그 글 기획
+- 타겟: ① 수강생(취미러) ② 강사(자격·수익화) ③ 학교·기관·기업(B2B 단체출강) ④ 제품판매자(입점 벤더)
+- 사용자 입력값: "홍보 키워드 추출 + AI 검색 노출 블로그 글 기획, 강사·학교·제품판매자까지 고려"
+- 실행 에이전트 순서: seo-researcher → content-strategist
+- 주의: context/business_profile.md(서우/AI에이전시)는 오류 — 무시. 오센틱아트 공예 플랫폼 기준.
+- 현재 단계: 완료 (키워드전략 + 블로그기획 .md/.docx 생성)
+- 완료된 에이전트: seo-researcher, content-strategist
+- 산출물: outputs/04-marketing/20260608-오센틱아트-AEO키워드전략.{md,docx}, 20260608-오센틱아트-블로그콘텐츠기획.{md,docx}
+- 사용자 결정 사항: 블로그/AEO 인프라 이미 배포됨(/blog, FAQ 구조화데이터, llms.txt)
