@@ -82,11 +82,21 @@ export default async function ShopDetailPage({ params }: { params: Promise<{ id:
     },
   }
 
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: '홈', item: baseUrl },
+      { '@type': 'ListItem', position: 2, name: '재료 쇼핑', item: `${baseUrl}/shop` },
+      { '@type': 'ListItem', position: 3, name: product.name, item: `${baseUrl}/shop/${id}` },
+    ],
+  }
+
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify([jsonLd, breadcrumbLd]).replace(/</g, '\\u003c') }}
       />
     <div className="min-h-screen bg-brand-bg">
       <div className="max-w-5xl mx-auto px-4 py-8">

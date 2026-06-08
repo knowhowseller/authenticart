@@ -134,11 +134,21 @@ export default async function InstructorDetailPage({ params }: { params: Promise
     } : {}),
   }
 
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: '홈', item: baseUrl },
+      { '@type': 'ListItem', position: 2, name: '강사 소개', item: `${baseUrl}/instructors` },
+      { '@type': 'ListItem', position: 3, name: user?.name ?? '강사', item: `${baseUrl}/instructors/${id}` },
+    ],
+  }
+
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify([jsonLd, breadcrumbLd]).replace(/</g, '\\u003c') }}
       />
     <div className="min-h-screen bg-brand-bg">
       <div className="max-w-5xl mx-auto px-4 py-12">

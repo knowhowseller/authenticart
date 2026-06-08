@@ -232,11 +232,21 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
     } : {}),
   }
 
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: '홈', item: baseUrl },
+      { '@type': 'ListItem', position: 2, name: '클래스', item: `${baseUrl}/classes` },
+      { '@type': 'ListItem', position: 3, name: cls.title, item: `${baseUrl}/classes/${id}` },
+    ],
+  }
+
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify([jsonLd, breadcrumbLd]).replace(/</g, '\\u003c') }}
       />
     <div className="min-h-screen bg-brand-bg">
       {/* 비공개 미리보기 배너 */}
