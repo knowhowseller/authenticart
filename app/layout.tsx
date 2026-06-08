@@ -20,6 +20,11 @@ export const metadata: Metadata = {
   description: '레진아트·캔들·플라워·도자기·주얼리·자수·회화·목공예 — 전 장르 공예·예술 클래스 예약, 재료 구매, 작품 판매를 한 플랫폼에서. 취미를 직업으로.',
   keywords: '공예 클래스, 원데이클래스, 레진아트, 캔들 만들기, 플라워 클래스, 도자기 체험, 주얼리 공방, 자수 배우기, 수채화 클래스, 목공예, 공예 재료, 강사 자격증',
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.authenticart.co.kr'),
+  alternates: { canonical: '/' },
+  verification: {
+    // 네이버 서치어드바이저 사이트 소유확인 (HTML 태그 방식)
+    other: { 'naver-site-verification': '5a7838f0fbaa25f8fd1c8a3013fd5c4a370bc3ea' },
+  },
   openGraph: {
     siteName: '오센틱아트',
     locale: 'ko_KR',
