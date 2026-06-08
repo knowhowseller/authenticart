@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import Hexagon from '@/components/brand/Hexagon'
+import JsonLd from '@/components/seo/JsonLd'
 
 const faqs = [
   {
@@ -47,15 +48,15 @@ const faqs = [
     items: [
       {
         q: '강사 신청 자격은 무엇인가요?',
-        a: '공예 분야 경력 1년 이상 또는 관련 자격증 보유자면 신청 가능합니다. 포트폴리오 및 증빙 서류를 함께 제출해주세요.',
+        a: '공예 작품 포트폴리오와 강의 역량을 갖추면 신청할 수 있습니다. 국가공인 자격증은 필수가 아니며, 포트폴리오·역량 심사를 통해 오센틱아트 인증 강사 자격을 부여합니다.',
       },
       {
         q: '강사 심사 기간은 얼마나 걸리나요?',
         a: '신청 후 영업일 기준 3~5일 내에 결과를 이메일로 안내해드립니다.',
       },
       {
-        q: '수수료는 얼마인가요?',
-        a: '플랫폼 수수료는 결제금액의 15%입니다. 결제 대행사 수수료 약 3.3%가 별도 발생합니다.',
+        q: '강사 수수료(정산)는 얼마인가요?',
+        a: '플랫폼 수수료는 결제금액의 10%이며, 결제 대행사(PG) 수수료 약 3.3%가 별도입니다. 두 수수료를 합산한 13.3%를 공제하고 강사가 결제액의 86.7%를 수령합니다. 클래스 등록에 별도 고정 비용은 없습니다.',
       },
       {
         q: '정산은 언제 받나요?',
@@ -99,6 +100,17 @@ const faqs = [
   },
 ]
 
+// FAQPage 구조화 데이터 — AI 검색·구글이 답변을 직접 인용
+const faqLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.flatMap((s) => s.items).map((i) => ({
+    '@type': 'Question',
+    name: i.q,
+    acceptedAnswer: { '@type': 'Answer', text: i.a },
+  })),
+}
+
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false)
   return (
@@ -127,6 +139,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 export default function FaqPage() {
   return (
     <div className="min-h-screen bg-brand-bg">
+      <JsonLd data={faqLd} />
       <div className="max-w-3xl mx-auto px-4 py-12">
         <div className="flex items-center gap-2 mb-2">
           <Hexagon color="amber" size={16} />

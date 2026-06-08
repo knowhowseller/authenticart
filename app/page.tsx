@@ -211,6 +211,34 @@ const ugcFallback = [
 
 const regions = ['전체', '서울', '인천', '강릉', '충주', '부산', '제주']
 
+// 홈 FAQ — AI 검색(AEO)이 직접 인용하기 좋은 명료한 단답. 4개 타겟(수강생·강사·학교·판매자) 포괄.
+const homeFaqs: { q: string; a: string }[] = [
+  {
+    q: '오센틱아트는 어떤 서비스인가요?',
+    a: '오센틱아트는 레진아트·캔들·플라워·도자기·주얼리·자수·회화·목공예 등 전 장르 공예 클래스 예약, 강사 양성·인증, 작품 판매, 재료 도매를 한 곳에서 제공하는 공예 종합 플랫폼입니다.',
+  },
+  {
+    q: '공예 원데이클래스는 어떻게 예약하나요?',
+    a: '클래스 페이지에서 지역·장르로 검색해 강사·일정·가격을 비교하고 바로 예약할 수 있습니다. 서울·인천·강릉·충주·부산·제주 등 전국 클래스를 제공합니다.',
+  },
+  {
+    q: '공예 강사가 되려면 자격증이 필요한가요?',
+    a: '국가공인 자격증은 필수가 아닙니다. 포트폴리오와 강의 역량 심사를 통과하면 오센틱아트 인증 강사로 클래스를 개설할 수 있습니다.',
+  },
+  {
+    q: '오센틱아트 강사 정산(수수료)은 어떻게 되나요?',
+    a: 'PG 결제 수수료 3.3%와 플랫폼 수수료 10%를 합산한 13.3%만 공제하며, 강사가 결제액의 86.7%를 수령합니다. 클래스 등록에 별도 고정 비용은 없습니다.',
+  },
+  {
+    q: '기업·학교 단체 공예 체험도 신청할 수 있나요?',
+    a: '네. 10인 이상 단체 출강(기업 팀빌딩, 학교 방과후·자유학기제, 복지관 프로그램 등)을 전국 인증 강사로 연결합니다. 인원·장르·일정을 입력하면 맞춤 견적을 안내합니다.',
+  },
+  {
+    q: '공예 재료는 어디서 구매하나요?',
+    a: '강사 회원은 도매가로 재료를 구매할 수 있고, 공예 재료 판매자는 벤더로 입점해 강사·수강생에게 직접 판매할 수 있습니다.',
+  },
+]
+
 const roleCards = [
   {
     icon: <BookOpen size={26} className="text-brand-amber" />,
@@ -286,19 +314,40 @@ export default async function HomePage() {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: '오센틱아트',
+    legalName: '주식회사 오센틱아트',
     alternateName: 'Authentic Art',
     url: siteUrl,
     logo: `${siteUrl}/logo/logo-light.png`,
+    image: `${siteUrl}/logo/logo-light.png`,
     description:
       '레진아트·캔들·플라워·도자기·주얼리·자수·회화·목공예 전 장르 공예·예술 클래스 예약, 강사 자격 취득, 작품 판매, 재료 도매를 제공하는 종합 플랫폼.',
     slogan: '취미를 직업으로',
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: '공단로140번길 27, 군포LS R&D센터 819호',
+      addressLocality: '군포시',
+      addressRegion: '경기도',
+      addressCountry: 'KR',
+    },
+    contactPoint: {
+      '@type': 'ContactPoint',
+      contactType: 'customer support',
+      email: 'contact@authenticart.co.kr',
+      areaServed: 'KR',
+      availableLanguage: ['Korean'],
+    },
+    identifier: {
+      '@type': 'PropertyValue',
+      name: '사업자등록번호',
+      value: '102-81-47445',
+    },
     sameAs: [
       'https://instagram.com/authentic_art.rs/',
       'https://cafe.naver.com/authenticart',
       'http://pf.kakao.com/_AaxjDxj',
     ],
-    areaServed: 'KR',
-    knowsAbout: ['레진아트', '캔들', '플라워', '도자기', '주얼리', '자수', '회화', '목공예', '공예 클래스', '공예 강사 자격'],
+    areaServed: ['서울', '인천', '강릉', '충주', '부산', '제주', '대한민국'],
+    knowsAbout: ['레진아트', '캔들', '플라워', '도자기', '주얼리', '자수', '회화', '목공예', '공예 원데이클래스', '공예 강사 양성', '단체 공예 체험', '공예 재료 도매'],
   }
   const websiteLd = {
     '@context': 'https://schema.org',
@@ -313,10 +362,20 @@ export default async function HomePage() {
       'query-input': 'required name=search_term_string',
     },
   }
+  // FAQPage 구조화 데이터 — AI 검색이 답변을 직접 인용
+  const faqLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: homeFaqs.map((f) => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
+  }
 
   return (
     <div>
-      <JsonLd data={[orgLd, websiteLd]} />
+      <JsonLd data={[orgLd, websiteLd, faqLd]} />
       {/* ─── 1. Hero ─── */}
       <MarbleBackground className="bg-brand-deep min-h-[640px] flex items-center" opacity={0.12}>
         <div className="max-w-6xl mx-auto px-4 py-24 w-full">
@@ -1070,6 +1129,51 @@ export default async function HomePage() {
           </div>
         </section>
       )}
+
+      {/* ─── 12.7 오센틱아트란? + 자주 묻는 질문 (AEO) ─── */}
+      <section className="py-16 bg-white border-t border-brand-mist/20">
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <Hexagon color="amber" size={13} />
+              <span className="text-xs font-medium text-brand-amber uppercase tracking-wider">About &amp; FAQ</span>
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold text-brand-ink">오센틱아트는 어떤 플랫폼인가요?</h2>
+          </div>
+
+          {/* 정의형 단답 블록 — AI가 그대로 인용하기 좋은 사실 서술 */}
+          <p className="text-center text-brand-grey leading-relaxed max-w-2xl mx-auto mb-10">
+            <strong className="text-brand-ink">오센틱아트</strong>는 레진아트·캔들·플라워·도자기·주얼리·자수·회화·목공예 등
+            전 장르 <strong className="text-brand-ink">공예 클래스 예약</strong>,
+            <strong className="text-brand-ink"> 강사 양성·인증</strong>,
+            <strong className="text-brand-ink"> 작품 판매</strong>,
+            <strong className="text-brand-ink"> 재료 도매</strong>를 한 곳에서 제공하는 공예 종합 플랫폼입니다.
+            서울·인천·강릉·충주·부산·제주 등 전국에서 운영되며, 슬로건은 <em className="not-italic text-brand-deep">"취미를 직업으로"</em>입니다.
+          </p>
+
+          {/* FAQ 아코디언 (네이티브 details — 서버 렌더링, JS 불필요) */}
+          <div className="bg-brand-bg rounded-2xl border border-brand-mist/30 divide-y divide-brand-mist/30 overflow-hidden">
+            {homeFaqs.map((f) => (
+              <details key={f.q} className="group">
+                <summary className="flex items-center justify-between gap-3 px-5 py-4 cursor-pointer list-none">
+                  <span className="text-sm font-semibold text-brand-ink flex items-start gap-2">
+                    <span className="text-brand-amber font-bold">Q.</span>
+                    {f.q}
+                  </span>
+                  <span className="text-brand-grey group-open:rotate-180 transition-transform flex-shrink-0">⌄</span>
+                </summary>
+                <p className="px-5 pb-4 pl-11 text-sm text-brand-grey leading-relaxed">{f.a}</p>
+              </details>
+            ))}
+          </div>
+
+          <div className="text-center mt-6">
+            <Link href="/faq" className="text-sm text-brand-deep font-medium hover:text-brand-amber transition-colors">
+              전체 자주 묻는 질문 보기 →
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* ─── 13. 단체 클래스 배너 ─── */}
       <section className="py-10 bg-gradient-to-r from-brand-sage to-brand-deep">
