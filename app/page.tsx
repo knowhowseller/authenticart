@@ -680,10 +680,12 @@ export default async function HomePage() {
                 >
                   <div className="aspect-square relative bg-brand-mist/10">
                     {artwork.images?.[0] ? (
-                      <img
+                      <Image
                         src={artwork.images[0]}
                         alt={artwork.title}
-                        className="w-full h-full object-cover"
+                        fill
+                        sizes="(max-width: 768px) 50vw, 33vw"
+                        className="object-cover"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-5xl">🎨</div>
@@ -963,7 +965,7 @@ export default async function HomePage() {
                 >
                   <div className="aspect-square bg-brand-mist/10 relative">
                     {p.images?.[0] ? (
-                      <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover" />
+                      <Image src={p.images[0]} alt={p.name} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-4xl">📦</div>
                     )}
