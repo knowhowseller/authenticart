@@ -40,7 +40,7 @@ export async function releaseAndNotify(bookingId: string, admin: SupabaseClient)
   if (!user?.email || !schedule) return
 
   const cls = (schedule as any).classes
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://authenticart.kr'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.authenticart.co.kr'
 
   await sendEmail({
     to: user.email,

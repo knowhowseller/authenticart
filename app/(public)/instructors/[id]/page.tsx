@@ -110,7 +110,7 @@ export default async function InstructorDetailPage({ params }: { params: Promise
     { icon: Users, label: '후기', value: `${totalReviews}개` },
   ]
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://authenticart.kr'
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.authenticart.co.kr'
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Person',

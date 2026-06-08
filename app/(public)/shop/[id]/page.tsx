@@ -63,7 +63,7 @@ export default async function ShopDetailPage({ params }: { params: Promise<{ id:
   if (!product) notFound()
 
   const isSoldOut = product.stock === 0
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://authenticart.kr'
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.authenticart.co.kr'
 
   const jsonLd = {
     '@context': 'https://schema.org',

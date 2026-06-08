@@ -38,7 +38,7 @@ export function orderShippedHtml(params: {
           <div style="color: #292929; font-size: 13px;">${params.shippingAddress}</div>
         </div>
       </div>
-      <a href="${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://authenticart.kr'}/my/orders/${params.orderId}"
+      <a href="${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://www.authenticart.co.kr'}/my/orders/${params.orderId}"
          style="display: block; background: #1F4145; color: white; text-decoration: none; text-align: center; padding: 14px; border-radius: 12px; font-weight: 600; font-size: 14px;">
         배송 조회하기
       </a>

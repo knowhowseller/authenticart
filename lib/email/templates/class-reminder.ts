@@ -58,7 +58,7 @@ export function classReminderHtml(params: {
         ${materialsSection}
         ${phoneSection}
       </div>
-      <a href="${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://authenticart.kr'}/my/bookings"
+      <a href="${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://www.authenticart.co.kr'}/my/bookings"
          style="display: block; background: #1F4145; color: white; text-decoration: none; text-align: center; padding: 14px; border-radius: 12px; font-weight: 600; font-size: 14px;">
         예약 내역 확인하기
       </a>

@@ -196,7 +196,7 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ id
     ? Math.min(...schedules.map((s: any) => (s.max_students ?? 0) - (s.booked_count ?? 0)))
     : null
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://authenticart.kr'
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.authenticart.co.kr'
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Course',

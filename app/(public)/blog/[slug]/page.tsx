@@ -6,11 +6,12 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import Hexagon from '@/components/brand/Hexagon'
 import Markdown from '@/components/blog/Markdown'
+import BlogCover from '@/components/blog/BlogCover'
 import JsonLd from '@/components/seo/JsonLd'
 import { categoryLabel, categoryEmoji, readingMinutes, stripMarkdown, type BlogPost, type BlogPostCard } from '@/lib/blog'
 import { ChevronLeft, Eye, Clock } from 'lucide-react'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://authenticart.kr'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.authenticart.co.kr'
 
 async function getPost(slug: string): Promise<BlogPost | null> {
   const supabase = await createClient()
@@ -165,13 +166,15 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
           </div>
         </header>
 
-        {/* 대표 이미지 */}
-        {post.cover_image && (
-          <div className="mb-8 rounded-2xl overflow-hidden border border-brand-mist/20">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={post.cover_image} alt={post.title} className="w-full object-cover" />
-          </div>
-        )}
+        {/* 대표 이미지 (없으면 제목 썸네일 자동 생성) */}
+        <div className="mb-8 rounded-2xl overflow-hidden border border-brand-mist/20 aspect-[16/7]">
+          {post.cover_image ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={post.cover_image} alt={post.title} className="w-full h-full object-cover" />
+          ) : (
+            <BlogCover title={post.title} category={post.category} size="hero" />
+          )}
+        </div>
 
         {/* 본문 */}
         <div className="bg-white rounded-2xl p-7 md:p-10 shadow-sm border border-brand-mist/30">

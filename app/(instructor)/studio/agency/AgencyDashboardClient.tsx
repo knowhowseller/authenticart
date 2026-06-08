@@ -34,7 +34,7 @@ export default function AgencyDashboardClient({ agency, instructors: initialInst
   const [removingId, setRemovingId] = useState<string | null>(null)
   const [reissuingId, setReissuingId] = useState<string | null>(null)
   const [expandedPayout, setExpandedPayout] = useState<string | null>(null)
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://authenticart.kr'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.authenticart.co.kr'
 
   async function createInvite() {
     setLoading(true)

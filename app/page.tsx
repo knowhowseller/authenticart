@@ -10,7 +10,8 @@ import ClassCard from '@/components/class/ClassCard'
 import Button from '@/components/ui/Button'
 import FloatingCTA from '@/components/home/FloatingCTA'
 import JsonLd from '@/components/seo/JsonLd'
-import { categoryLabel, categoryEmoji, type BlogPostCard } from '@/lib/blog'
+import BlogCover from '@/components/blog/BlogCover'
+import { categoryLabel, type BlogPostCard } from '@/lib/blog'
 import { formatPrice } from '@/lib/utils/format'
 import {
   MapPin, Star, CheckCircle2, TrendingUp, Award, ShoppingBag, Search,
@@ -277,7 +278,7 @@ export default async function HomePage() {
   const sessionRevenue = roiStats.avgClassPrice * 6
   const monthlyRevenue = sessionRevenue * 4
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://authenticart.kr'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.authenticart.co.kr'
 
   // ── 구조화 데이터(AEO): Organization + WebSite ──
   // AI 검색·생성형 엔진이 '오센틱아트'를 명확한 엔티티로 인식하도록 제공
@@ -1046,11 +1047,13 @@ export default async function HomePage() {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-5xl">{categoryEmoji(p.category)}</div>
+                      <BlogCover title={p.title} category={p.category} />
                     )}
-                    <span className="absolute top-3 left-3 text-xs font-medium px-2.5 py-1 rounded-full bg-white/90 text-brand-deep backdrop-blur-sm">
-                      {categoryLabel(p.category)}
-                    </span>
+                    {p.cover_image && (
+                      <span className="absolute top-3 left-3 text-xs font-medium px-2.5 py-1 rounded-full bg-white/90 text-brand-deep backdrop-blur-sm">
+                        {categoryLabel(p.category)}
+                      </span>
+                    )}
                   </div>
                   <div className="p-5 flex flex-col flex-1">
                     <h3 className="font-bold text-brand-ink leading-snug mb-2 line-clamp-2 group-hover:text-brand-deep transition-colors">

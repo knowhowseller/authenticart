@@ -6,9 +6,10 @@ import { createClient } from '@/lib/supabase/server'
 import Hexagon from '@/components/brand/Hexagon'
 import JsonLd from '@/components/seo/JsonLd'
 import { BLOG_CATEGORIES, categoryLabel, categoryEmoji, type BlogPostCard } from '@/lib/blog'
+import BlogCover from '@/components/blog/BlogCover'
 import { Eye } from 'lucide-react'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://authenticart.kr'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.authenticart.co.kr'
 
 export const metadata: Metadata = {
   title: '공예 매거진 — 가이드·트렌드·강사 인터뷰',
@@ -136,7 +137,7 @@ export default async function BlogListPage({
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={featured.cover_image} alt={featured.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-6xl">{categoryEmoji(featured.category)}</div>
+                    <BlogCover title={featured.title} category={featured.category} size="hero" />
                   )}
                 </div>
                 <div className="md:w-1/2 p-7 flex flex-col justify-center">
@@ -171,11 +172,13 @@ export default async function BlogListPage({
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={p.cover_image} alt={p.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-5xl">{categoryEmoji(p.category)}</div>
+                      <BlogCover title={p.title} category={p.category} />
                     )}
-                    <span className="absolute top-3 left-3 text-xs font-medium px-2.5 py-1 rounded-full bg-white/90 text-brand-deep backdrop-blur-sm">
-                      {categoryLabel(p.category)}
-                    </span>
+                    {p.cover_image && (
+                      <span className="absolute top-3 left-3 text-xs font-medium px-2.5 py-1 rounded-full bg-white/90 text-brand-deep backdrop-blur-sm">
+                        {categoryLabel(p.category)}
+                      </span>
+                    )}
                   </div>
                   <div className="p-5 flex flex-col flex-1">
                     <h3 className="font-bold text-brand-ink leading-snug mb-2 line-clamp-2 group-hover:text-brand-deep transition-colors">
