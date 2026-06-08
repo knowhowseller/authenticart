@@ -164,6 +164,7 @@ export default async function AdminPage() {
     { href: '/admin/bookings', label: '예약 현황', icon: '📅', desc: '클래스 예약 현황 조회' },
     { href: '/admin/group-requests', label: '단체 출강 관리', icon: '🏫', desc: '단체 출강 요청 강사 배정' },
     { href: '/admin/notices', label: '공지사항 관리', icon: '📢', desc: '공지사항 작성 및 공개 설정' },
+    { href: '/admin/blog', label: '블로그 관리', icon: '📝', desc: '공예 매거진 홍보글 작성·발행' },
   ]
 
   const adminMenus = [
@@ -177,6 +178,7 @@ export default async function AdminPage() {
     { href: '/admin/branches', label: '지부 관리', icon: '🏢', desc: '지부 생성 및 지부장 지정' },
     { href: '/admin/coupons', label: '쿠폰 관리', icon: '🏷️', desc: '할인 쿠폰 생성 및 관리' },
     { href: '/admin/notices', label: '공지사항 관리', icon: '📢', desc: '공지사항 작성 및 공개 설정' },
+    { href: '/admin/blog', label: '블로그 관리', icon: '📝', desc: '공예 매거진 홍보글 작성·발행' },
     { href: '/admin/stats', label: '통계 차트', icon: '📊', desc: '월별 매출·예약 건수 차트' },
     { href: '/admin/group-requests', label: '단체 출강 관리', icon: '🏫', desc: '단체 출강 요청 강사 배정' },
     { href: '/admin/artworks', label: '작품 마켓 관리', icon: '🎨', desc: '수강생 작품 수정·삭제·상태 관리' },

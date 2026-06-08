@@ -23,6 +23,7 @@ const navLinks = [
   { href: '/artworks', label: '작품 마켓' },
   { href: '/shop', label: '재료 쇼핑' },
   { href: '/instructors', label: '강사 소개' },
+  { href: '/blog', label: '매거진' },
   { href: '/board', label: '게시판' },
 ]
 

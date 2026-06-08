@@ -8,6 +8,9 @@ export async function POST(request: Request) {
 
   const { product_id, quantity = 1, shipping_info } = await request.json()
   if (!product_id) return NextResponse.json({ error: 'product_id required' }, { status: 400 })
+  if (!Number.isInteger(quantity) || quantity <= 0) {
+    return NextResponse.json({ error: '상품 수량이 올바르지 않습니다' }, { status: 400 })
+  }
 
   const { data: product, error: productError } = await supabase
     .from('products')
@@ -67,8 +70,11 @@ export async function POST(request: Request) {
     .single()
 
   if (error) {
-    // 주문 생성 실패 시 재고 복구
-    await admin.from('products').update({ stock_qty: product.stock_qty }).eq('id', product_id)
+    // 주문 생성 실패 시 선점한 재고를 원자적으로 복구
+    await admin.rpc('increment_stock', {
+      p_product_id: product_id,
+      p_quantity: quantity,
+    })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 

@@ -40,8 +40,6 @@ export async function POST(request: Request) {
       .eq('id', orderId)
 
     if (!error) {
-      await supabase.rpc('decrement_seat', { p_booking_id: orderId })
-
       // 예약 확정 이메일 발송
       const { data: booking } = await supabase
         .from('bookings')

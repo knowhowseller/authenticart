@@ -41,6 +41,7 @@ const footerLinks = [
       { label: '클래스 찾기', href: '/classes' },
       { label: '재료 쇼핑', href: '/shop' },
       { label: '강사 소개', href: '/instructors' },
+      { label: '공예 매거진', href: '/blog' },
       { label: '강사 신청', href: '/signup/instructor' },
     ],
   },

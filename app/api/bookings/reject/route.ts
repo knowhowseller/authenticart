@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { releaseAndNotify } from '@/lib/waitlist'
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -26,6 +27,8 @@ export async function POST(request: Request) {
     status: 'rejected',
     refund_reason: reason,
   }).eq('id', booking_id)
+
+  releaseAndNotify(booking_id, admin).catch(() => {})
 
   void admin.from('notifications').insert({
     user_id: (booking as any).student_id,

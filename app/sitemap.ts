@@ -11,17 +11,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { data: products },
     { data: artworks },
     { data: vendors },
+    { data: blogPosts },
   ] = await Promise.all([
     supabase.from('classes').select('id, updated_at').eq('status', 'published'),
     supabase.from('instructor_profiles').select('instructor_id, updated_at').eq('status', 'approved'),
     supabase.from('products').select('id, updated_at').eq('is_active', true),
     supabase.from('artworks').select('id, updated_at').eq('status', 'active'),
     supabase.from('vendors').select('id, updated_at').eq('status', 'approved'),
+    supabase.from('blog_posts').select('slug, updated_at, published_at').eq('status', 'published'),
   ])
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: baseUrl, priority: 1, changeFrequency: 'daily' },
     { url: `${baseUrl}/classes`, priority: 0.9, changeFrequency: 'daily' },
+    { url: `${baseUrl}/blog`, priority: 0.8, changeFrequency: 'daily' },
     { url: `${baseUrl}/shop`, priority: 0.8, changeFrequency: 'daily' },
     { url: `${baseUrl}/shop/stores`, priority: 0.7, changeFrequency: 'weekly' },
     { url: `${baseUrl}/artworks`, priority: 0.7, changeFrequency: 'daily' },
@@ -66,6 +69,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: 'weekly',
   }))
 
+  const blogRoutes: MetadataRoute.Sitemap = (blogPosts ?? []).map(b => ({
+    url: `${baseUrl}/blog/${encodeURIComponent(b.slug)}`,
+    lastModified: b.updated_at ? new Date(b.updated_at) : (b.published_at ? new Date(b.published_at) : undefined),
+    priority: 0.7,
+    changeFrequency: 'weekly',
+  }))
+
   return [
     ...staticRoutes,
     ...classRoutes,
@@ -73,5 +83,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...productRoutes,
     ...artworkRoutes,
     ...vendorRoutes,
+    ...blogRoutes,
   ]
 }

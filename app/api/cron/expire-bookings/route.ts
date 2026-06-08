@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
+import { releaseAndNotify } from '@/lib/waitlist'
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization')
@@ -18,6 +19,9 @@ export async function GET(request: Request) {
     .eq('status', 'pending_approval')
     .lt('approval_expires_at', now)
     .select('id')
+  await Promise.all((expiredApproval ?? []).map((booking: { id: string }) =>
+    releaseAndNotify(booking.id, admin).catch(() => {})
+  ))
 
   // 결제 기한 초과 (approved → student didn't pay in time)
   const { data: expiredPayment } = await admin
@@ -26,6 +30,9 @@ export async function GET(request: Request) {
     .eq('status', 'approved')
     .lt('payment_expires_at', now)
     .select('id')
+  await Promise.all((expiredPayment ?? []).map((booking: { id: string }) =>
+    releaseAndNotify(booking.id, admin).catch(() => {})
+  ))
 
   // 수업 종료된 회차의 paid 예약을 completed로 전환
   const { data: endedSchedules } = await admin
@@ -35,7 +42,7 @@ export async function GET(request: Request) {
 
   let completedCount = 0
   if (endedSchedules && endedSchedules.length > 0) {
-    const scheduleIds = endedSchedules.map((s: any) => s.id)
+    const scheduleIds = endedSchedules.map((s: { id: string }) => s.id)
     const { data: completed } = await admin
       .from('bookings')
       .update({ status: 'completed' })

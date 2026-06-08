@@ -9,6 +9,8 @@ import Hexagon from '@/components/brand/Hexagon'
 import ClassCard from '@/components/class/ClassCard'
 import Button from '@/components/ui/Button'
 import FloatingCTA from '@/components/home/FloatingCTA'
+import JsonLd from '@/components/seo/JsonLd'
+import { categoryLabel, categoryEmoji, type BlogPostCard } from '@/lib/blog'
 import { formatPrice } from '@/lib/utils/format'
 import {
   MapPin, Star, CheckCircle2, TrendingUp, Award, ShoppingBag, Search,
@@ -123,6 +125,20 @@ async function getFeaturedProducts() {
     .order('created_at', { ascending: false })
     .limit(4)
   return data ?? []
+}
+
+async function getFeaturedBlogPosts() {
+  const supabase = await createClient()
+  // 홈 노출(featured) 글 우선, 없으면 최신 발행글로 채움
+  const { data } = await supabase
+    .from('blog_posts')
+    .select('id, slug, title, excerpt, cover_image, category, tags, author_name, published_at, created_at, view_count')
+    .eq('status', 'published')
+    .order('is_featured', { ascending: false })
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false })
+    .limit(3)
+  return (data ?? []) as BlogPostCard[]
 }
 
 async function getHotBoardPosts() {
@@ -243,6 +259,7 @@ export default async function HomePage() {
     vendors,
     products,
     boardPosts,
+    blogPosts,
     roiStats,
   ] = await Promise.all([
     getFeaturedClasses(),
@@ -253,14 +270,52 @@ export default async function HomePage() {
     getApprovedVendors(),
     getFeaturedProducts(),
     getHotBoardPosts(),
+    getFeaturedBlogPosts(),
     getRoiStats(),
   ])
 
   const sessionRevenue = roiStats.avgClassPrice * 6
   const monthlyRevenue = sessionRevenue * 4
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://authenticart.kr'
+
+  // ── 구조화 데이터(AEO): Organization + WebSite ──
+  // AI 검색·생성형 엔진이 '오센틱아트'를 명확한 엔티티로 인식하도록 제공
+  const orgLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: '오센틱아트',
+    alternateName: 'Authentic Art',
+    url: siteUrl,
+    logo: `${siteUrl}/logo/logo-light.png`,
+    description:
+      '레진아트·캔들·플라워·도자기·주얼리·자수·회화·목공예 전 장르 공예·예술 클래스 예약, 강사 자격 취득, 작품 판매, 재료 도매를 제공하는 종합 플랫폼.',
+    slogan: '취미를 직업으로',
+    sameAs: [
+      'https://instagram.com/authentic_art.rs/',
+      'https://cafe.naver.com/authenticart',
+      'http://pf.kakao.com/_AaxjDxj',
+    ],
+    areaServed: 'KR',
+    knowsAbout: ['레진아트', '캔들', '플라워', '도자기', '주얼리', '자수', '회화', '목공예', '공예 클래스', '공예 강사 자격'],
+  }
+  const websiteLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: '오센틱아트',
+    url: siteUrl,
+    inLanguage: 'ko-KR',
+    publisher: { '@type': 'Organization', name: '오센틱아트', url: siteUrl },
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: { '@type': 'EntryPoint', urlTemplate: `${siteUrl}/classes?q={search_term_string}` },
+      'query-input': 'required name=search_term_string',
+    },
+  }
+
   return (
     <div>
+      <JsonLd data={[orgLd, websiteLd]} />
       {/* ─── 1. Hero ─── */}
       <MarbleBackground className="bg-brand-deep min-h-[640px] flex items-center" opacity={0.12}>
         <div className="max-w-6xl mx-auto px-4 py-24 w-full">
@@ -953,6 +1008,65 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ─── 12.5 공예 매거진(블로그) ─── */}
+      {blogPosts.length > 0 && (
+        <section className="py-16 bg-white">
+          <div className="max-w-6xl mx-auto px-4">
+            <div className="flex items-end justify-between mb-10">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Hexagon color="amber" size={13} />
+                  <span className="text-xs font-medium text-brand-amber uppercase tracking-wider">Magazine</span>
+                </div>
+                <h2 className="text-3xl font-bold text-brand-ink">
+                  공예가 처음이라면,{' '}
+                  <span className="text-brand-deep">여기서 시작하세요</span>
+                </h2>
+                <p className="text-brand-grey text-sm mt-1">입문 가이드 · 트렌드 · 강사들의 진짜 이야기</p>
+              </div>
+              <Link href="/blog" className="text-sm text-brand-grey hover:text-brand-deep transition-colors">
+                매거진 전체 보기 →
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {blogPosts.map((p) => (
+                <Link
+                  key={p.id}
+                  href={`/blog/${encodeURIComponent(p.slug)}`}
+                  className="group bg-brand-bg rounded-2xl overflow-hidden border border-brand-mist/20 hover:shadow-md transition-all flex flex-col"
+                >
+                  <div className="aspect-[16/10] bg-brand-mist/10 relative overflow-hidden">
+                    {p.cover_image ? (
+                      <img
+                        src={p.cover_image}
+                        alt={p.title}
+                        loading="lazy"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-5xl">{categoryEmoji(p.category)}</div>
+                    )}
+                    <span className="absolute top-3 left-3 text-xs font-medium px-2.5 py-1 rounded-full bg-white/90 text-brand-deep backdrop-blur-sm">
+                      {categoryLabel(p.category)}
+                    </span>
+                  </div>
+                  <div className="p-5 flex flex-col flex-1">
+                    <h3 className="font-bold text-brand-ink leading-snug mb-2 line-clamp-2 group-hover:text-brand-deep transition-colors">
+                      {p.title}
+                    </h3>
+                    {p.excerpt && (
+                      <p className="text-xs text-brand-grey leading-relaxed line-clamp-2 flex-1">{p.excerpt}</p>
+                    )}
+                    <span className="text-xs text-brand-deep font-medium mt-3">자세히 읽기 →</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ─── 13. 단체 클래스 배너 ─── */}
       <section className="py-10 bg-gradient-to-r from-brand-sage to-brand-deep">

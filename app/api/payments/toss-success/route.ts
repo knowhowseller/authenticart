@@ -85,9 +85,6 @@ export async function GET(request: Request) {
       return NextResponse.redirect(new URL('/payment/fail?reason=db_update_failed', request.url))
     }
 
-    // 좌석 감소
-    await supabase.rpc('decrement_seat', { p_booking_id: orderId })
-
     // 일반회원(member)이 클래스 결제 완료 시 수강생(student)으로 승격 + 쿠폰 사용 처리
     const { data: paidBooking } = await supabase
       .from('bookings').select('student_id, coupon_id, discount_amount').eq('id', orderId).single()
@@ -265,9 +262,6 @@ export async function GET(request: Request) {
         .from('orders')
         .select('product_id, quantity, buyer_id')
         .in('id', ids)
-      for (const o of paidOrders ?? []) {
-        await supabase.rpc('decrement_stock', { p_product_id: o.product_id, p_qty: o.quantity })
-      }
       const buyerId = (paidOrders ?? [])[0]?.buyer_id
       if (buyerId) {
         void supabase.from('notifications').insert({
@@ -296,7 +290,6 @@ export async function GET(request: Request) {
     .single()
 
   if (order) {
-    await supabase.rpc('decrement_stock', { p_product_id: (order as any).product_id, p_qty: (order as any).quantity })
     const { data: buyer } = await supabase
       .from('users').select('name, email').eq('id', (order as any).buyer_id).single()
     // 인앱 알림

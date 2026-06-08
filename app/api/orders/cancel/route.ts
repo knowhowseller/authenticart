@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
 
   const { data: order } = await supabase
     .from('orders')
-    .select('id, status, buyer_id')
+    .select('id, status, buyer_id, product_id, quantity')
     .eq('id', order_id)
     .eq('buyer_id', user.id)
     .single()
@@ -27,6 +27,14 @@ export async function POST(req: NextRequest) {
     .eq('id', order_id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  if (order.product_id && order.quantity > 0) {
+    const admin = await createAdminClient()
+    await admin.rpc('increment_stock', {
+      p_product_id: order.product_id,
+      p_quantity: order.quantity,
+    })
+  }
 
   return NextResponse.json({ ok: true })
 }

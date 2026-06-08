@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { releaseAndNotify } from '@/lib/waitlist'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -30,6 +31,8 @@ export async function POST(req: NextRequest) {
       .update({ status: 'cancelled', refund_reason: reason ?? '관리자 강제 취소' })
       .eq('id', booking_id)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    releaseAndNotify(booking_id, admin).catch(() => {})
 
     await admin.from('audit_logs').insert({
       actor_id: user.id,
@@ -73,6 +76,8 @@ export async function POST(req: NextRequest) {
     refunded_at: new Date().toISOString(),
     refund_reason: reason ?? '관리자 강제 환불',
   }).eq('id', booking_id)
+
+  releaseAndNotify(booking_id, admin).catch(() => {})
 
   await admin.from('audit_logs').insert({
     actor_id: user.id,
