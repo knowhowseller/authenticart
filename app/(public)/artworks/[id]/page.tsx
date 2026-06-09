@@ -84,6 +84,8 @@ export default function ArtworkDetailPage() {
 
   const seller = artwork.users
   const images: string[] = artwork.images ?? []
+  const shippingFee: number = artwork.shipping_fee ?? 0
+  const total: number = (artwork.price ?? 0) + shippingFee
 
   return (
     <div className="min-h-screen bg-brand-bg">
@@ -141,7 +143,19 @@ export default function ArtworkDetailPage() {
             )}
 
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-mist/30">
-              <p className="text-2xl font-bold text-brand-deep mb-1">{formatPrice(artwork.price)}</p>
+              <div className="mb-4 space-y-1.5">
+                <div className="flex items-center justify-between text-sm text-brand-grey">
+                  <span>작품가</span><span>{formatPrice(artwork.price)}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm text-brand-grey">
+                  <span>배송비</span>
+                  <span>{shippingFee > 0 ? formatPrice(shippingFee) : <span className="text-brand-sage font-medium">무료</span>}</span>
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t border-brand-mist/30">
+                  <span className="text-sm font-semibold text-brand-ink">합계</span>
+                  <span className="text-2xl font-bold text-brand-deep">{formatPrice(total)}</span>
+                </div>
+              </div>
               <p className="text-xs text-brand-grey mb-4">재고 {artwork.stock}개 · 핸드메이드 작품</p>
 
               {artwork.status === 'sold_out' ? (
@@ -166,7 +180,7 @@ export default function ArtworkDetailPage() {
                         className="w-full px-3 py-2 rounded-lg border border-brand-mist text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber" />
                       <button onClick={handleBuy} disabled={buying}
                         className="w-full py-3 bg-brand-deep text-white rounded-xl text-sm font-medium hover:bg-brand-deep/90 disabled:opacity-50 transition-colors">
-                        {buying ? '결제 중...' : `${formatPrice(artwork.price)} 결제하기`}
+                        {buying ? '결제 중...' : `${formatPrice(total)} 결제하기`}
                       </button>
                       <button onClick={() => setShowForm(false)} className="w-full py-2 text-sm text-brand-grey hover:text-brand-ink">취소</button>
                     </div>

@@ -180,16 +180,16 @@ export async function GET(request: Request) {
 
   // type === 'artwork'
   if (type === 'artwork') {
-    // ── 금액 검증(D-1) + 멱등성(D-2) ──
+    // ── 금액 검증(D-1) + 멱등성(D-2): amount = 작품가 + 배송비 (주문 생성 시 서버 저장) ──
     const { data: aoCheck } = await supabase
       .from('artwork_orders')
-      .select('status, artworks!artwork_id(price)')
+      .select('status, amount')
       .eq('id', orderId).single()
     if (!aoCheck) return failRedirect(request, 'order_not_found')
     if ((aoCheck as any).status === 'paid' || (aoCheck as any).status === 'completed') {
       return NextResponse.redirect(new URL('/my/artwork-orders?success=1', request.url))
     }
-    const expectedArtwork = (aoCheck as any).artworks?.price ?? -1
+    const expectedArtwork = (aoCheck as any).amount ?? -1
     if (parsedAmount !== expectedArtwork) {
       await cancelTossPayment(paymentKey, '결제 금액 불일치')
       return failRedirect(request, 'amount_mismatch')

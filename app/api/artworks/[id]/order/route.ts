@@ -18,11 +18,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: '본인 작품은 구매할 수 없습니다' }, { status: 400 })
   }
 
+  const shippingFee = Math.max(0, artwork.shipping_fee ?? 0)
+  const total = artwork.price + shippingFee
+
   const { data: order, error } = await admin.from('artwork_orders').insert({
     artwork_id: id,
     buyer_id: user.id,
     seller_id: artwork.seller_id,
-    amount: artwork.price,
+    amount: total,                 // 결제액 = 작품가 + 배송비 (서버 산정 = 결제 검증 기준)
+    shipping_fee: shippingFee,
     status: 'pending',
     shipping_name: shipping_name ?? null,
     shipping_phone: shipping_phone ?? null,
@@ -30,5 +34,5 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }).select('id').single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ order_id: order.id, amount: artwork.price })
+  return NextResponse.json({ order_id: order.id, amount: total })
 }

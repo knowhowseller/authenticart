@@ -9,7 +9,7 @@ const CATEGORIES = ['레진아트', '비즈공예', '자수', '석고아트', '�
 export default function NewArtworkPage() {
   const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
-  const [form, setForm] = useState({ title: '', description: '', price: '', category: '레진아트', material: '', size_info: '', stock: '1' })
+  const [form, setForm] = useState({ title: '', description: '', price: '', category: '레진아트', material: '', size_info: '', stock: '1', shipping_fee: '0' })
   const [images, setImages] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -62,7 +62,7 @@ export default function NewArtworkPage() {
     const res = await fetch('/api/artworks/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, price: Number(form.price), stock: Number(form.stock), images }),
+      body: JSON.stringify({ ...form, price: Number(form.price), stock: Number(form.stock), shipping_fee: Number(form.shipping_fee || 0), images }),
     })
     const data = await res.json()
     setSaving(false)
@@ -138,6 +138,12 @@ export default function NewArtworkPage() {
             <div>
               <label className="text-xs font-medium text-brand-grey block mb-1.5">재고 수량</label>
               <input type="number" min={1} value={form.stock} onChange={e => setForm(f => ({ ...f, stock: e.target.value }))}
+                className="w-full px-3 py-2 rounded-lg border border-brand-mist text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-brand-grey block mb-1.5">배송비 (원) · 무료배송은 0</label>
+              <input type="number" min={0} value={form.shipping_fee} onChange={e => setForm(f => ({ ...f, shipping_fee: e.target.value }))}
+                placeholder="0"
                 className="w-full px-3 py-2 rounded-lg border border-brand-mist text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber" />
             </div>
           </div>
