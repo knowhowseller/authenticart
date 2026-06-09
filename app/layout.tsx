@@ -3,6 +3,7 @@ import { Noto_Sans_KR } from 'next/font/google'
 import { Toaster } from 'sonner'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
+import CSChatWidget from '@/components/cs/CSChatWidget'
 import './globals.css'
 
 const noto = Noto_Sans_KR({
@@ -41,6 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main className="flex-1">{children}</main>
         <Footer />
         <Toaster richColors position="top-center" />
+        <CSChatWidget />
       </body>
     </html>
   )

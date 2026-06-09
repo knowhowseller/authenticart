@@ -20,6 +20,7 @@ async function getAdminStats() {
     monthGmv, prevMonthGmv,
     monthOrderGmv,
     pendingBookings, recentBookings, recentOrders, pendingPayouts,
+    pendingVendors, pendingAgencies, openDisputes, openGroups,
   ] = await Promise.all([
     supabase.from('users').select('id', { count: 'exact', head: true })
       .then(r => r.count ?? 0),
@@ -50,6 +51,14 @@ async function getAdminStats() {
       .then(r => r.data ?? []),
     supabase.from('payouts').select('id', { count: 'exact', head: true }).eq('status', 'pending')
       .then(r => r.count ?? 0),
+    supabase.from('vendors').select('id', { count: 'exact', head: true }).eq('status', 'pending')
+      .then(r => r.count ?? 0),
+    supabase.from('agencies').select('id', { count: 'exact', head: true }).eq('status', 'pending')
+      .then(r => r.count ?? 0),
+    supabase.from('disputes').select('id', { count: 'exact', head: true }).in('status', ['open', 'under_review', 'escalated'])
+      .then(r => r.count ?? 0),
+    supabase.from('group_lesson_requests').select('id', { count: 'exact', head: true }).eq('status', 'open')
+      .then(r => r.count ?? 0),
   ])
 
   const gmvChange = prevMonthGmv > 0
@@ -61,6 +70,7 @@ async function getAdminStats() {
     pendingInstructors, pendingClasses,
     monthGmv, gmvChange, monthOrderGmv,
     pendingBookings, recentBookings, recentOrders, pendingPayouts,
+    pendingVendors, pendingAgencies, openDisputes, openGroups,
   }
 }
 
@@ -154,6 +164,34 @@ export default async function AdminPage() {
       color: 'text-purple-600',
       bg: 'bg-purple-50 border-purple-200',
       text: `정산 대기 ${stats.pendingPayouts}명 강사 — 입금 처리 필요`,
+    },
+    stats.openGroups > 0 && {
+      href: '/admin/group-requests',
+      icon: AlertCircle,
+      color: 'text-brand-deep',
+      bg: 'bg-brand-deep/5 border-brand-deep/20',
+      text: `단체 출강 문의 ${stats.openGroups}건 — 상담·강사 배정 필요`,
+    },
+    role === 'admin' && stats.pendingVendors > 0 && {
+      href: '/admin/vendors',
+      icon: AlertCircle,
+      color: 'text-brand-sage',
+      bg: 'bg-brand-sage/10 border-brand-sage/20',
+      text: `벤더 입점 신청 ${stats.pendingVendors}건 검토 대기`,
+    },
+    role === 'admin' && stats.pendingAgencies > 0 && {
+      href: '/admin/agencies',
+      icon: AlertCircle,
+      color: 'text-purple-600',
+      bg: 'bg-purple-50 border-purple-200',
+      text: `에이전시 신청 ${stats.pendingAgencies}건 검토 대기`,
+    },
+    role === 'admin' && stats.openDisputes > 0 && {
+      href: '/admin/disputes',
+      icon: AlertCircle,
+      color: 'text-red-600',
+      bg: 'bg-red-50 border-red-200',
+      text: `미해결 분쟁 ${stats.openDisputes}건 — 처리 필요`,
     },
   ].filter(Boolean) as any[]
 
