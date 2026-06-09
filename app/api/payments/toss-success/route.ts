@@ -5,6 +5,25 @@ import { sendEmail } from '@/lib/email/resend'
 import { bookingConfirmedHtml } from '@/lib/email/templates/booking-confirmed'
 import { orderConfirmedHtml } from '@/lib/email/templates/order-confirmed'
 
+const TOSS_AUTH = `Basic ${Buffer.from((process.env.TOSS_SECRET_KEY ?? '') + ':').toString('base64')}`
+
+// 금액 불일치 등으로 결제를 무효화해야 할 때 토스 결제 취소(환불). 베스트에포트.
+async function cancelTossPayment(paymentKey: string, reason: string) {
+  try {
+    await fetch(`https://api.tosspayments.com/v1/payments/${encodeURIComponent(paymentKey)}/cancel`, {
+      method: 'POST',
+      headers: { Authorization: TOSS_AUTH, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cancelReason: reason }),
+    })
+  } catch {
+    /* 취소 실패해도 결제는 'paid'로 확정하지 않으므로 미충족 상태로 남음 */
+  }
+}
+
+function failRedirect(request: Request, reason: string) {
+  return NextResponse.redirect(new URL(`/payment/fail?reason=${reason}`, request.url))
+}
+
 export async function GET(request: Request) {
   const url = new URL(request.url)
   const paymentKey = url.searchParams.get('paymentKey')
@@ -36,6 +55,19 @@ export async function GET(request: Request) {
   const parsedAmount = parseInt(amount)
 
   if (type === 'booking') {
+    // ── 결제금액 서버 검증(D-1) + 멱등성(D-2) ──
+    const { data: bk } = await supabase
+      .from('bookings').select('status, gross_amount, discount_amount').eq('id', orderId).single()
+    if (!bk) return failRedirect(request, 'order_not_found')
+    if (bk.status === 'paid' || bk.status === 'completed') {
+      return NextResponse.redirect(new URL('/my/bookings?success=1', request.url))
+    }
+    const expectedBooking = (bk.gross_amount ?? 0) - (bk.discount_amount ?? 0)
+    if (parsedAmount !== expectedBooking) {
+      await cancelTossPayment(paymentKey, '결제 금액 불일치')
+      return failRedirect(request, 'amount_mismatch')
+    }
+
     // 강사의 에이전시 및 지부 조회
     const { data: bookingInfo } = await supabase
       .from('bookings')
@@ -148,6 +180,21 @@ export async function GET(request: Request) {
 
   // type === 'artwork'
   if (type === 'artwork') {
+    // ── 금액 검증(D-1) + 멱등성(D-2) ──
+    const { data: aoCheck } = await supabase
+      .from('artwork_orders')
+      .select('status, artworks!artwork_id(price)')
+      .eq('id', orderId).single()
+    if (!aoCheck) return failRedirect(request, 'order_not_found')
+    if ((aoCheck as any).status === 'paid' || (aoCheck as any).status === 'completed') {
+      return NextResponse.redirect(new URL('/my/artwork-orders?success=1', request.url))
+    }
+    const expectedArtwork = (aoCheck as any).artworks?.price ?? -1
+    if (parsedAmount !== expectedArtwork) {
+      await cancelTossPayment(paymentKey, '결제 금액 불일치')
+      return failRedirect(request, 'amount_mismatch')
+    }
+
     const { error } = await supabase.from('artwork_orders').update({
       status: 'paid',
       payment_id: paymentKey,
@@ -199,7 +246,16 @@ export async function GET(request: Request) {
       return NextResponse.redirect(new URL('/payment/fail?reason=invalid_params', request.url))
     }
 
-    // 참여자 상태를 paid로 업데이트
+    // ── 금액 검증(D-1): 1인 결제금액 = price_per_person ──
+    const { data: reqPrice } = await supabase
+      .from('class_open_requests').select('price_per_person').eq('id', requestId).single()
+    if (!reqPrice) return failRedirect(request, 'order_not_found')
+    if (parsedAmount !== (reqPrice.price_per_person ?? -1)) {
+      await cancelTossPayment(paymentKey, '결제 금액 불일치')
+      return failRedirect(request, 'amount_mismatch')
+    }
+
+    // 참여자 상태를 paid로 업데이트 (status='payment_requested'만 대상 → 멱등성 부분 방어)
     await supabase
       .from('class_open_request_participants')
       .update({ status: 'paid' })
@@ -252,6 +308,18 @@ export async function GET(request: Request) {
     const orderIdsParam = url.searchParams.get('orderIds')
     if (orderIdsParam) {
       const ids = orderIdsParam.split(',').filter(Boolean)
+      // ── 금액 검증(D-1) + 멱등성(D-2): 합계 = Σ total_amount ──
+      const { data: cartOrders } = await supabase
+        .from('orders').select('id, total_amount, status').in('id', ids)
+      if (!cartOrders || cartOrders.length !== ids.length) return failRedirect(request, 'order_not_found')
+      if (cartOrders.every((o) => o.status === 'paid')) {
+        return NextResponse.redirect(new URL('/my/orders?success=1', request.url))
+      }
+      const expectedCart = cartOrders.reduce((s, o) => s + (o.total_amount ?? 0), 0)
+      if (parsedAmount !== expectedCart) {
+        await cancelTossPayment(paymentKey, '결제 금액 불일치')
+        return failRedirect(request, 'amount_mismatch')
+      }
       await supabase.from('orders').update({
         status: 'paid',
         payment_id: paymentKey,
@@ -277,6 +345,18 @@ export async function GET(request: Request) {
   }
 
   // type === 'order'
+  // ── 금액 검증(D-1) + 멱등성(D-2) ──
+  const { data: orderCheck } = await supabase
+    .from('orders').select('status, total_amount').eq('id', orderId).single()
+  if (!orderCheck) return failRedirect(request, 'order_not_found')
+  if (orderCheck.status === 'paid') {
+    return NextResponse.redirect(new URL('/my/orders?success=1', request.url))
+  }
+  if (parsedAmount !== (orderCheck.total_amount ?? -1)) {
+    await cancelTossPayment(paymentKey, '결제 금액 불일치')
+    return failRedirect(request, 'amount_mismatch')
+  }
+
   await supabase.from('orders').update({
     status: 'paid',
     payment_id: paymentKey,
