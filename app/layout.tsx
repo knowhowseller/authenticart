@@ -4,6 +4,7 @@ import { Toaster } from 'sonner'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import CSChatWidget from '@/components/cs/CSChatWidget'
+import ChannelTalkBoot from '@/components/cs/ChannelTalkBoot'
 import './globals.css'
 
 const noto = Noto_Sans_KR({
@@ -43,6 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Footer />
         <Toaster richColors position="top-center" />
         <CSChatWidget />
+        <ChannelTalkBoot />
       </body>
     </html>
   )

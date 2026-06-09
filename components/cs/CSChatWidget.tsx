@@ -6,7 +6,7 @@ interface Msg { role: 'user' | 'assistant'; content: string }
 
 const GREETING: Msg = {
   role: 'assistant',
-  content: '안녕하세요! 오센틱아트 고객지원입니다 🎨\n예약·환불·강사·결제 등 궁금한 점을 물어보세요. 답변이 어려우면 게시판으로 안내해 드릴게요.',
+  content: '안녕하세요! 오센틱아트 고객지원입니다 🎨\n예약·환불·강사·결제 등 궁금한 점을 물어보세요. 답변이 어려우면 채널톡 상담으로 안내해 드릴게요.',
 }
 
 export default function CSChatWidget() {
@@ -15,6 +15,9 @@ export default function CSChatWidget() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
+  // 채널톡 런처(우측 하단)와 겹치지 않도록, 채널톡이 켜진 경우 AI 버튼을 위로 올린다.
+  const channelTalkOn = !!process.env.NEXT_PUBLIC_CHANNEL_TALK_PLUGIN_KEY
+  const launcherPos = channelTalkOn ? 'bottom-24 right-5' : 'bottom-5 right-5'
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
@@ -36,7 +39,7 @@ export default function CSChatWidget() {
       const data = await res.json()
       setMsgs((m) => [...m, { role: 'assistant', content: data.answer ?? data.error ?? '답변을 가져오지 못했습니다.' }])
     } catch {
-      setMsgs((m) => [...m, { role: 'assistant', content: '연결에 문제가 있습니다. 게시판(/board)으로 문의해 주세요.' }])
+      setMsgs((m) => [...m, { role: 'assistant', content: '연결에 문제가 있습니다. 우측 하단 채널톡으로 문의해 주세요.' }])
     } finally {
       setLoading(false)
     }
@@ -49,7 +52,7 @@ export default function CSChatWidget() {
         <button
           onClick={() => setOpen(true)}
           aria-label="고객지원 챗봇 열기"
-          className="fixed bottom-5 right-5 z-[60] w-14 h-14 rounded-full bg-brand-deep text-white shadow-lg flex items-center justify-center hover:bg-brand-deep/90 transition-colors"
+          className={`fixed ${launcherPos} z-[60] w-14 h-14 rounded-full bg-brand-deep text-white shadow-lg flex items-center justify-center hover:bg-brand-deep/90 transition-colors`}
         >
           <MessageCircle size={24} />
         </button>
@@ -100,7 +103,7 @@ export default function CSChatWidget() {
                 <Send size={16} />
               </button>
             </div>
-            <p className="text-[10px] text-brand-grey/60 mt-1.5 text-center">AI 자동응답 · 정확한 처리는 <a href="/board" className="underline">게시판</a> 또는 contact@authenticart.co.kr</p>
+            <p className="text-[10px] text-brand-grey/60 mt-1.5 text-center">AI 자동응답 · 정확한 처리는 채널톡 상담 또는 contact@authenticart.co.kr</p>
           </div>
         </div>
       )}

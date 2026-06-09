@@ -11,6 +11,22 @@
 
 ---
 
+## 2026-06-09 보안·결제 수정 + 배송비 기능 (배포 완료)
+
+- 🔴→✅ **D-1 과소결제 취약점 수정**: toss-success가 URL amount를 DB 실제금액과 대조 없이 paid 처리하던 문제 → 5개 결제 타입(booking·order·cart·artwork·class_request) 전부 서버 금액 검증 + 불일치 시 토스 결제 취소. (commit 5fe2f90)
+- ✅ **D-2 멱등성**: 이미 paid인 주문 재호출 시 중복 정산·알림 방지.
+- ✅ **C-1**: supabase/migrations/README.md — 중복 번호(0002/0005/0006) 문서화. 재번호 금지 규칙.
+- ✅ **작가 배송비 기능**: migration 0048(artworks/artwork_orders.shipping_fee) 적용 완료. 결제액=작품가+배송비. (commit c6605ad)
+- ⚠️ **배포 후 권장 테스트**: 실제 결제로 정상금액 통과/조작금액 차단 확인 (booking·쿠폰·작품). webhooks/toss 동일 검증 별도 검토.
+
+## 2026-06-09 1인 운영 자동화 (배포 완료)
+
+- **1순위**: class-reminder cron 활성화+윈도우 수정 / operator-digest(매일 09시 미처리 8종 요약) / weekly-kpi(매주 월) — admin 4명 발송
+- **2순위**: 정산 지급 완료(mark-paid 단건·일괄) 시 강사 정산 명세 자동 발송 (monthlyPayoutHtml 연결, 계산 로직 불변)
+- **3순위**: B2B 단체문의 자동 1차 응답(접수확인+절차) + admin 즉시 이메일·인앱 알림
+- 미적용/판단대기: 강사신청 실시간 알림(signup 클라이언트 insert라 서버라우트화 필요, 다이제스트가 일단위 커버), 4순위(CS봇·블로그 파이프라인·후기 자동요청), 5순위(운영 대시보드)
+- ⚠️ cron은 vercel.json 등록됨 — CRON_SECRET 환경변수 설정 전제(기존 7개 cron과 동일)
+
 ## 수정하면 안 되는 고정값
 
 | 항목 | 값 | 이유 |

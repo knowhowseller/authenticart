@@ -35,8 +35,7 @@ const KNOWLEDGE = `
 - 강사 회원은 도매가 구매 가능. 재료 판매자는 /my/vendor/apply 로 입점 신청.
 
 [기타]
-- 회원 탈퇴·기타 문의: contact@authenticart.co.kr
-- 게시판 문의: /board
+- 회원 탈퇴·복잡한 개별 처리·기타 문의: 사이트 우측 하단 채널톡 상담으로 문의(영업시간 내 순차 응대). 이메일 contact@authenticart.co.kr 도 가능.
 `
 
 export async function POST(req: NextRequest) {
@@ -51,22 +50,17 @@ export async function POST(req: NextRequest) {
   const messages: any[] = [
     {
       role: 'system',
-      content: `당신은 공예 플랫폼 '오센틱아트'의 친절한 고객지원 도우미입니다.
-한국어로 따뜻하고 간결하게(2~4문장) 답하세요.
+      content: `당신은 공예·예술 플랫폼 '오센틱아트'의 고객지원 상담원입니다.
+아래 '회사 정보'를 사용해 고객의 질문에 한국어로 친절하고 구체적으로(2~4문장) 답하세요.
 
-[가장 중요한 규칙]
-아래 [지식]에 질문과 관련된 내용이 있으면 — 단어가 정확히 일치하지 않더라도 — 반드시 그 내용을 활용해 적극적으로 답하세요.
-예) "수수료" 질문 → 강사 86.7% 수령 안내 / "환불 언제까지" 질문 → 7일·3~7일·3일 정책 안내 / "자격증" 질문 → 국가공인 불필요·자체 인증 안내.
+# 회사 정보
+${KNOWLEDGE}
 
-[지식과 전혀 무관한 질문일 때만] 다음 문장을 그대로 답하세요:
-"정확한 답변이 어렵습니다. 게시판(/board) 문의 또는 contact@authenticart.co.kr 로 문의해 주세요."
-
-[톤 규칙]
-- 환불·정산·수수료 등은 "정책 기준이며 클래스/상황에 따라 다를 수 있다" 정도로 안내.
-- 법률·세무·의료 단정 금지. 과장·허위 금지. 지식에 없는 수치를 지어내지 마세요.
-
-[지식]
-${KNOWLEDGE}`,
+# 지침
+- 위 회사 정보로 답할 수 있는 질문이면 망설이지 말고 그 내용으로 분명하게 답하세요. (예: 강사 수수료, 환불 기간, 강사 자격, 결제수단, 배송비, 단체 출강, 운영 지역 등은 모두 회사 정보에 있습니다.)
+- 회사 정보에 전혀 없는 주제(회사와 무관한 일반 상식, 특정 회원의 개별 계정 처리 등)일 때만 "정확한 답변이 어렵습니다. 사이트 우측 하단 채널톡으로 문의해 주세요." 라고 안내하세요.
+- 환불·정산·수수료를 답할 때는 "정책 기준이며 클래스/상황에 따라 다를 수 있습니다"라고 덧붙이세요.
+- 법률·세무·의료 단정 금지. 회사 정보에 없는 구체 수치나 사실을 지어내지 마세요.`,
     },
     ...(Array.isArray(history) ? history.slice(-6).map((m: any) => ({
       role: m.role === 'user' ? 'user' : 'assistant',
@@ -83,7 +77,7 @@ ${KNOWLEDGE}`,
       temperature: 0.3,
       messages,
     })
-    const answer = res.choices[0]?.message?.content?.trim() ?? '정확한 답변이 어렵습니다. contact@authenticart.co.kr 로 문의해 주세요.'
+    const answer = res.choices[0]?.message?.content?.trim() ?? '정확한 답변이 어렵습니다. 사이트 우측 하단 채널톡으로 문의해 주세요.'
     if (debug) {
       return NextResponse.json({
         answer,
@@ -102,7 +96,7 @@ ${KNOWLEDGE}`,
     if (debug) {
       const err = e as { status?: number; message?: string; code?: string }
       return NextResponse.json({
-        answer: '일시적으로 답변이 어렵습니다. 게시판(/board) 또는 contact@authenticart.co.kr 로 문의해 주세요.',
+        answer: '일시적으로 답변이 어렵습니다. 사이트 우측 하단 채널톡으로 문의해 주세요.',
         _debug: { error: true, status: err?.status, code: err?.code, message: err?.message, keyPresent: !!process.env.OPENAI_API_KEY },
       })
     }
