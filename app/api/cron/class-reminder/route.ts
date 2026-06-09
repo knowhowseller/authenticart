@@ -12,8 +12,13 @@ export async function GET(req: NextRequest) {
 
   const supabase = await createAdminClient()
   const now = new Date()
-  const twentyHoursLater = new Date(now.getTime() + 20 * 60 * 60 * 1000).toISOString()
-  const twentyEightHoursLater = new Date(now.getTime() + 28 * 60 * 60 * 1000).toISOString()
+
+  // KST(UTC+9) 기준 '내일' 00:00 ~ 다음날 00:00 전체를 대상으로 (매일 1회 실행 시 누락/중복 없음)
+  const KST_OFFSET = 9 * 60 * 60 * 1000
+  const nowKst = new Date(now.getTime() + KST_OFFSET)
+  const y = nowKst.getUTCFullYear(), mo = nowKst.getUTCMonth(), d = nowKst.getUTCDate()
+  const tomorrowStart = new Date(Date.UTC(y, mo, d + 1, 0, 0, 0) - KST_OFFSET).toISOString()
+  const tomorrowEnd = new Date(Date.UTC(y, mo, d + 2, 0, 0, 0) - KST_OFFSET).toISOString()
 
   // 내일 수업 예정 & paid 상태 예약 조회
   const { data: bookings } = await supabase
@@ -29,8 +34,8 @@ export async function GET(req: NextRequest) {
       )
     `)
     .eq('status', 'paid')
-    .gte('class_schedules.start_at', twentyHoursLater)
-    .lte('class_schedules.start_at', twentyEightHoursLater)
+    .gte('class_schedules.start_at', tomorrowStart)
+    .lt('class_schedules.start_at', tomorrowEnd)
 
   if (!bookings || bookings.length === 0) {
     return NextResponse.json({ ok: true, sent: 0 })
