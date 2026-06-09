@@ -75,6 +75,7 @@ ${KNOWLEDGE}`,
     { role: 'user', content: question },
   ]
 
+  const debug = req.nextUrl.searchParams.get('debug') === '1'
   try {
     const res = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
@@ -83,8 +84,28 @@ ${KNOWLEDGE}`,
       messages,
     })
     const answer = res.choices[0]?.message?.content?.trim() ?? '정확한 답변이 어렵습니다. contact@authenticart.co.kr 로 문의해 주세요.'
+    if (debug) {
+      return NextResponse.json({
+        answer,
+        _debug: {
+          keyPresent: !!process.env.OPENAI_API_KEY,
+          keyPrefix: (process.env.OPENAI_API_KEY ?? '').slice(0, 7),
+          model: res.model,
+          finish: res.choices[0]?.finish_reason,
+          usage: res.usage,
+          msgCount: messages.length,
+        },
+      })
+    }
     return NextResponse.json({ answer })
-  } catch {
+  } catch (e: unknown) {
+    if (debug) {
+      const err = e as { status?: number; message?: string; code?: string }
+      return NextResponse.json({
+        answer: '일시적으로 답변이 어렵습니다. 게시판(/board) 또는 contact@authenticart.co.kr 로 문의해 주세요.',
+        _debug: { error: true, status: err?.status, code: err?.code, message: err?.message, keyPresent: !!process.env.OPENAI_API_KEY },
+      })
+    }
     return NextResponse.json({ answer: '일시적으로 답변이 어렵습니다. 게시판(/board) 또는 contact@authenticart.co.kr 로 문의해 주세요.' })
   }
 }
