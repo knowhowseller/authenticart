@@ -72,7 +72,8 @@ ${KNOWLEDGE}
   const debug = req.nextUrl.searchParams.get('debug') === '1'
   try {
     const res = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      // gpt-4o-mini가 한국어 KB에서 검색·지시 따르기가 약해 KB 내 질문도 과도 거부 → gpt-4o로 상향(CS 호출량 적어 비용 미미)
+      model: 'gpt-4o',
       max_tokens: 350,
       temperature: 0.3,
       messages,
