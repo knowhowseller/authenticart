@@ -1,5 +1,5 @@
 # 오센틱아트 현재 상태 (최신)
-> 마지막 갱신: 2026-06-10
+> 마지막 갱신: 2026-06-13
 
 ---
 
@@ -18,6 +18,21 @@
 - ✅ **C-1**: supabase/migrations/README.md — 중복 번호(0002/0005/0006) 문서화. 재번호 금지 규칙.
 - ✅ **작가 배송비 기능**: migration 0048(artworks/artwork_orders.shipping_fee) 적용 완료. 결제액=작품가+배송비. (commit c6605ad)
 - ⚠️ **배포 후 권장 테스트**: 실제 결제로 정상금액 통과/조작금액 차단 확인 (booking·쿠폰·작품). webhooks/toss 동일 검증 별도 검토.
+
+## 2026-06-10 블로그 홍보 기획 + 타겟별 홍보글 7편 (✅ 운영 DB 발행 완료)
+
+- ✅ **블로그 홍보 기획서 + 홍보글 7편 작성**: 타겟 7세그먼트(입문/B2B/강사/작품/커플/학부모/선물) 맞춤, AEO 3종(excerpt·FAQ·소제목) 적용, 광고법 안전. `outputs/04-marketing/20260610-오센틱아트-블로그홍보{기획,글7편}.md(+.docx)`
+- ✅ **CTA 실제 라우트 반영**: `/classes`·`/artworks`·`/group-request`·`/signup/instructor`
+- ✅ **운영 DB(blog_posts) 7건 published INSERT 완료** (사용자 승인, execute_sql): blog_posts 22편 → 29편. 홈 노출(is_featured) Day1·4·7=true. 라이브 검증: `/blog` 목록·3개 글 HTTP 200 + 본문 렌더링 확인 (www.authenticart.co.kr).
+- 📌 후속(선택): 글별 cover_image(대표 이미지) URL 입력 — 현재 미입력(카드 이미지 없음). 상세 `20260610-블로그홍보7편-worklog.md`
+
+## 2026-06-13 블로그 홍보글 2주차 7편 작성 + 운영 DB 발행 완료 (✅)
+
+- ✅ **2주차 7편 작성 완료**: 기획서 로드맵대로 1주차 7타겟 로테이션 유지·주제만 교체. 여름·장마·여름방학 시즌 훅 반영. AEO 3종·광고법 안전 동일 기준. slug 1주차와 전부 다르게 생성. `outputs/04-marketing/20260613-오센틱아트-블로그홍보글7편-2주차.md(+.docx 21.9KB)`
+- ✅ **운영 DB(blog_posts) 7건 published INSERT 완료** (사용자 승인 "즉시 published 일괄", execute_sql): published 29편 → **36편**. Day1·4·7=is_featured true.
+- ✅ **홈 featured 로테이션**: 1주차 Day1·4·7(6/10) featured 내림 → 2주차 Day1·4·7 올림. 6/8 상록 가이드 2편(강사되는법·수수료비교)은 유지. **featured 총 5편**.
+- ✅ **라이브 검증**: 새 글 3건 + `/blog` 목록 HTTP 200, 본문 렌더링 확인(www.authenticart.co.kr).
+- 📌 후속(선택): 글별 cover_image URL 미입력(카드 이미지 없음). 상세 `20260613-블로그홍보2주차-worklog.md`
 
 ## 2026-06-10 CS 자동응답 봇 검증·정리 (커밋 완료, 푸시 대기)
 
