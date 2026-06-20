@@ -26,8 +26,11 @@ export const metadata: Metadata = {
   verification: {
     // 구글 서치콘솔 사이트 소유확인 (HTML 태그 방식)
     google: 'oOokeLaH0MNgZ69mxxnrwkY0GN4krDCu39KUvNQiDKo',
-    // 네이버 서치어드바이저 사이트 소유확인 (HTML 태그 방식)
-    other: { 'naver-site-verification': '5a7838f0fbaa25f8fd1c8a3013fd5c4a370bc3ea' },
+    // 네이버 서치어드바이저 / 빙 웹마스터 사이트 소유확인 (HTML 태그 방식)
+    other: {
+      'naver-site-verification': '5a7838f0fbaa25f8fd1c8a3013fd5c4a370bc3ea',
+      'msvalidate.01': '16D2C238DF1479E9A43213AA90676318',
+    },
   },
   openGraph: {
     siteName: '오센틱아트',
