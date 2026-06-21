@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { slugify } from '@/lib/blog'
+import { submitBlogPost } from '@/lib/indexnow'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -15,7 +16,7 @@ export async function POST(req: NextRequest) {
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
   // 현재 상태 조회 (발행 전환 시 published_at 세팅 판단용)
-  const { data: current } = await supabase.from('blog_posts').select('status, published_at').eq('id', id).single()
+  const { data: current } = await supabase.from('blog_posts').select('status, published_at, slug').eq('id', id).single()
   if (!current) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
@@ -57,5 +58,11 @@ export async function POST(req: NextRequest) {
 
   const { error } = await supabase.from('blog_posts').update(updates).eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // 수정 후 최종 상태가 발행이면 IndexNow 재색인 요청 (내용·slug 변경 반영, 실패 무시)
+  const finalStatus = body.status !== undefined ? (body.status === 'published' ? 'published' : 'draft') : current.status
+  const finalSlug = (updates.slug as string | undefined) ?? current.slug
+  if (finalStatus === 'published' && finalSlug) await submitBlogPost(finalSlug)
+
   return NextResponse.json({ ok: true })
 }
