@@ -15,7 +15,8 @@
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\노하우셀러\\\\authenticart\" -Recurse -Depth 2)",
       "Bash(Select-Object FullName)",
       "Bash(Head -50)",
-      "PowerShell(npm list *)"
+      "PowerShell(npm list *)",
+      "mcp__plugin_supabase_supabase__execute_sql"
     ]
   }
 }

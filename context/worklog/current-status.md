@@ -1,7 +1,28 @@
 # 오센틱아트 현재 상태 (최신)
-> 마지막 갱신: 2026-06-13
+> 마지막 갱신: 2026-06-25
 
 ---
+
+## 2026-06-25 블로그 홍보글 3주차 7편 작성 + 발행 완료 (✅ 라이브 검증)
+
+- ✅ **3주차 7편 작성 완료**: 1·2주차 7타겟 로테이션 유지·주제 교체(여름 휴가철·방학 시즌 훅). AEO 3종·광고법 안전 동일. slug 1·2주차와 전부 다름. `outputs/04-marketing/20260625-오센틱아트-블로그홍보글7편-3주차.md(+.docx 22.1KB)`
+- ✅ **운영 DB 발행 완료**: 사용자가 대시보드 SQL 에디터에서 `20260625-블로그3주차-발행SQL.sql` 실행(BEGIN/COMMIT). published 36 → **43편**. 확인 SELECT 7행 전부 published, featured Day1·4·7 ON.
+- ✅ **featured 로테이션**: 3주차 Day1·4·7 ON, 2주차 Day1·4·7 OFF.
+- ✅ **라이브 검증**: `/blog` 목록 + 신규 6글 상세 HTTP 200·H1·본문·FAQ 렌더링 확인. 강사글 정산 86.7% 문구 정상. (www.authenticart.co.kr)
+- ✅ **IndexNow 일괄 색인**: `scripts/indexnow-submit-all.mjs` 실행 — sitemap 62건(신규 7편 포함) 200 OK 제출. (SQL 직접 INSERT는 자동 ping 안 돼 수동 실행)
+- 📌 **이번 세션 특이사항**: execute_sql MCP가 **다른 Supabase 계정(vision-suite, ref axucxnfmbkhlunpiifce)으로 연결**돼 authenticart(coabfjizufovypfappco) 접근 불가 → 대시보드 SQL로 발행. 다음에 MCP 직접 발행하려면 오센틱아트 계정으로 재연결 필요. 상세 `20260625-블로그홍보3주차-worklog.md`
+
+## 2026-06-20~21 검색 노출 강화: 빙 등록 + IndexNow + RSS (배포 완료)
+
+- ✅ **빙 웹마스터 메타 태그**: `app/layout.tsx` verification.other에 `msvalidate.01` 추가. 구글·네이버에 이어 빙 소유확인 준비. (commit cfb6f7b)
+- ✅ **IndexNow 자동 색인** (commit fb92a63): 빙·네이버·Yandex 등 참여 엔진에 즉시 색인 요청.
+  - 키 파일 `public/9d0817bd5e9a59d21ab9bfb876612795.txt` (라이브 200 확인) + `lib/indexnow.ts` 제출 유틸
+  - 블로그 발행/수정(create·update route)에서 발행 상태 시 자동 ping (fire-and-forget, 발행 안 막음)
+  - `scripts/indexnow-submit-all.mjs`: sitemap 전체 일괄 제출 1회성
+- ✅ **RSS 2.0 피드 `/rss.xml`**: 최신 발행글 50건, 30분 캐시. layout alternate 링크 노출. (라이브 200 확인)
+- ✅ **사이트맵 55건 IndexNow 일괄 제출 완료**: 응답 202 Accepted.
+- 📌 **사용자 수동 작업(웹마스터 UI)**: 빙/네이버/구글 콘솔에서 `sitemap.xml`·`rss.xml` 제출 + 빙 소유확인 버튼 클릭.
+- 📌 **IndexNow 키는 비밀 아님**: 공개 검증 토큰. 키 변경 시 public 파일명·lib/indexnow.ts·스크립트 3곳 동시 변경 필요.
 
 ## 프로젝트 단계
 
@@ -55,7 +76,7 @@
 |------|-----|------|
 | 강사 수수료 | PG 3.3% + 플랫폼 10% = **13.3% 공제, 강사 86.7% 수령** | 코드 로직(calcBookingFees) 반영됨 |
 | 에이전시 수수료 | 스탠다드 10% / 실버 12% / 골드 15% | 제안서 확정, DB 반영 예정 |
-| 브랜드 컬러 | DEEP `#1A1A2E` / AMBER `#F59E0B` | DOCX 스크립트 공통 적용 |
+| 브랜드 컬러 | 딥틸 DEEP `#1F4145` / 앰버 AMBER `#FFBF00` | 정본(context/brand). DOCX 스크립트 공통 적용. 옛 `#1A1A2E`/`#F59E0B`는 폐기 |
 
 ---
 
