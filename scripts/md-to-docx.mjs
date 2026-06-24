@@ -18,8 +18,8 @@ const raw = readFileSync(inputPath, 'utf8')
 // Strip YAML frontmatter
 const content = raw.replace(/^---[\s\S]*?---\n/, '').replace(/^---\n/, '')
 
-const BRAND_DEEP = '1A1A2E'
-const BRAND_AMBER = 'D97706'
+const BRAND_DEEP = '1F4145'
+const BRAND_AMBER = 'FFBF00'
 const BRAND_MIST = 'E5E7EB'
 const BRAND_GREY = '6B7280'
 const WHITE = 'FFFFFF'

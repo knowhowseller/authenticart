@@ -6,10 +6,10 @@ import {
 import { writeFileSync } from 'fs'
 
 const F = '맑은 고딕'
-const DEEP   = '1A1A2E'
-const AMBER  = 'F59E0B'
+const DEEP   = '1F4145'
+const AMBER  = 'FFBF00'
 const NAVY   = '144e8c'
-const GOLD   = 'f7931e'
+const GOLD   = 'FFBF00'
 const WHITE  = 'FFFFFF'
 const GREY   = '6B7280'
 const LIGHT  = 'F3F4F6'

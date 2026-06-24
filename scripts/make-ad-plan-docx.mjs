@@ -5,8 +5,8 @@ import {
 } from 'docx'
 import { writeFileSync } from 'fs'
 
-const DEEP   = '1A1A2E'
-const AMBER  = 'F59E0B'
+const DEEP   = '1F4145'
+const AMBER  = 'FFBF00'
 const GREY   = '6B7280'
 const LIGHT  = 'FFFBEB'
 const ALT    = 'F8FAFC'

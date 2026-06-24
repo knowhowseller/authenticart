@@ -6,11 +6,11 @@ import {
 } from 'docx'
 import { writeFileSync, readFileSync } from 'fs'
 
-const BRAND_AMBER = '00B4D8'
-const BRAND_DEEP  = '1A1A2E'
+const BRAND_AMBER = 'FFBF00'
+const BRAND_DEEP  = '1F4145'
 const BRAND_GREY  = '6B7280'
-const LIGHT_BG    = 'F0FAFF'
-const TABLE_HDR   = '1A1A2E'
+const LIGHT_BG    = 'F3F4F7'
+const TABLE_HDR   = '1F4145'
 const TABLE_ALT   = 'F8FAFC'
 
 const noBorder = {
