@@ -3,6 +3,14 @@
 
 ---
 
+## 2026-06-25 블로그 홍보글 4주차 7편 작성 완료 (⏳ 발행 SQL 인계 — DB 발행 대기)
+
+- ✅ **4주차 7편 작성 완료**: 1·2·3주차 7타겟 로테이션 유지·앵글 차별화. 7월 초 한여름 시즌 훅(더위·휴가철·사내행사). AEO 3종·광고법 안전 동일. slug 21편과 전부 다름. `outputs/04-marketing/20260702-오센틱아트-블로그홍보글7편-4주차.md(+.docx 21.7KB)`
+- ✅ **발행 SQL 준비**: `outputs/04-marketing/20260702-블로그4주차-발행SQL.sql` (BEGIN/COMMIT, ON CONFLICT, featured 로테이션 포함). 4주차 Day1·4·7 ON / 3주차 Day1·4·7 OFF.
+- ⏳ **DB 발행 대기**: 사용자가 대시보드 SQL 에디터에서 실행 시 published 43→**50편**. (현재 Supabase MCP가 다른 계정 vision-suite 연결 상태라 Claude 직접 발행 불가)
+- 📌 **발행 후 할 일**: ① IndexNow 일괄 색인 `scripts/indexnow-submit-all.mjs` ② 라이브 검증(`/blog` + 신규 글 상세). 상세 `20260625-블로그홍보4주차-worklog.md`
+- 4주차 목록: ①(월/guide,featured) 처음 클래스 예약·당일준비 ②(화/guide) 여름 사내행사 워크숍 ③(수/instructor) 강사 부업 현실(정산86.7%) ④(목/trend,featured) 여름 테이블 코스터·트레이 ⑤(금/story) 멀리 안 가는 여름 데이트 ⑥(토/guide) 더운날 실내 공예체험 ⑦(일/story,featured) 상황별 선물(집들이·승진·감사)
+
 ## 2026-06-25 블로그 홍보글 3주차 7편 작성 + 발행 완료 (✅ 라이브 검증)
 
 - ✅ **3주차 7편 작성 완료**: 1·2주차 7타겟 로테이션 유지·주제 교체(여름 휴가철·방학 시즌 훅). AEO 3종·광고법 안전 동일. slug 1·2주차와 전부 다름. `outputs/04-marketing/20260625-오센틱아트-블로그홍보글7편-3주차.md(+.docx 22.1KB)`
