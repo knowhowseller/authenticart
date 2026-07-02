@@ -61,10 +61,21 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url))
   }
 
-  // /admin/* — admin 또는 branch_manager. admin 전용 하위 페이지(users·payouts 등)는
-  // 각 페이지가 role === 'admin'을 재검증해 지부장을 차단한다(방어심층).
-  if (pathname.startsWith('/admin') && !['admin', 'branch_manager'].includes(role ?? '')) {
-    return NextResponse.redirect(new URL('/', request.url))
+  // /admin/* — admin은 전체 허용. branch_manager는 실제 사용하는 경로만 allowlist로 통과시킨다.
+  // (허용 경로의 각 페이지도 role 재검증하지만, 미들웨어에서 범위를 좁혀 실수 여지를 줄인다 = 이중 방어)
+  if (pathname.startsWith('/admin')) {
+    if (role === 'admin') {
+      // 전체 허용
+    } else if (role === 'branch_manager') {
+      const BM_PREFIXES = [
+        '/admin/instructors', '/admin/classes', '/admin/bookings',
+        '/admin/group-requests', '/admin/notices', '/admin/blog', '/admin/payouts',
+      ]
+      const allowed = pathname === '/admin' || BM_PREFIXES.some(p => pathname === p || pathname.startsWith(p + '/'))
+      if (!allowed) return NextResponse.redirect(new URL('/', request.url))
+    } else {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
   }
 
   // /branch/* — branch_manager 또는 admin

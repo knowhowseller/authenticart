@@ -20,8 +20,9 @@ async function cancelTossPayment(paymentKey: string, reason: string) {
   }
 }
 
-function failRedirect(request: Request, reason: string) {
-  return NextResponse.redirect(new URL(`/payment/fail?reason=${reason}`, request.url))
+function failRedirect(request: Request, reason: string, type?: string) {
+  const qs = type ? `?reason=${reason}&type=${type}` : `?reason=${reason}`
+  return NextResponse.redirect(new URL(`/payment/fail${qs}`, request.url))
 }
 
 export async function GET(request: Request) {
@@ -32,7 +33,7 @@ export async function GET(request: Request) {
   const type      = url.searchParams.get('type') ?? 'booking'
 
   if (!paymentKey || !orderId || !amount) {
-    return NextResponse.redirect(new URL('/payment/fail?reason=invalid_params', request.url))
+    return failRedirect(request, 'invalid_params', type)
   }
 
   // Toss 결제 승인 API 직접 호출
@@ -48,7 +49,7 @@ export async function GET(request: Request) {
   const payment = await tossRes.json()
   if (!tossRes.ok) {
     const msg = encodeURIComponent(payment.message ?? '결제 승인 실패')
-    return NextResponse.redirect(new URL(`/payment/fail?reason=${msg}`, request.url))
+    return failRedirect(request, msg, type)
   }
 
   const supabase = await createAdminClient()
@@ -58,14 +59,14 @@ export async function GET(request: Request) {
     // ── 결제금액 서버 검증(D-1) + 멱등성(D-2) ──
     const { data: bk } = await supabase
       .from('bookings').select('status, gross_amount, discount_amount').eq('id', orderId).single()
-    if (!bk) return failRedirect(request, 'order_not_found')
+    if (!bk) return failRedirect(request, 'order_not_found', type)
     if (bk.status === 'paid' || bk.status === 'completed') {
       return NextResponse.redirect(new URL('/my/bookings?success=1', request.url))
     }
     const expectedBooking = (bk.gross_amount ?? 0) - (bk.discount_amount ?? 0)
     if (parsedAmount !== expectedBooking) {
       await cancelTossPayment(paymentKey, '결제 금액 불일치')
-      return failRedirect(request, 'amount_mismatch')
+      return failRedirect(request, 'amount_mismatch', type)
     }
 
     // 강사의 에이전시 및 지부 조회
@@ -114,7 +115,7 @@ export async function GET(request: Request) {
     }).eq('id', orderId)
 
     if (error) {
-      return NextResponse.redirect(new URL('/payment/fail?reason=db_update_failed', request.url))
+      return failRedirect(request, 'db_update_failed', type)
     }
 
     // 일반회원(member)이 클래스 결제 완료 시 수강생(student)으로 승격 + 쿠폰 사용 처리
@@ -185,14 +186,14 @@ export async function GET(request: Request) {
       .from('artwork_orders')
       .select('status, amount')
       .eq('id', orderId).single()
-    if (!aoCheck) return failRedirect(request, 'order_not_found')
+    if (!aoCheck) return failRedirect(request, 'order_not_found', type)
     if ((aoCheck as any).status === 'paid' || (aoCheck as any).status === 'completed') {
       return NextResponse.redirect(new URL('/my/artwork-orders?success=1', request.url))
     }
     const expectedArtwork = (aoCheck as any).amount ?? -1
     if (parsedAmount !== expectedArtwork) {
       await cancelTossPayment(paymentKey, '결제 금액 불일치')
-      return failRedirect(request, 'amount_mismatch')
+      return failRedirect(request, 'amount_mismatch', type)
     }
 
     const { error } = await supabase.from('artwork_orders').update({
@@ -202,7 +203,7 @@ export async function GET(request: Request) {
     }).eq('id', orderId)
 
     if (error) {
-      return NextResponse.redirect(new URL('/payment/fail?reason=db_update_failed', request.url))
+      return failRedirect(request, 'db_update_failed', type)
     }
 
     const { data: artworkOrder } = await supabase
@@ -243,16 +244,16 @@ export async function GET(request: Request) {
     const requestId = url.searchParams.get('requestId')
     const userId    = url.searchParams.get('userId')
     if (!requestId || !userId) {
-      return NextResponse.redirect(new URL('/payment/fail?reason=invalid_params', request.url))
+      return failRedirect(request, 'invalid_params', type)
     }
 
     // ── 금액 검증(D-1): 1인 결제금액 = price_per_person ──
     const { data: reqPrice } = await supabase
       .from('class_open_requests').select('price_per_person').eq('id', requestId).single()
-    if (!reqPrice) return failRedirect(request, 'order_not_found')
+    if (!reqPrice) return failRedirect(request, 'order_not_found', type)
     if (parsedAmount !== (reqPrice.price_per_person ?? -1)) {
       await cancelTossPayment(paymentKey, '결제 금액 불일치')
-      return failRedirect(request, 'amount_mismatch')
+      return failRedirect(request, 'amount_mismatch', type)
     }
 
     // 참여자 상태를 paid로 업데이트 (status='payment_requested'만 대상 → 멱등성 부분 방어)
@@ -311,14 +312,14 @@ export async function GET(request: Request) {
       // ── 금액 검증(D-1) + 멱등성(D-2): 합계 = Σ total_amount ──
       const { data: cartOrders } = await supabase
         .from('orders').select('id, total_amount, status').in('id', ids)
-      if (!cartOrders || cartOrders.length !== ids.length) return failRedirect(request, 'order_not_found')
+      if (!cartOrders || cartOrders.length !== ids.length) return failRedirect(request, 'order_not_found', type)
       if (cartOrders.every((o) => o.status === 'paid')) {
         return NextResponse.redirect(new URL('/my/orders?success=1&from=cart', request.url))
       }
       const expectedCart = cartOrders.reduce((s, o) => s + (o.total_amount ?? 0), 0)
       if (parsedAmount !== expectedCart) {
         await cancelTossPayment(paymentKey, '결제 금액 불일치')
-        return failRedirect(request, 'amount_mismatch')
+        return failRedirect(request, 'amount_mismatch', type)
       }
       await supabase.from('orders').update({
         status: 'paid',
@@ -348,13 +349,13 @@ export async function GET(request: Request) {
   // ── 금액 검증(D-1) + 멱등성(D-2) ──
   const { data: orderCheck } = await supabase
     .from('orders').select('status, total_amount').eq('id', orderId).single()
-  if (!orderCheck) return failRedirect(request, 'order_not_found')
+  if (!orderCheck) return failRedirect(request, 'order_not_found', type)
   if (orderCheck.status === 'paid') {
     return NextResponse.redirect(new URL('/my/orders?success=1', request.url))
   }
   if (parsedAmount !== (orderCheck.total_amount ?? -1)) {
     await cancelTossPayment(paymentKey, '결제 금액 불일치')
-    return failRedirect(request, 'amount_mismatch')
+    return failRedirect(request, 'amount_mismatch', type)
   }
 
   await supabase.from('orders').update({

@@ -1,5 +1,6 @@
 'use client'
 import { useRef, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
@@ -11,6 +12,7 @@ export default function GroupRequestPage() {
   const router = useRouter()
   const supabase = createClient()
   const fileRef = useRef<HTMLInputElement>(null)
+  const [submitted, setSubmitted] = useState(false)
   const [form, setForm] = useState({
     org_name: '', contact_name: '', contact_email: '', contact_phone: '',
     region: '', lesson_theme: '', preferred_date: '', participant_count: '',
@@ -49,8 +51,32 @@ export default function GroupRequestPage() {
     })
     setSaving(false)
     if (!res.ok) { const d = await res.json(); toast.error(d.error ?? '오류'); return }
-    toast.success('단체 출강 신청이 접수되었습니다. 담당자가 빠르게 연락드리겠습니다.')
-    router.push('/board')
+    toast.success('단체 출강 신청이 접수되었습니다.')
+    setSubmitted(true)
+  }
+
+  if (submitted) {
+    return (
+      <div className="min-h-screen bg-brand-bg flex items-center justify-center px-4">
+        <div className="bg-white rounded-2xl p-8 shadow-sm border border-brand-mist/30 text-center max-w-md w-full">
+          <div className="text-5xl mb-4">📮</div>
+          <h1 className="text-xl font-bold text-brand-ink mb-2">단체 출강 문의가 접수되었습니다</h1>
+          <p className="text-sm text-brand-grey mb-1">입력하신 이메일로 접수 확인 메일을 보내드렸습니다.</p>
+          <p className="text-sm text-brand-grey mb-6"><strong className="text-brand-deep">24시간 내</strong>에 담당자가 연락드립니다.</p>
+          <div className="bg-brand-amber/5 rounded-xl p-4 text-xs text-brand-grey text-left mb-6">
+            <p className="font-semibold text-brand-ink mb-1">다음 단계</p>
+            <ul className="space-y-1 list-disc list-inside">
+              <li>담당자가 지역·인원·테마를 확인해 강사를 배정합니다</li>
+              <li>재료비·강사비는 상담 시 안내드립니다</li>
+            </ul>
+          </div>
+          <div className="flex gap-3">
+            <Link href="/" className="flex-1 px-4 py-2.5 text-sm rounded-xl border border-brand-mist text-brand-grey hover:bg-brand-bg text-center">홈으로</Link>
+            <Link href="/classes" className="flex-1 px-4 py-2.5 text-sm rounded-xl bg-brand-deep text-white hover:bg-brand-deep/90 text-center">클래스 둘러보기</Link>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

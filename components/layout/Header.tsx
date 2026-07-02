@@ -76,7 +76,8 @@ export default function Header() {
       }
     })
 
-    setCartCount(getCart().reduce((s, item) => s + item.quantity, 0))
+    // 마운트 직후 동기 setState는 cascading render 경고 대상 → 마이크로태스크로 defer(SSR-safe: effect는 클라이언트만 실행)
+    queueMicrotask(() => setCartCount(getCart().reduce((s, item) => s + item.quantity, 0)))
     const handler = () => setCartCount(getCart().reduce((s, item) => s + item.quantity, 0))
     window.addEventListener('storage', handler)
     return () => {

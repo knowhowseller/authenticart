@@ -15,7 +15,14 @@
 - ✅ **pending 주문 만료 cron(⚠️결제인접)**: `/api/cron/expire-orders`(매시) — 1h 경과 pending 주문 만료+재고 복구(increment_stock, cancel 로직 재사용, status=pending 조건부라 멱등). vercel.json 등록.
 - ✅ **로그인 회원 강사 전환 신청**: `/my/instructor/apply` 신규(계정필드 없이 instructor_profiles만 insert, 중복신청·기존강사 안내 분기).
 - ✅ **런칭 UX 4종**: not-found·error·global-error·loading (2026-06-29 작업, 함께 커밋 대기).
-- 📌 **미반영(별도)**: 추가4 배송비 정책 통일(⚠️게이트), 추가6 회차요청 내부화, 추가7 필터 모바일, 추가8 카드 액션 정리(UI). lint 594건(대부분 기존 any)도 별도 정리 대상.
+
+### 3차 마감(2026-07-02 추가)
+- ✅ **login open redirect 방지**: `?redirect=` 파라미터를 내부 절대경로(/…, //차단)만 허용 + `window.location.assign`(lint error 해소).
+- ✅ **결제 서버검증 실패도 type 전달**: `failRedirect(request, reason, type)` — 금액불일치·승인실패 등 서버측 실패도 결제유형별 실패화면으로.
+- ✅ **/admin 지부장 allowlist**: proxy에서 지부장은 실사용 7경로(instructors·classes·bookings·group-requests·notices·blog·payouts)+대시보드만 통과(전역허용→범위축소, 이중방어).
+- ✅ **단체출강 완료 화면**: `/board` 이동 대신 전용 완료 UI(접수확인·24h 연락 안내·다음단계).
+- ✅ **Header lint error 해소**: effect 내 동기 setState→queueMicrotask defer.
+- 📌 **미반영(별도)**: 추가4 배송비 정책 통일(⚠️게이트), 추가6 회차요청 내부화, 추가7 필터 모바일, 추가8 카드 액션 정리(UI). lint 잔여(대부분 기존 any 타입·img 경고)는 별도 정리 대상.
 
 ---
 

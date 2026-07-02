@@ -1,7 +1,7 @@
 'use client'
 import { Suspense, useState } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -19,7 +19,6 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 function LoginForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
   const [loading, setLoading] = useState(false)
@@ -41,8 +40,11 @@ function LoginForm() {
         : error.message)
       return
     }
-    const redirectTo = searchParams.get('redirect') ?? '/'
-    window.location.href = redirectTo
+    // open redirect 방지: 내부 절대경로(/...)만 허용, 프로토콜 상대(//evil.com) 차단.
+    const raw = searchParams.get('redirect')
+    const redirectTo = raw && raw.startsWith('/') && !raw.startsWith('//') ? raw : '/'
+    // 로그인 세션 쿠키를 서버가 확실히 반영하도록 전체 내비게이션(location.assign) 사용.
+    window.location.assign(redirectTo)
   }
 
   return (
