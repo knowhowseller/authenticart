@@ -70,7 +70,7 @@ export default function ArtworkDetailPage() {
       orderId: data.order_id,
       orderName: artwork?.title ?? '작품',
       successUrl: `${window.location.origin}/api/payments/toss-success?type=artwork`,
-      failUrl: `${window.location.origin}/payment/fail`,
+      failUrl: `${window.location.origin}/payment/fail?type=artwork`,
     })
   }
 

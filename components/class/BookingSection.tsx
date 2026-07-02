@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { formatPrice, formatDateTime } from '@/lib/utils/format'
@@ -33,6 +33,7 @@ export default function BookingSection({
   classId, price, confirmationMode, schedules, myWaitlists = [],
 }: BookingSectionProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const supabase = createClient()
   const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null)
   const [loading, setLoading] = useState(false)
@@ -72,7 +73,7 @@ export default function BookingSection({
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       toast.error('로그인이 필요합니다')
-      router.push('/login')
+      router.push(`/login?redirect=${encodeURIComponent(pathname)}`)
       return
     }
 
@@ -111,7 +112,7 @@ export default function BookingSection({
         orderName: `클래스 예약`,
         customerName,
         successUrl: `${window.location.origin}/api/payments/toss-success?type=booking`,
-        failUrl: `${window.location.origin}/payment/fail`,
+        failUrl: `${window.location.origin}/payment/fail?type=booking`,
       })
     } catch (err: any) {
       toast.error(err.message ?? '결제 중 오류가 발생했습니다')

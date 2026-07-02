@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -27,6 +27,7 @@ interface ShopOrderSectionProps {
 
 export default function ShopOrderSection({ productId, productName, price }: ShopOrderSectionProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const supabase = createClient()
   const [loading, setLoading] = useState(false)
   const { register, handleSubmit, formState: { errors } } = useForm<ShippingForm>({
@@ -35,7 +36,7 @@ export default function ShopOrderSection({ productId, productName, price }: Shop
 
   async function onSubmit(shipping: ShippingForm) {
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { toast.error('로그인이 필요합니다'); router.push('/login'); return }
+    if (!user) { toast.error('로그인이 필요합니다'); router.push(`/login?redirect=${encodeURIComponent(pathname)}`); return }
 
     setLoading(true)
     try {
@@ -57,7 +58,7 @@ export default function ShopOrderSection({ productId, productName, price }: Shop
         orderName: productName,
         customerName: user.email,
         successUrl: `${window.location.origin}/api/payments/toss-success?type=order`,
-        failUrl: `${window.location.origin}/payment/fail`,
+        failUrl: `${window.location.origin}/payment/fail?type=order`,
       })
     } catch (err: any) {
       toast.error(err.message ?? '결제 중 오류가 발생했습니다')

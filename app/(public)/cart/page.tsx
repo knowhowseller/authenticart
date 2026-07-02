@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import {
-  getCart, removeFromCart, updateQuantity, clearCart, cartTotal,
+  getCart, removeFromCart, updateQuantity, cartTotal,
   type CartItem,
 } from '@/lib/cart'
 import { formatPrice } from '@/lib/utils/format'
@@ -80,9 +80,10 @@ export default function CartPage() {
         orderName: data.order_name,
         customerName: shipping.recipient,
         successUrl: `${origin}/api/payments/toss-success?type=cart&orderIds=${orderIdsParam}`,
-        failUrl: `${origin}/payment/fail`,
+        failUrl: `${origin}/payment/fail?type=cart`,
       })
-      clearCart()
+      // 결제 성공 시 successUrl로 리다이렉트되므로 이 지점 이후 코드는 실행되지 않는다.
+      // 장바구니 비우기는 결제 성공 도착점(/my/orders?success=1)에서 수행한다.
     } catch (err: any) {
       toast.error(err.message ?? '결제 오류')
     } finally {

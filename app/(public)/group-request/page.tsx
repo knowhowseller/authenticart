@@ -102,7 +102,7 @@ export default function GroupRequestPage() {
               </div>
               <div>
                 <label className="text-xs text-brand-grey block mb-1">참여 인원 *</label>
-                <input type="number" min={2} value={form.participant_count} onChange={e => set('participant_count', e.target.value)}
+                <input type="number" min={5} value={form.participant_count} onChange={e => set('participant_count', e.target.value)}
                   placeholder="20"
                   className="w-full px-3 py-2 rounded-lg border border-brand-mist text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber" />
               </div>

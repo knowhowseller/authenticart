@@ -1,8 +1,9 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { formatPrice } from '@/lib/utils/format'
+import { clearCart } from '@/lib/cart'
 import { toast } from 'sonner'
 
 const statusConfig: Record<string, { label: string; color: string }> = {
@@ -30,9 +31,18 @@ interface Order {
 
 export default function MyOrdersClient({ orders: initialOrders }: { orders: Order[] }) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [orders, setOrders] = useState(initialOrders)
   const [cancelling, setCancelling] = useState<string | null>(null)
   const [confirming, setConfirming] = useState<string | null>(null)
+
+  // 장바구니 결제 성공 도착 시(from=cart) 로컬 장바구니를 비운다.
+  // 단품 주문(success=1, from 없음)은 장바구니와 무관하므로 비우지 않는다.
+  useEffect(() => {
+    if (searchParams.get('success') === '1' && searchParams.get('from') === 'cart') {
+      clearCart()
+    }
+  }, [searchParams])
 
   async function handleConfirm(orderId: string) {
     if (!window.confirm('구매를 확정하시겠습니까? 확정 후에는 반품/환불이 어려울 수 있습니다.')) return

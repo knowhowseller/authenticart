@@ -47,13 +47,23 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // /studio/* — instructor 또는 admin
-  if (pathname.startsWith('/studio') && !['instructor', 'admin'].includes(role ?? '')) {
+  // /studio/agency/* — 승인된 에이전시 소유자(role=member 포함)도 허용.
+  // 소유 여부는 페이지가 agency 조회로 최종 판정하므로 여기서는 로그인만 확인한다.
+  if (pathname.startsWith('/studio/agency')) {
+    if (!user) {
+      const loginUrl = new URL('/login', request.url)
+      loginUrl.searchParams.set('redirect', pathname)
+      return NextResponse.redirect(loginUrl)
+    }
+  }
+  // /studio/* (에이전시 제외) — instructor 또는 admin
+  else if (pathname.startsWith('/studio') && !['instructor', 'admin'].includes(role ?? '')) {
     return NextResponse.redirect(new URL('/', request.url))
   }
 
-  // /admin/* — admin만
-  if (pathname.startsWith('/admin') && role !== 'admin') {
+  // /admin/* — admin 또는 branch_manager. admin 전용 하위 페이지(users·payouts 등)는
+  // 각 페이지가 role === 'admin'을 재검증해 지부장을 차단한다(방어심층).
+  if (pathname.startsWith('/admin') && !['admin', 'branch_manager'].includes(role ?? '')) {
     return NextResponse.redirect(new URL('/', request.url))
   }
 
@@ -65,6 +75,12 @@ export async function proxy(request: NextRequest) {
   // /bookings/* — 로그인 필요
   if (pathname.startsWith('/bookings') && !user) {
     return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  // 로그인 회원의 강사 신청은 계정 생성을 건너뛰는 전용 경로로 유도한다.
+  // (기존 /signup/instructor는 회원가입+신청 통합폼이라 로그인 회원에겐 맞지 않음)
+  if (user && pathname === '/signup/instructor') {
+    return NextResponse.redirect(new URL('/my/instructor/apply', request.url))
   }
 
   // 로그인 상태에서 /login /signup 접근 → 홈으로

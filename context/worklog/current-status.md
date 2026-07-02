@@ -1,5 +1,30 @@
 # 오센틱아트 현재 상태 (최신)
-> 마지막 갱신: 2026-06-25
+> 마지막 갱신: 2026-07-02
+
+---
+
+## 2026-07-02 역할 접근 경로·결제 전환 UX 보완 (빌드·tsc 통과, ⚠️배포 게이트 승인 대기)
+
+2차 코드리뷰(역할별 진입경로/CTA·예약구매 전환·운영안정성) 지적 검증 후 타당 항목 보완. 결제 금액 계산 로직은 무변경.
+
+- ✅ **proxy 권한 정렬(⚠️역할체계=배포게이트)**: ①지부장 `/admin` 허용(하위 admin전용 12페이지는 각자 `role==='admin'` 재검증) ②승인 에이전시 `/studio/agency` 허용(로그인만 확인, 소유는 페이지 판정) ③로그인 회원이 `/signup/instructor` 접근 시 홈이 아니라 `/my/instructor/apply`로 유도.
+- ✅ **단체 출강 전환**: 홈 CTA `/board?tab=group_request`→`/group-request`(전용폼). 인원 기준 5인 통일(폼 min=5·홈문구·안내), API `participant_count>=5` 서버검증 추가.
+- ✅ **로그인 후 복귀**: 클래스예약·상품구매 비로그인 시 `/login?redirect=<현재경로>`(login 페이지가 이미 redirect 처리).
+- ✅ **결제 실패 화면 분기**: `/payment/fail?type=booking|order|cart|artwork|class_request` 별 CTA 분기. 5개 결제 시작점 failUrl에 type 전달.
+- ✅ **장바구니 성공 후 정리**: cart 성공 리다이렉트에 `from=cart` 플래그 추가, `/my/orders`에서 그 경우만 clearCart(단품주문은 미정리). 실행 안 되던 cart page의 clearCart 제거.
+- ✅ **pending 주문 만료 cron(⚠️결제인접)**: `/api/cron/expire-orders`(매시) — 1h 경과 pending 주문 만료+재고 복구(increment_stock, cancel 로직 재사용, status=pending 조건부라 멱등). vercel.json 등록.
+- ✅ **로그인 회원 강사 전환 신청**: `/my/instructor/apply` 신규(계정필드 없이 instructor_profiles만 insert, 중복신청·기존강사 안내 분기).
+- ✅ **런칭 UX 4종**: not-found·error·global-error·loading (2026-06-29 작업, 함께 커밋 대기).
+- 📌 **미반영(별도)**: 추가4 배송비 정책 통일(⚠️게이트), 추가6 회차요청 내부화, 추가7 필터 모바일, 추가8 카드 액션 정리(UI). lint 594건(대부분 기존 any)도 별도 정리 대상.
+
+---
+
+## 2026-06-29 런칭 점검 + UX 마감 4종 추가 (빌드·tsc 통과, 커밋 대기)
+
+- ✅ **런칭 UX 마감 4종 신규**: `app/not-found.tsx`(브랜드 404)·`app/error.tsx`(페이지 에러바운더리)·`app/global-error.tsx`(루트레이아웃 최종방어선, 인라인스타일)·`app/loading.tsx`(전역 스피너). 기존엔 error 1개(classes/[id])뿐, 404·loading 0개였음. `npm run build`·`tsc --noEmit` 통과. 결제·정산·role 로직 무변경(배포 게이트 비해당).
+- ✅ **보안 기본기 양호 확인**: admin 페이지 27개·`/api/admin` 27개 전부 서버측 role 가드, cron 10개 전부 CRON_SECRET 검증. 비밀키 추적노출·console.log·TODO 0건.
+- 📌 **P0 오진 정정**: "세션 끊김(updateSession 미호출)"은 오진. Next.js 16이 `middleware`→`proxy`로 리네임했고 이미 `proxy.ts`가 세션갱신+가드 수행 중. `lib/supabase/middleware.ts`는 미사용 잔재(건드리지 말 것).
+- ⚠️ **미해결·대표 결정 대기 (RBAC 불일치)**: `proxy.ts` 미들웨어 가드가 페이지보다 엄격 → 페이지의 branch_manager 분기가 도달불가. `/admin/*`=admin만 통과하나 `admin/blog`는 지부장 허용 / `/studio/*`=instructor·admin만 통과하나 `studio/classes/[id]/edit`는 지부장(isPrivileged) 허용. CLAUDE.md B-1(/admin은 지부장 허용)과 어긋날 소지. **역할체계 사안=배포 게이트** → 지부장 접근 필요여부 확정 후 proxy 보정 or 페이지 죽은분기 정리.
 
 ---
 

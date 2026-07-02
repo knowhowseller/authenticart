@@ -1188,9 +1188,9 @@ export default async function HomePage() {
                 <span className="text-white/80 text-xs font-medium uppercase tracking-wider">Group Class</span>
               </div>
               <h3 className="text-xl font-bold text-white">단체 클래스 · 기업 문화 체험</h3>
-              <p className="text-white/75 text-sm mt-1">10명 이상 단체 맞춤 공예 프로그램 문의를 받습니다</p>
+              <p className="text-white/75 text-sm mt-1">5인 이상 단체 맞춤 공예 프로그램 문의를 받습니다</p>
             </div>
-            <Link href="/board?tab=group_request" className="flex-shrink-0">
+            <Link href="/group-request" className="flex-shrink-0">
               <Button variant="accent" size="md">단체 문의하기 →</Button>
             </Link>
           </div>

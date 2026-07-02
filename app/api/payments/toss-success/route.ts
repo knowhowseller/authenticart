@@ -313,7 +313,7 @@ export async function GET(request: Request) {
         .from('orders').select('id, total_amount, status').in('id', ids)
       if (!cartOrders || cartOrders.length !== ids.length) return failRedirect(request, 'order_not_found')
       if (cartOrders.every((o) => o.status === 'paid')) {
-        return NextResponse.redirect(new URL('/my/orders?success=1', request.url))
+        return NextResponse.redirect(new URL('/my/orders?success=1&from=cart', request.url))
       }
       const expectedCart = cartOrders.reduce((s, o) => s + (o.total_amount ?? 0), 0)
       if (parsedAmount !== expectedCart) {
@@ -341,7 +341,7 @@ export async function GET(request: Request) {
         })
       }
     }
-    return NextResponse.redirect(new URL('/my/orders?success=1', request.url))
+    return NextResponse.redirect(new URL('/my/orders?success=1&from=cart', request.url))
   }
 
   // type === 'order'

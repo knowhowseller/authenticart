@@ -13,6 +13,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '필수 항목을 모두 입력해주세요' }, { status: 400 })
   }
 
+  // 단체 출강 최소 인원 정책(5인) 서버 검증 — 클라이언트 min 우회 방지
+  if (Number(participant_count) < 5) {
+    return NextResponse.json({ error: '단체 출강은 최소 5인 이상부터 신청 가능합니다' }, { status: 400 })
+  }
+
   const admin = await createAdminClient()
   const { error } = await admin.from('group_lesson_requests').insert({
     org_name, contact_name, contact_email, contact_phone,

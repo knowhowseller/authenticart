@@ -66,7 +66,7 @@ export default function ClassRequestPayPage() {
         orderId: `class-req-${id}-${Date.now()}`,
         orderName: req.title,
         successUrl: `${window.location.origin}/api/payments/toss-success?type=class_request&requestId=${id}&userId=${userId ?? ''}`,
-        failUrl: `${window.location.origin}/payment/fail`,
+        failUrl: `${window.location.origin}/payment/fail?type=class_request`,
       })
     } catch (e: any) {
       if (e?.code !== 'USER_CANCEL') toast.error('결제 중 오류가 발생했습니다')
