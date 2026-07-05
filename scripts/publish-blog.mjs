@@ -63,7 +63,31 @@ async function main() {
   if (error) { console.error('발행 실패:', error.message); process.exit(1) }
   console.log(`✅ 발행 upsert 완료: ${rows.length}편 요청 (신규 ${data?.length ?? 0}편)`)
 
-  // 3) IndexNow 색인 (sitemap 일괄) — 별도 스크립트 재사용
+  // 3) 발행 이력 기록 — 공유 키워드엔진의 measure.js/reinforce.js 성과·강화 루프 대상.
+  //    (publish_log.csv에 없으면 측정·학습이 안 돎. 중복 url은 skip)
+  const LOG = 'D:/키워드엔진/publish_log.csv'
+  const site = env.NEXT_PUBLIC_SITE_URL || 'https://www.authenticart.co.kr'
+  const today = new Date().toISOString().slice(0, 10)
+  try {
+    let logTxt = fs.existsSync(LOG)
+      ? fs.readFileSync(LOG, 'utf8')
+      : 'date,brand,channel,keyword,title,url,videoId,format,intent\n'
+    if (!logTxt.endsWith('\n')) logTxt += '\n'
+    let added = 0
+    for (const p of posts) {
+      const url = `${site}/blog/${p.slug}`
+      if (logTxt.includes(url)) continue // 중복 방지
+      const csv = s => String(s ?? '').replace(/[,\n]/g, ' ').trim()
+      logTxt += `${today},오센틱아트,web,${csv(p.keyword)},${csv(p.title)},${url},,blog,${csv(p.intent)}\n`
+      added++
+    }
+    fs.writeFileSync(LOG, logTxt)
+    console.log(`publish_log 기록: +${added}건 (엔진 measure/reinforce 대상)`)
+  } catch (e) {
+    console.warn('publish_log 기록 경고(엔진 폴더 접근 실패):', e.message)
+  }
+
+  // 4) IndexNow 색인 (sitemap 일괄) — 별도 스크립트 재사용
   const idx = path.resolve('scripts/indexnow-submit-all.mjs')
   if (fs.existsSync(idx)) {
     console.log('→ IndexNow 색인은 다음으로 실행: node scripts/indexnow-submit-all.mjs')
