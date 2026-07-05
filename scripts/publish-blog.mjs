@@ -66,7 +66,9 @@ async function main() {
   // 3) 발행 이력 기록 — 공유 키워드엔진의 measure.js/reinforce.js 성과·강화 루프 대상.
   //    (publish_log.csv에 없으면 측정·학습이 안 돎. 중복 url은 skip)
   const LOG = 'D:/키워드엔진/publish_log.csv'
-  const site = env.NEXT_PUBLIC_SITE_URL || 'https://www.authenticart.co.kr'
+  // 프로덕션 URL 강제 — .env.local이 localhost일 수 있어(개발용) 성과측정(measure.js GSC)이 못 찾는 것 방지
+  let site = env.NEXT_PUBLIC_SITE_URL || ''
+  if (!site || site.includes('localhost')) site = 'https://www.authenticart.co.kr'
   const today = new Date().toISOString().slice(0, 10)
   try {
     let logTxt = fs.existsSync(LOG)

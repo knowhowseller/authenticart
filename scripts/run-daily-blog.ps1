@@ -23,9 +23,21 @@ $posts  = "outputs\04-marketing\posts-auto-$date.json"
 Log "Claude generating drafts..."
 $prompt | & claude --print --dangerously-skip-permissions 2>&1 | Add-Content $log -Encoding UTF8
 
-# 3) publish (deterministic) + index + notify
+# 2.5) quality gate: check -> if flagged, Claude reviews context & fixes once -> recheck
+if (Test-Path $posts) {
+  & node scripts/check-content.mjs $posts 2>&1 | Add-Content $log -Encoding UTF8
+  if ($LASTEXITCODE -ne 0) {
+    Log "quality gate flagged -> Claude review/fix"
+    $fix = (Get-Content -Raw -Encoding UTF8 "scripts\daily-blog-fix-prompt.txt").Replace('{{DATE}}', $date)
+    $fix | & claude --print --dangerously-skip-permissions 2>&1 | Add-Content $log -Encoding UTF8
+    & node scripts/check-content.mjs $posts 2>&1 | Add-Content $log -Encoding UTF8
+  }
+}
+
+# 3) publish (deterministic) + featured rotation + index + notify
 if (Test-Path $posts) {
   & node scripts/publish-blog.mjs $posts 2>&1 | Add-Content $log -Encoding UTF8
+  & node scripts/rotate-featured.mjs 3 2>&1 | Add-Content $log -Encoding UTF8
   & node scripts/indexnow-submit-all.mjs 2>&1 | Add-Content $log -Encoding UTF8
   & node scripts/notify-daily.mjs $date ok
   Log "=== done ==="

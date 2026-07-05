@@ -15,7 +15,7 @@
 ## 각 post 필드
 - slug: 한글-하이픈. **기존 발행분과 중복 금지** — `D:\키워드엔진\publish_log.csv`의 오센틱아트 행 URL들과 겹치지 않게 유니크하게.
 - title, excerpt(2~3문장)
-- content: 마크다운 900~1300자, H2 소제목 3~4개, 마지막에 CTA 링크 1개
+- content: 마크다운 **최소 1000자 이상 1400자 이내**(1000자 미만 금지 — 짧으면 재작성). H2 소제목 3~4개, **각 H2 섹션마다 2~3문단으로 충분히 서술**(예시·상황·팁 포함). 마지막에 CTA 링크 1개
 - category: guide|story|trend|instructor 중 타겟에 맞게 (입문·학부모=guide, 커플=story, 선물=trend, 강사=instructor)
 - tags: 3~5개, faq: 정확히 4개 [{q,a}]
 - seo_title, seo_description
