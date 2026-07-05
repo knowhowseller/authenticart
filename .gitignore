@@ -47,3 +47,6 @@ next-env.d.ts
 **/~$*
 
 .env*
+out/
+outputs/04-marketing/posts-auto-*.json
+outputs/04-marketing/_daily_blog_*.log

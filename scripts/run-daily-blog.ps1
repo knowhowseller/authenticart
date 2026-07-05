@@ -1,0 +1,35 @@
+# Osentic daily blog auto-publish (scheduler entry)
+# Flow: keyword-refine -> pick 3 -> Claude(headless) writes posts JSON -> publish-blog -> IndexNow -> Telegram
+# Korean strings are handled inside node scripts to avoid PS 5.1 encoding issues.
+$ErrorActionPreference = 'Continue'
+$proj = 'C:\Users\노하우셀러\authenticart'
+Set-Location $proj
+$date = Get-Date -Format 'yyyyMMdd'
+$log  = Join-Path $proj "outputs\04-marketing\_daily_blog_$date.log"
+function Log($m) { $line = "$((Get-Date).ToString('HH:mm:ss')) $m"; Add-Content -Path $log -Value $line -Encoding UTF8; Write-Host $line }
+
+Log "=== daily blog start ($date) ==="
+
+# 1) refresh refined keywords + pick today's 3 (exclude already-published, target diversity)
+& node scripts/keyword-refine.mjs 2>&1 | Add-Content $log -Encoding UTF8
+& node scripts/pick-keywords.mjs 3 --out "out\today-keywords.json" 2>&1 | Add-Content $log -Encoding UTF8
+if (-not (Test-Path "out\today-keywords.json")) {
+  Log "FAIL: keyword pick"; & node scripts/notify-daily.mjs $date fail; exit 1
+}
+
+# 2) Claude headless writes the posts JSON (does NOT publish)
+$prompt = (Get-Content -Raw -Encoding UTF8 "scripts\daily-blog-prompt.txt").Replace('{{DATE}}', $date)
+$posts  = "outputs\04-marketing\posts-auto-$date.json"
+Log "Claude generating drafts..."
+$prompt | & claude --print --dangerously-skip-permissions 2>&1 | Add-Content $log -Encoding UTF8
+
+# 3) publish (deterministic) + index + notify
+if (Test-Path $posts) {
+  & node scripts/publish-blog.mjs $posts 2>&1 | Add-Content $log -Encoding UTF8
+  & node scripts/indexnow-submit-all.mjs 2>&1 | Add-Content $log -Encoding UTF8
+  & node scripts/notify-daily.mjs $date ok
+  Log "=== done ==="
+} else {
+  Log "FAIL: draft JSON not created"
+  & node scripts/notify-daily.mjs $date fail
+}
