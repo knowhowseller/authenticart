@@ -17,10 +17,11 @@ if (-not (Test-Path "out\today-keywords.json")) {
   Log "FAIL: keyword pick"; & node scripts/notify-daily.mjs $date fail; exit 1
 }
 
-# 2) Claude headless writes the posts JSON (does NOT publish)
-$prompt = (Get-Content -Raw -Encoding UTF8 "scripts\daily-blog-prompt.txt").Replace('{{DATE}}', $date)
+# 2) build prompt with engine learning digest (win/loss feedback) + Claude writes posts JSON (no publish)
+& node scripts/build-prompt.mjs $date 2>&1 | Add-Content $log -Encoding UTF8
 $posts  = "outputs\04-marketing\posts-auto-$date.json"
-Log "Claude generating drafts..."
+Log "Claude generating drafts (with learning digest)..."
+$prompt = Get-Content -Raw -Encoding UTF8 "out\daily-prompt-final.txt"
 $prompt | & claude --print --dangerously-skip-permissions 2>&1 | Add-Content $log -Encoding UTF8
 
 # 2.5) quality gate: check -> if flagged, Claude reviews context & fixes once -> recheck
