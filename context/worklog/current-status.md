@@ -1,5 +1,15 @@
 # 오센틱아트 현재 상태 (최신)
-> 마지막 갱신: 2026-07-02
+> 마지막 갱신: 2026-07-05
+
+---
+
+## 2026-07-05 키워드 엔진 블로그 파이프라인 + 5주차 자동 발행 (✅ 라이브 검증)
+
+- ✅ **키워드 엔진 적용**: 전역 공유엔진 `D:\키워드엔진`(keywords/attack) + 신규 정제기 `scripts/keyword-refine.mjs`(공예 온토픽 필터+7타겟 분류, out 자동통합). 6,242행→**온토픽 796개**. 선물(집들이선물 50,800)·입문·커플 고수요 → **균등 7로테이션 폐기, 수요로 재조정**. SERP 공략카드(attack.js): 전 헤드 상업·거래 의도 → 후기/추천형+CTA, 헤드는 롱테일 우회.
+- ✅ **5주차 7편 자동 발행**: `집들이선물·반지공방·디퓨저·공방데이트·상견례선물·도자기·어린이체험` 축. 신규 발행 스크립트 `scripts/publish-blog.mjs`(service role upsert+featured 로테이션+IndexNow, 멱등)로 **대시보드 SQL 없이 직접 발행**. published→57편, featured 5주차 Day1·4·7 ON/4주차 OFF. 라이브 7편 전부 200+H1+FAQ, IndexNow 76건.
+- ✅ **자동 발행 파이프라인 확립**: 앞으로 `node scripts/publish-blog.mjs <posts.json>` 한 줄. 스킬 `keyword-blog`(전역 `keyword-engine-publish` 특화)로 표준화.
+- 🔑 **service role key 이슈 해결**: 로컬·Vercel(production/preview/dev) **전부 유효 service role 키 없었음**(빈 값). Supabase 대시보드 신형 secret key(`sb_secret_...`)를 로컬 반영해 발행 성공.
+- ⚠️ **미결·대표 확인**: ①Vercel 환경변수 `SUPABASE_SERVICE_ROLE_KEY`가 빈 값 → **앱 service role 기능(정산 cron·admin 서버작업) 동작 점검 필요**. ②발행에 쓴 secret key가 채팅 노출됨 → **Supabase에서 rotate(재발급) 필요**, 재발급 후 로컬·Vercel 동기화.
 
 ---
 
