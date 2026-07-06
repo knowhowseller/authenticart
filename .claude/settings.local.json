@@ -16,7 +16,9 @@
       "Bash(Select-Object FullName)",
       "Bash(Head -50)",
       "PowerShell(npm list *)",
-      "mcp__plugin_supabase_supabase__execute_sql"
+      "mcp__plugin_supabase_supabase__execute_sql",
+      "mcp__plugin_vercel_vercel__list_teams",
+      "mcp__plugin_vercel_vercel__list_deployments"
     ]
   }
 }

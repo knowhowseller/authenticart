@@ -1,8 +1,8 @@
-# Osentic daily blog auto-publish (scheduler entry)
+﻿# Osentic daily blog auto-publish (scheduler entry)
 # Flow: keyword-refine -> pick 3 -> Claude(headless) writes posts JSON -> publish-blog -> IndexNow -> Telegram
 # Korean strings are handled inside node scripts to avoid PS 5.1 encoding issues.
 $ErrorActionPreference = 'Continue'
-$proj = 'C:\Users\노하우셀러\authenticart'
+$proj = Split-Path -Parent $PSScriptRoot   # scripts의 부모 = 프로젝트 루트 (한글 리터럴 회피)
 Set-Location $proj
 $date = Get-Date -Format 'yyyyMMdd'
 $log  = Join-Path $proj "outputs\04-marketing\_daily_blog_$date.log"
@@ -17,8 +17,19 @@ if (-not (Test-Path "out\today-keywords.json")) {
   Log "FAIL: keyword pick"; & node scripts/notify-daily.mjs $date fail; exit 1
 }
 
+# 1.5) keyword engine content plans (intent/type/priority + winning title patterns; brand_bias feedback)
+try {
+  $todayKw = Get-Content -Raw -Encoding UTF8 "out\today-keywords.json" | ConvertFrom-Json
+  foreach ($k in $todayKw) { & node 'D:\키워드엔진\plan.js' "$($k.keyword)" authenticart 2>&1 | Add-Content $log -Encoding UTF8 }
+} catch { Log "WARN: content plan generation failed ($($_.Exception.Message))" }
+
 # 2) build prompt with engine learning digest (win/loss feedback) + Claude writes posts JSON (no publish)
 & node scripts/build-prompt.mjs $date 2>&1 | Add-Content $log -Encoding UTF8
+# 2.1) append content plan guidance to the prompt (engine decisions -> writing guidance)
+try {
+  $brief = (& node 'D:\키워드엔진\plans_brief.js' authenticart | Out-String).Trim()
+  if ($brief) { Add-Content -Path "out\daily-prompt-final.txt" -Value "`n$brief" -Encoding UTF8 }
+} catch { Log "WARN: plans_brief append failed" }
 $posts  = "outputs\04-marketing\posts-auto-$date.json"
 Log "Claude generating drafts (with learning digest)..."
 $prompt = Get-Content -Raw -Encoding UTF8 "out\daily-prompt-final.txt"

@@ -109,10 +109,11 @@ export default function Footer() {
         <div className="border-t border-brand-sage/20 pt-6 flex flex-col md:flex-row justify-between items-start gap-2">
           <p className="text-xs text-brand-mist/50 leading-relaxed">
             (주)오센틱아트 | 대표: 유진 | 사업자등록번호: 102-81-47445<br />
-            통신판매업신고: 제2023-경기군포-00203호 | 주소: 경기도 군포시 공단로140번길 27, 군포LS R&amp;D센터 819호
+            통신판매업신고: 제2023-경기군포-00203호 | 주소: 경기도 군포시 공단로140번길 27, 군포LS R&amp;D센터 819호<br />
+            이메일: contact@authenticart.co.kr
           </p>
           <p className="text-xs text-brand-mist/40 shrink-0">
-            © 2025 Authentic Art. All rights reserved.
+            © {new Date().getFullYear()} Authentic Art. All rights reserved.
           </p>
         </div>
       </div>

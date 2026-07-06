@@ -171,10 +171,12 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
       </Suspense>
 
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <p className="text-sm text-brand-grey mb-5">
-          총 <span className="font-semibold text-brand-ink">{products.length}</span>개의 상품
-          {breadcrumb && <span className="ml-2 text-brand-deep font-medium">{breadcrumb}</span>}
-        </p>
+        {(products.length > 0 || craftIds || params.q) && (
+          <p className="text-sm text-brand-grey mb-5">
+            총 <span className="font-semibold text-brand-ink">{products.length}</span>개의 상품
+            {breadcrumb && <span className="ml-2 text-brand-deep font-medium">{breadcrumb}</span>}
+          </p>
+        )}
 
         {products.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
@@ -194,13 +196,37 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
               />
             ))}
           </div>
-        ) : (
+        ) : (craftIds || params.q) ? (
           <div className="text-center py-20 text-brand-grey">
             <div className="text-5xl mb-4">📦</div>
             <p className="text-lg font-medium">
               {craftIds ? '해당 카테고리의 상품이 없습니다' : '조건에 맞는 상품이 없습니다'}
             </p>
             <a href="/shop" className="inline-block mt-4 text-sm text-brand-deep hover:underline">전체 상품 보기</a>
+          </div>
+        ) : (
+          /* 상품 0개 + 필터 없음 = 입점 전 → "없습니다" 대신 오픈 준비 안내(신뢰도 보호) */
+          <div className="text-center py-20">
+            <div className="text-5xl mb-4">🛒</div>
+            <p className="text-lg font-semibold text-brand-ink mb-2">재료 쇼핑 오픈 준비 중입니다</p>
+            <p className="text-sm text-brand-grey leading-relaxed">
+              공예 재료를 강사 도매가로 만나볼 수 있도록 준비하고 있어요.<br />
+              재료 판매자(벤더) 입점 신청은 지금 받고 있습니다.
+            </p>
+            <div className="mt-6 flex gap-3 justify-center flex-wrap">
+              <Link
+                href="/my/vendor/apply"
+                className="inline-block px-5 py-2.5 rounded-xl bg-brand-deep text-white text-sm font-medium hover:bg-brand-deep/90 transition-colors"
+              >
+                벤더 입점 신청하기
+              </Link>
+              <Link
+                href="/classes"
+                className="inline-block px-5 py-2.5 rounded-xl border border-brand-mist text-brand-ink text-sm font-medium hover:border-brand-amber transition-colors"
+              >
+                클래스 둘러보기
+              </Link>
+            </div>
           </div>
         )}
       </div>

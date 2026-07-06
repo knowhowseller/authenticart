@@ -20,27 +20,6 @@ import {
 } from 'lucide-react'
 import type { ClassAttributes, ConfirmationMode } from '@/types/database'
 
-async function getStats() {
-  const supabase = createPublicClient()
-  const [
-    { count: instructorCount },
-    { count: classCount },
-    { count: productCount },
-    { count: artworkCount },
-  ] = await Promise.all([
-    supabase.from('instructor_profiles').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
-    supabase.from('classes').select('*', { count: 'exact', head: true }).eq('status', 'published'),
-    supabase.from('products').select('*', { count: 'exact', head: true }).eq('is_active', true),
-    supabase.from('artworks').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-  ])
-  return {
-    instructorCount: instructorCount ?? 0,
-    classCount: classCount ?? 0,
-    productCount: productCount ?? 0,
-    artworkCount: artworkCount ?? 0,
-  }
-}
-
 async function getGenreCategories() {
   const supabase = createPublicClient()
   const { data } = await supabase
@@ -232,7 +211,7 @@ const homeFaqs: { q: string; a: string }[] = [
   },
   {
     q: '기업·학교 단체 공예 체험도 신청할 수 있나요?',
-    a: '네. 10인 이상 단체 출강(기업 팀빌딩, 학교 방과후·자유학기제, 복지관 프로그램 등)을 전국 인증 강사로 연결합니다. 인원·장르·일정을 입력하면 맞춤 견적을 안내합니다.',
+    a: '네. 5인 이상 단체 출강(기업 팀빌딩, 학교 방과후·자유학기제, 복지관 프로그램 등)을 전국 인증 강사로 연결합니다. 인원·장르·일정을 입력하면 맞춤 견적을 안내합니다.',
   },
   {
     q: '공예 재료는 어디서 구매하나요?',
@@ -283,7 +262,6 @@ export default async function HomePage() {
   const [
     classes,
     instructors,
-    stats,
     artworks,
     genreCategories,
     vendors,
@@ -294,7 +272,6 @@ export default async function HomePage() {
   ] = await Promise.all([
     getFeaturedClasses(),
     getFeaturedInstructors(),
-    getStats(),
     getFeaturedArtworks(),
     getGenreCategories(),
     getApprovedVendors(),
@@ -402,24 +379,35 @@ export default async function HomePage() {
             <p className="text-brand-mist text-lg mb-3 leading-relaxed">
               배우고 · 자격 따고 · 수업 열고 · 수익까지
             </p>
-            <p className="text-brand-mist/70 text-sm mb-10">
+            <p className="text-brand-mist/70 text-sm mb-3">
               대한민국 공예 강사들이 선택한 플랫폼
             </p>
-            {/* 4-경로 CTA 그리드 */}
+            <p className="text-brand-amber text-sm font-semibold mb-10">
+              강사 등록비 0원 · 수업료의 86.7% 정산
+            </p>
+            {/* 4-경로 CTA 그리드 — 강사 모집 우선(콜드스타트 전략) */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-xl mb-8">
               {[
-                { label: '클래스 예약', href: '/classes', icon: '📚' },
-                { label: '강사 신청', href: '/signup/instructor', icon: '🎓' },
-                { label: '작품 마켓', href: '/artworks', icon: '🖼️' },
-                { label: '재료 쇼핑', href: '/shop', icon: '🛒' },
-              ].map(({ label, href, icon }) => (
+                { label: '강사 신청', href: '/signup/instructor', icon: '🎓', featured: true },
+                { label: '클래스 예약', href: '/classes', icon: '📚', featured: false },
+                { label: '작품 마켓', href: '/artworks', icon: '🖼️', featured: false },
+                { label: '재료 쇼핑', href: '/shop', icon: '🛒', featured: false },
+              ].map(({ label, href, icon, featured }) => (
                 <Link
                   key={href}
                   href={href}
-                  className="flex flex-col items-center gap-1.5 py-3 px-2 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/15 hover:bg-white/20 hover:border-brand-amber/50 transition-all group"
+                  className={`flex flex-col items-center gap-1.5 py-3 px-2 rounded-2xl backdrop-blur-sm border transition-all group ${
+                    featured
+                      ? 'bg-brand-amber border-brand-amber hover:bg-brand-amber/90 shadow-lg'
+                      : 'bg-white/10 border-white/15 hover:bg-white/20 hover:border-brand-amber/50'
+                  }`}
                 >
                   <span className="text-2xl">{icon}</span>
-                  <span className="text-xs font-medium text-white/90 group-hover:text-brand-amber transition-colors">{label}</span>
+                  <span className={`text-xs transition-colors ${
+                    featured
+                      ? 'font-bold text-brand-ink'
+                      : 'font-medium text-white/90 group-hover:text-brand-amber'
+                  }`}>{label}</span>
                 </Link>
               ))}
             </div>
@@ -447,40 +435,40 @@ export default async function HomePage() {
 
       <FlowLine className="mt-[-1px]" color="#BEC9C9" />
 
-      {/* ─── 2. 신뢰 지표 바 (6개) ─── */}
+      {/* ─── 2. 신뢰 지표 바 (6개) — 규모 실측치 대신 고정 가치 제안(콜드스타트 신뢰도 보호) ─── */}
       <section className="py-10 bg-white border-b border-brand-mist/20">
         <div className="max-w-5xl mx-auto px-4">
           <div className="grid grid-cols-3 md:grid-cols-6 gap-4 text-center">
             {[
               {
-                num: stats.instructorCount > 0 ? `${stats.instructorCount}명` : '모집 중',
-                label: '인증 강사',
-                icon: <Award size={18} className="text-brand-amber mx-auto mb-1" />,
+                num: '86.7%',
+                label: '강사 정산율',
+                icon: <TrendingUp size={18} className="text-brand-amber mx-auto mb-1" />,
               },
               {
-                num: stats.classCount > 0 ? `${stats.classCount}개` : '준비 중',
-                label: '개설 클래스',
-                icon: <BookOpen size={18} className="text-brand-deep mx-auto mb-1" />,
-              },
-              {
-                num: stats.artworkCount > 0 ? `${stats.artworkCount}점` : '등록 중',
-                label: '작품 마켓',
-                icon: <Palette size={18} className="text-brand-blush mx-auto mb-1" />,
-              },
-              {
-                num: stats.productCount > 0 ? `${stats.productCount}종` : '입고 중',
-                label: '재료 상품',
-                icon: <Package size={18} className="text-brand-sage mx-auto mb-1" />,
+                num: '0원',
+                label: '강사 등록비',
+                icon: <Award size={18} className="text-brand-deep mx-auto mb-1" />,
               },
               {
                 num: '8개 장르',
                 label: '공예·예술',
-                icon: <MapPin size={18} className="text-brand-deep mx-auto mb-1" />,
+                icon: <Palette size={18} className="text-brand-blush mx-auto mb-1" />,
+              },
+              {
+                num: '6개 지역',
+                label: '전국 클래스',
+                icon: <MapPin size={18} className="text-brand-sage mx-auto mb-1" />,
+              },
+              {
+                num: '5인부터',
+                label: '단체 출강',
+                icon: <Users size={18} className="text-brand-deep mx-auto mb-1" />,
               },
               {
                 num: '최대 40%',
                 label: '재료비 절감',
-                icon: <TrendingUp size={18} className="text-brand-amber mx-auto mb-1" />,
+                icon: <Package size={18} className="text-brand-amber mx-auto mb-1" />,
               },
             ].map(({ num, label, icon }) => (
               <div key={label} className="py-3">
@@ -547,12 +535,12 @@ export default async function HomePage() {
               </p>
             </div>
             <div className="flex gap-3 flex-wrap justify-center md:justify-end">
-              <Link href="/classes">
-                <Button variant="accent" size="md">클래스 예약하기</Button>
-              </Link>
               <Link href="/signup/instructor">
+                <Button variant="accent" size="md">강사 신청하기</Button>
+              </Link>
+              <Link href="/classes">
                 <Button variant="outline" size="md" className="border-white text-white hover:bg-white hover:text-brand-deep">
-                  강사 신청하기
+                  클래스 예약하기
                 </Button>
               </Link>
             </div>
@@ -1213,8 +1201,8 @@ export default async function HomePage() {
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl mx-auto">
             {[
-              { label: '클래스 수강하기', href: '/classes', icon: '📚', desc: '원데이 체험 예약' },
               { label: '강사 신청하기', href: '/signup/instructor', icon: '🎓', desc: '인증 자격 취득' },
+              { label: '클래스 수강하기', href: '/classes', icon: '📚', desc: '원데이 체험 예약' },
               { label: '작품 판매하기', href: '/my/artworks', icon: '🖼️', desc: '내 작품으로 수익' },
               { label: '재료 구매하기', href: '/shop', icon: '🛒', desc: '도매가로 절약' },
             ].map(({ label, href, icon, desc }) => (

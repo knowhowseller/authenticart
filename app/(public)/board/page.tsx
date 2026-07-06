@@ -3,7 +3,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { Lock, Pin } from 'lucide-react'
 
-export const metadata: Metadata = { title: '게시판 | 오센틱아트' }
+export const metadata: Metadata = { title: '게시판' }
 
 const TYPE_LABELS: Record<string, { label: string; color: string }> = {
   notice:         { label: '공지', color: 'bg-brand-deep/10 text-brand-deep' },
