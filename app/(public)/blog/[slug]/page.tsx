@@ -74,16 +74,26 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
   // 조회수 증가 (실패해도 페이지 렌더에는 영향 없음)
   await supabase.rpc('increment_blog_view', { post_slug: post.slug })
 
-  // 관련 글 (같은 카테고리 우선)
-  const { data: relatedData } = await supabase
+  // 관련 글 (같은 카테고리) — 최신글에만 링크가 몰려 오래된 글이 고아(색인 탈락)가 되던 문제를
+  // 막기 위해 "최신 + 오래된" 글을 함께 노출한다. 모든 형제 글 페이지가 오래된 글로도 내부링크를
+  // 흘려보내, 카테고리 안에서 링크 자산이 고르게 퍼지고 크롤 경로가 생긴다.
+  const { data: poolData } = await supabase
     .from('blog_posts')
     .select('id, slug, title, excerpt, cover_image, category, tags, author_name, published_at, created_at, view_count')
     .eq('status', 'published')
     .eq('category', post.category)
     .neq('id', post.id)
     .order('published_at', { ascending: false, nullsFirst: false })
-    .limit(3)
-  const related = (relatedData ?? []) as BlogPostCard[]
+    .limit(60)
+  const pool = (poolData ?? []) as BlogPostCard[]
+  const newest = pool.slice(0, 3)
+  const oldest = pool.slice(-3).reverse()
+  const seen = new Set<string>()
+  const related = [...newest, ...oldest].filter((r) => {
+    if (seen.has(r.id)) return false
+    seen.add(r.id)
+    return true
+  }).slice(0, 6)
 
   const url = `${SITE_URL}/blog/${encodeURIComponent(post.slug)}`
   const description = post.seo_description || post.excerpt || stripMarkdown(post.content)

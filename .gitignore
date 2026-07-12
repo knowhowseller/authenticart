@@ -50,3 +50,6 @@ next-env.d.ts
 out/
 outputs/04-marketing/posts-auto-*.json
 outputs/04-marketing/_daily_blog_*.log
+
+# 색인·AEO 보강 임시 작업(서비스롤 스크립트·백업) — 커밋 제외
+scripts/_tmp/
