@@ -1,11 +1,19 @@
 import type { Metadata } from 'next'
 import { Noto_Sans_KR } from 'next/font/google'
 import { Toaster } from 'sonner'
+import { GoogleAnalytics } from '@next/third-parties/google'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import CSChatWidget from '@/components/cs/CSChatWidget'
 import ChannelTalkBoot from '@/components/cs/ChannelTalkBoot'
 import './globals.css'
+
+// GA4 측정 ID. GA 측정 ID는 페이지 소스에 노출되는 공개값이라 코드에 둬도 무방하다.
+// 단 실제 프로덕션(VERCEL_ENV=production)에서만 로드해 로컬·프리뷰 트래픽이 통계를 오염시키지 않게 한다.
+// 필요 시 NEXT_PUBLIC_GA_ID 환경변수로 오버라이드 가능.
+const GA_ID =
+  process.env.NEXT_PUBLIC_GA_ID ??
+  (process.env.VERCEL_ENV === 'production' ? 'G-QGXQ391R6J' : undefined)
 
 const noto = Noto_Sans_KR({
   subsets: ['latin'],
@@ -54,6 +62,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <CSChatWidget />
         <ChannelTalkBoot />
       </body>
+      {GA_ID && <GoogleAnalytics gaId={GA_ID} />}
     </html>
   )
 }

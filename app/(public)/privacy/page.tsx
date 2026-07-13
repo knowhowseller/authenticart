@@ -101,6 +101,11 @@ export default function PrivacyPage() {
                 <td style={{border:'1px solid #eee', padding:'8px'}}>이메일 발송 (예약 확인, 환불, 정산 알림 등)</td>
                 <td style={{border:'1px solid #eee', padding:'8px'}}>발송 완료 후 즉시 파기</td>
               </tr>
+              <tr>
+                <td style={{border:'1px solid #eee', padding:'8px'}}>Google LLC</td>
+                <td style={{border:'1px solid #eee', padding:'8px'}}>웹사이트 방문 통계 분석 (Google Analytics)</td>
+                <td style={{border:'1px solid #eee', padding:'8px'}}>수집일로부터 최대 14개월</td>
+              </tr>
             </tbody>
           </table>
 
@@ -131,6 +136,13 @@ export default function PrivacyPage() {
                 <td style={{border:'1px solid #eee', padding:'8px'}}>이메일 발송 서비스 제공</td>
                 <td style={{border:'1px solid #eee', padding:'8px'}}>발송 완료 후 즉시 파기</td>
               </tr>
+              <tr>
+                <td style={{border:'1px solid #eee', padding:'8px'}}>Google LLC</td>
+                <td style={{border:'1px solid #eee', padding:'8px'}}>미국</td>
+                <td style={{border:'1px solid #eee', padding:'8px'}}>쿠키, 접속 IP, 기기 정보, 서비스 이용 기록 (개인 식별 정보 제외)</td>
+                <td style={{border:'1px solid #eee', padding:'8px'}}>웹사이트 방문 통계 분석 (Google Analytics)</td>
+                <td style={{border:'1px solid #eee', padding:'8px'}}>수집일로부터 최대 14개월</td>
+              </tr>
             </tbody>
           </table>
 
@@ -155,6 +167,7 @@ export default function PrivacyPage() {
               </ul>
             </li>
             <li>쿠키 차단 시 로그인 상태 유지 등 일부 서비스 이용이 제한될 수 있습니다.</li>
+            <li><strong>Google Analytics 수집 거부:</strong> 회사는 웹사이트 방문 통계 분석을 위해 Google Analytics를 사용합니다. 방문 통계 수집을 원하지 않으시면 Google Analytics 차단 브라우저 부가기능(<a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer" style={{color:'#1F4145', textDecoration:'underline'}}>tools.google.com/dlpage/gaoptout</a>)을 설치하시면 됩니다.</li>
           </ul>
 
           <h2>9. 개인정보의 파기</h2>
