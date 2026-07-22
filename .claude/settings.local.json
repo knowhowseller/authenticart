@@ -18,7 +18,9 @@
       "PowerShell(npm list *)",
       "mcp__plugin_supabase_supabase__execute_sql",
       "mcp__plugin_vercel_vercel__list_teams",
-      "mcp__plugin_vercel_vercel__list_deployments"
+      "mcp__plugin_vercel_vercel__list_deployments",
+      "mcp__claude_ai__transactions",
+      "Artifact"
     ]
   }
 }

@@ -1,5 +1,48 @@
 # 오센틱아트 현재 상태 (최신)
-> 마지막 갱신: 2026-07-12
+> 마지막 갱신: 2026-07-17
+
+---
+
+## 2026-07-17 랙돌 고양이 캐릭터 IP 사업계획서 완료 (✅ 초안 완료, 대표 검토 대기)
+
+### 새 사업 기획 — 랙돌 캐릭터 IP 글로벌 브랜드
+
+- **세션**: 20260717-new-business (new-business 워크플로우)
+- **목표**: 랙돌 고양이 캐릭터 IP 기반 글로벌 라이프스타일 브랜드 — 디지털 IP 우선, POD 드롭십, 0원 부트스트랩, 1인+AI 운영
+- **완료된 에이전트**: market-researcher / competitor-analyst / keyword-researcher / analyst / financial-reporter / legal-researcher / compliance-checker / proposal-writer
+- **산출물**: `context/sessions/20260717-new-business/proposal-writer-output.md`
+
+### 핵심 확정 결정사항
+
+| 항목 | 확정 내용 |
+|------|----------|
+| 예산 | 실질 0원 부트스트랩. 월 고정비 $0 시작 → 매출 게이트별 재투자 |
+| Gate 2 집행 시점 | 누적 $130~150 권장 (즉시 $100 집행은 Midjourney 비용 차감 후 부족) |
+| 수익모델 순서 | Redbubble + LINE 스탬프 먼저 → Ko-fi/Patreon은 팔로워 형성 후 |
+| 캐릭터 제작 | AI 초안 + 대표 직접 수정 + 이력 보관 (저작권 요건 충족) |
+| 감정 코드 | "나른함(Flop)" — MBTI 파생은 본체 확립 후 |
+| 시장 순서 | 영미권 6개월 집중 → 일본 확장 |
+| 라쿠텐 | 팬덤 후 진입 (월 이용료 감당 불가 + 알고리즘은 관계로 해결 안 됨) |
+| 상표 출원 | 캐릭터명 확정 직후 즉시 $250~350/분류 (0원 원칙 유일한 예외) |
+| 목표 시점 재조정 | 연 $50K = 36~48개월 (기본) / 연 $300K = 5~8년 (라이선싱 전제) |
+| 기회비용 | 24개월 기본 시나리오 기준 -$21,800~-$31,100 (명시됨) |
+
+### 즉시 실행 항목 (미완료)
+
+- [ ] 통신판매업 신고 (판매 전 필수, 과태료 최대 5,000만 원)
+- [ ] W-8BEN 제출 (플랫폼 가입 당일)
+- [ ] AI 수정 워크플로우 폴더 체계 확립
+- [ ] 캐릭터명 확정
+- [ ] 개인정보처리방침 작성·게시
+
+---
+
+## 2026-07-13 Google Analytics(GA4) 연결 (✅ 라이브)
+
+- ✅ **GA4 `G-QGXQ391R6J` 연결**: `@next/third-parties`의 `<GoogleAnalytics>`를 `app/layout.tsx`에 배선(App Router 클라이언트 라우팅 페이지뷰 자동추적). **프로덕션(VERCEL_ENV=production)에서만 로드** — 로컬·프리뷰 트래픽 오염 방지, `NEXT_PUBLIC_GA_ID`로 오버라이드 가능(측정 ID는 공개값이라 코드 상수 무방).
+- ✅ **개인정보처리방침 반영**(⚠️개인정보 처리방식 변경=배포게이트, 소유자 요청으로 승인): 처리위탁·국외이전 표에 **Google LLC(미국, GA)** 추가, 쿠키 섹션에 GA 옵트아웃(gaoptout) 안내. 기존 "자동수집(IP·쿠키·이용기록)" 고지가 이미 커버.
+- ✅ **배포·검증**: commit 1a89040→push→Vercel. 라이브 HTML `gtag/js?id=G-QGXQ391R6J` 로드 확인, /privacy Google LLC 반영 확인.
+- 📌 **사용자 후속(GA4 콘솔)**: ①실시간 보고서로 본인 방문 확인 ②데이터 보관 2→**14개월** 변경(관리→데이터설정, 방침 기재값과 일치) ③Search Console 연결(검색어·랜딩 통합, 색인·AEO 작업과 시너지) ④내부트래픽(본인 IP) 제외 필터.
 
 ---
 
@@ -8,9 +51,8 @@
 - 배경: `docs/콘텐츠-발행-가이드.md`(7/12 작성) — 발행 81편 중 색인 15/37 감사분(전수 41%, 엔진기준 7일경과분 63%). 원인=얇은 글 대량발행으로 크롤예산 소진 + **블로그 전 글 본문 내부링크 사실상 0개(L0)**. 인프라(sitemap 제출·robots·JSON-LD·llms.txt)·배선(쿼터 제동·색인게이트·엔진주입) **모두 정상 확인**.
 - ✅ **크롤거부 2건 본문 보강**: `상견례-결혼기념일-핸드메이드-선물`(1,092→2,240자)·`집들이-선물-추천-...-한점`(726→2,019자). 실수치·비교표·내부링크 5·FAQ 유지, check-content 게이트 통과. 운영 DB 반영·라이브 200.
 - ✅ **미색인 20건 내부링크 삽입**(발견-미크롤 13+구글모름 7): 각 글에 "함께 보면 좋은 글" 같은언어·주제 3링크. 백업 `scripts/_tmp/backup-20260712.json`(가역). IndexNow 93건 재제출.
-- ⚠️ **관련글 로직 코드 개선 — 배포 대기**: `app/(public)/blog/[slug]/page.tsx` 관련글 "최신 3"→"최신 3+오래된 3"(고아 글 인바운드 링크 수신). `pnpm build`·tsc 통과, **미커밋·미푸시**(git push는 knowhowseller 계정, 대표 승인 후). 배포 게이트 비해당(마케팅).
+- ✅ **관련글 로직 코드 개선 — 배포 완료**: `app/(public)/blog/[slug]/page.tsx` 관련글 "최신 3"→"최신 3+오래된 3"(고아 글 인바운드 링크 수신). commit 4133c61 → main push → Vercel 프로덕션 배포. 라이브 검증(미편집 guide글 관련글 3→6). 배포 게이트 비해당(마케팅).
 - 📌 **남은 수동(사용자)**: GSC URL검사→색인 요청(보강 2건+미색인 20건). 7일 후 엔진 measure.js 재판정. 색인률 80%↑ 시 쿼터 자동 2편.
-- 상세: 옵시디언 [[색인 게이트 패턴 (색인률이 발행량을 정한다)]]
 
 ---
 
@@ -19,93 +61,8 @@
 - 🔴→✅ **근본원인: authenticart 엔진 가이드가 한 번도 생성된 적 없어 발행에 미반영**. `scripts/run-daily-blog.ps1` 2.2(카피)·2.3(기회탐지)가 `D:\엔진공장\out\{offer,opportunity}\authenticart\*.md`를 `Test-Path`로 읽는데 **파일 부재 시 조용히 스킵**. 가이드 생성 작업 `EngineGuidesDaily`(06시)가 **한 번도 실행 안 됨**(LastRun 1999, 첫 자동실행 예정 7/8 06시)인데 발행 `Osentic-DailyBlog`(09시)는 매일 정상 발행 → 그간 두 엔진이 실제 글에 반영된 적 없음(7/6 로그에 injected 라인 0건으로 확인).
 - ✅ **두 엔진 authenticart 정상 작동 직접 검증**: `opportunity screen authenticart`(씨앗5→후보12→pain_guide.md) / `offer screen authenticart`(카피10→daily_copy_guide.md). 러너가 읽는 정확한 경로에 생성 확인.
 - ✅ **자동 경로(스케줄러) 복구·검증**: `EngineGuidesDaily` 수동 트리거 → opportunity/authenticart 재생성(7:39) 확인, 워치독 래퍼 정상. 실행순서 06시 생성→09시 발행 3h 간격 정합.
-- 📌 **엔진 매핑**: 카피 엔진=offer(후킹·CTA, 서치콘솔 CTR 학습), 기회탐지=opportunity(VOC 페인포인트, 성장 실측 학습). 공유 엔진공장 `D:\엔진공장`, 브랜드 variant=authenticart.
-- 📌 **잔여(경미)**: ①`core/run.js`가 plan 반환(객체)에 `.length` 로그 → "plan: undefined건" 표시상 버그(무해) ②offer 1회 텔레그램 미전송(비차단) ③7/8 06시 첫 자동 EngineGuidesDaily 실제 성공 최종 확인 권장.
 
 ---
-
-## 2026-07-06 사이트 검토 후속 조치 완료 (✅ 대표 승인·라이브 검증)
-
-- ✅ **P0 배포 중단 해결 — 진짜 원인은 Hobby 플랜 cron 제한**: 7/2 커밋(826cb48)의 `expire-orders` cron `0 * * * *`(매시)이 Vercel Hobby 검증(일 1회 제한)에서 거부 → **이후 GitHub 자동배포 전부 실패**(Git 연동 단절 아님, 로컬 빌드·tsc로는 안 잡힘). `0 15 * * *`(일 1회)로 수정(38a5658) → push 즉시 자동배포 정상 재개, 7/2 보안·UX 수정 전부 라이브 반영(`/group-request` min=5 확인).
-- ✅ **강사모집 타겟팅(대표 동의)**: 히어로 CTA 강사 신청 1순위(앰버 강조)+정산 86.7%·등록비 0원 문구, 배너/최종CTA 강사 우선. 홈 통계바 실측치(3명/5개/1점) → 고정 가치 제안 6종으로 교체.
-- ✅ **시드 데이터 정리(`scripts/cleanup-seed-data.mjs`, 전부 가역)**: 시드 클래스 4건 draft, 시드 강사(박아트/김레진) pending, 김유진 bio 정상화, 테스트 게시글 비공개, 내부 공지(홈페이지 보완사항 종합) 비공개, placeholder 작품 hidden, 기한 지난 모집(레진 키링) cancelled. 라이브 확인 완료.
-- ✅ **재료쇼핑 오픈 준비 중 처리**: 0상품+무필터 시 "오픈 준비 중"+벤더 입점 CTA. ✅ **P2**: board 타이틀 중복 해소, group-request 메타 신설, 푸터 이메일 표기·© 동적 연도.
-- 📌 **동시 세션 주의**: 마케팅 자동화 세션의 `git add -A` 커밋(f55c117)에 이 세션 변경분이 쓸려 들어감(내용 무손실, 이력 유지). 병행 세션 시 커밋 스윕 주의.
-- 📌 **남은 후속(사용자/다음 세션)**: ①노출된 Supabase secret key rotate + Vercel `SUPABASE_SERVICE_ROLE_KEY` 동기화(여전히 미결) ②매거진 57편 cover_image 일괄 생성 ③클래스 회차 등록(현재 예약 가능 회차 0) ④후기 수집 플로우 ⑤hourly cron 필요해지면 Vercel Pro 검토.
-- 상세: 옵시디언 [[오센틱아트 사이트 검토 2026-07]]
-
----
-
-## 2026-07-05 키워드 엔진 블로그 파이프라인 + 5주차 자동 발행 (✅ 라이브 검증)
-
-- ✅ **키워드 엔진 적용**: 전역 공유엔진 `D:\키워드엔진`(keywords/attack) + 신규 정제기 `scripts/keyword-refine.mjs`(공예 온토픽 필터+7타겟 분류, out 자동통합). 6,242행→**온토픽 796개**. 선물(집들이선물 50,800)·입문·커플 고수요 → **균등 7로테이션 폐기, 수요로 재조정**. SERP 공략카드(attack.js): 전 헤드 상업·거래 의도 → 후기/추천형+CTA, 헤드는 롱테일 우회.
-- ✅ **5주차 7편 자동 발행**: `집들이선물·반지공방·디퓨저·공방데이트·상견례선물·도자기·어린이체험` 축. 신규 발행 스크립트 `scripts/publish-blog.mjs`(service role upsert+featured 로테이션+IndexNow, 멱등)로 **대시보드 SQL 없이 직접 발행**. published→57편, featured 5주차 Day1·4·7 ON/4주차 OFF. 라이브 7편 전부 200+H1+FAQ, IndexNow 76건.
-- ✅ **자동 발행 파이프라인 확립**: 앞으로 `node scripts/publish-blog.mjs <posts.json>` 한 줄. 스킬 `keyword-blog`(전역 `keyword-engine-publish` 특화)로 표준화.
-- 🔑 **service role key 이슈 해결**: 로컬·Vercel(production/preview/dev) **전부 유효 service role 키 없었음**(빈 값). Supabase 대시보드 신형 secret key(`sb_secret_...`)를 로컬 반영해 발행 성공.
-- ⚠️ **미결·대표 확인**: ①Vercel 환경변수 `SUPABASE_SERVICE_ROLE_KEY`가 빈 값 → **앱 service role 기능(정산 cron·admin 서버작업) 동작 점검 필요**. ②발행에 쓴 secret key가 채팅 노출됨 → **Supabase에서 rotate(재발급) 필요**, 재발급 후 로컬·Vercel 동기화.
-
----
-
-## 2026-07-02 역할 접근 경로·결제 전환 UX 보완 (빌드·tsc 통과, ⚠️배포 게이트 승인 대기)
-
-2차 코드리뷰(역할별 진입경로/CTA·예약구매 전환·운영안정성) 지적 검증 후 타당 항목 보완. 결제 금액 계산 로직은 무변경.
-
-- ✅ **proxy 권한 정렬(⚠️역할체계=배포게이트)**: ①지부장 `/admin` 허용(하위 admin전용 12페이지는 각자 `role==='admin'` 재검증) ②승인 에이전시 `/studio/agency` 허용(로그인만 확인, 소유는 페이지 판정) ③로그인 회원이 `/signup/instructor` 접근 시 홈이 아니라 `/my/instructor/apply`로 유도.
-- ✅ **단체 출강 전환**: 홈 CTA `/board?tab=group_request`→`/group-request`(전용폼). 인원 기준 5인 통일(폼 min=5·홈문구·안내), API `participant_count>=5` 서버검증 추가.
-- ✅ **로그인 후 복귀**: 클래스예약·상품구매 비로그인 시 `/login?redirect=<현재경로>`(login 페이지가 이미 redirect 처리).
-- ✅ **결제 실패 화면 분기**: `/payment/fail?type=booking|order|cart|artwork|class_request` 별 CTA 분기. 5개 결제 시작점 failUrl에 type 전달.
-- ✅ **장바구니 성공 후 정리**: cart 성공 리다이렉트에 `from=cart` 플래그 추가, `/my/orders`에서 그 경우만 clearCart(단품주문은 미정리). 실행 안 되던 cart page의 clearCart 제거.
-- ✅ **pending 주문 만료 cron(⚠️결제인접)**: `/api/cron/expire-orders`(매시) — 1h 경과 pending 주문 만료+재고 복구(increment_stock, cancel 로직 재사용, status=pending 조건부라 멱등). vercel.json 등록.
-- ✅ **로그인 회원 강사 전환 신청**: `/my/instructor/apply` 신규(계정필드 없이 instructor_profiles만 insert, 중복신청·기존강사 안내 분기).
-- ✅ **런칭 UX 4종**: not-found·error·global-error·loading (2026-06-29 작업, 함께 커밋 대기).
-
-### 3차 마감(2026-07-02 추가)
-- ✅ **login open redirect 방지**: `?redirect=` 파라미터를 내부 절대경로(/…, //차단)만 허용 + `window.location.assign`(lint error 해소).
-- ✅ **결제 서버검증 실패도 type 전달**: `failRedirect(request, reason, type)` — 금액불일치·승인실패 등 서버측 실패도 결제유형별 실패화면으로.
-- ✅ **/admin 지부장 allowlist**: proxy에서 지부장은 실사용 7경로(instructors·classes·bookings·group-requests·notices·blog·payouts)+대시보드만 통과(전역허용→범위축소, 이중방어).
-- ✅ **단체출강 완료 화면**: `/board` 이동 대신 전용 완료 UI(접수확인·24h 연락 안내·다음단계).
-- ✅ **Header lint error 해소**: effect 내 동기 setState→queueMicrotask defer.
-- 📌 **미반영(별도)**: 추가4 배송비 정책 통일(⚠️게이트), 추가6 회차요청 내부화, 추가7 필터 모바일, 추가8 카드 액션 정리(UI). lint 잔여(대부분 기존 any 타입·img 경고)는 별도 정리 대상.
-
----
-
-## 2026-06-29 런칭 점검 + UX 마감 4종 추가 (빌드·tsc 통과, 커밋 대기)
-
-- ✅ **런칭 UX 마감 4종 신규**: `app/not-found.tsx`(브랜드 404)·`app/error.tsx`(페이지 에러바운더리)·`app/global-error.tsx`(루트레이아웃 최종방어선, 인라인스타일)·`app/loading.tsx`(전역 스피너). 기존엔 error 1개(classes/[id])뿐, 404·loading 0개였음. `npm run build`·`tsc --noEmit` 통과. 결제·정산·role 로직 무변경(배포 게이트 비해당).
-- ✅ **보안 기본기 양호 확인**: admin 페이지 27개·`/api/admin` 27개 전부 서버측 role 가드, cron 10개 전부 CRON_SECRET 검증. 비밀키 추적노출·console.log·TODO 0건.
-- 📌 **P0 오진 정정**: "세션 끊김(updateSession 미호출)"은 오진. Next.js 16이 `middleware`→`proxy`로 리네임했고 이미 `proxy.ts`가 세션갱신+가드 수행 중. `lib/supabase/middleware.ts`는 미사용 잔재(건드리지 말 것).
-- ⚠️ **미해결·대표 결정 대기 (RBAC 불일치)**: `proxy.ts` 미들웨어 가드가 페이지보다 엄격 → 페이지의 branch_manager 분기가 도달불가. `/admin/*`=admin만 통과하나 `admin/blog`는 지부장 허용 / `/studio/*`=instructor·admin만 통과하나 `studio/classes/[id]/edit`는 지부장(isPrivileged) 허용. CLAUDE.md B-1(/admin은 지부장 허용)과 어긋날 소지. **역할체계 사안=배포 게이트** → 지부장 접근 필요여부 확정 후 proxy 보정 or 페이지 죽은분기 정리.
-
----
-
-## 2026-06-25 블로그 홍보글 4주차 7편 작성 + 발행 완료 (✅ 라이브 검증)
-
-- ✅ **4주차 7편 작성 완료**: 1·2·3주차 7타겟 로테이션 유지·앵글 차별화. 7월 초 한여름 시즌 훅(더위·휴가철·사내행사). AEO 3종·광고법 안전 동일. slug 21편과 전부 다름. `outputs/04-marketing/20260702-오센틱아트-블로그홍보글7편-4주차.md(+.docx 21.7KB)`
-- ✅ **운영 DB 발행 완료**: 대시보드 SQL 에디터에서 `20260702-블로그4주차-발행SQL.sql` 실행. published 43→**50편**. featured 4주차 Day1·4·7 ON / 3주차 Day1·4·7 OFF.
-- ✅ **라이브 검증**: 신규 7편 전부 HTTP 200 + H1 + FAQPage 렌더링 확인. 강사글(Day3) 정산 86.7% 정상. (www.authenticart.co.kr) ※한글 slug는 percent-encoding 후 200(raw=500은 curl 인코딩 이슈).
-- ✅ **IndexNow 일괄 색인**: sitemap 69건(신규 7편 포함) 200 OK 제출. 상세 `20260625-블로그홍보4주차-worklog.md`
-- 4주차 목록: ①(월/guide,featured) 처음 클래스 예약·당일준비 ②(화/guide) 여름 사내행사 워크숍 ③(수/instructor) 강사 부업 현실(정산86.7%) ④(목/trend,featured) 여름 테이블 코스터·트레이 ⑤(금/story) 멀리 안 가는 여름 데이트 ⑥(토/guide) 더운날 실내 공예체험 ⑦(일/story,featured) 상황별 선물(집들이·승진·감사)
-
-## 2026-06-25 블로그 홍보글 3주차 7편 작성 + 발행 완료 (✅ 라이브 검증)
-
-- ✅ **3주차 7편 작성 완료**: 1·2주차 7타겟 로테이션 유지·주제 교체(여름 휴가철·방학 시즌 훅). AEO 3종·광고법 안전 동일. slug 1·2주차와 전부 다름. `outputs/04-marketing/20260625-오센틱아트-블로그홍보글7편-3주차.md(+.docx 22.1KB)`
-- ✅ **운영 DB 발행 완료**: 사용자가 대시보드 SQL 에디터에서 `20260625-블로그3주차-발행SQL.sql` 실행(BEGIN/COMMIT). published 36 → **43편**. 확인 SELECT 7행 전부 published, featured Day1·4·7 ON.
-- ✅ **featured 로테이션**: 3주차 Day1·4·7 ON, 2주차 Day1·4·7 OFF.
-- ✅ **라이브 검증**: `/blog` 목록 + 신규 6글 상세 HTTP 200·H1·본문·FAQ 렌더링 확인. 강사글 정산 86.7% 문구 정상. (www.authenticart.co.kr)
-- ✅ **IndexNow 일괄 색인**: `scripts/indexnow-submit-all.mjs` 실행 — sitemap 62건(신규 7편 포함) 200 OK 제출. (SQL 직접 INSERT는 자동 ping 안 돼 수동 실행)
-- 📌 **이번 세션 특이사항**: execute_sql MCP가 **다른 Supabase 계정(vision-suite, ref axucxnfmbkhlunpiifce)으로 연결**돼 authenticart(coabfjizufovypfappco) 접근 불가 → 대시보드 SQL로 발행. 다음에 MCP 직접 발행하려면 오센틱아트 계정으로 재연결 필요. 상세 `20260625-블로그홍보3주차-worklog.md`
-
-## 2026-06-20~21 검색 노출 강화: 빙 등록 + IndexNow + RSS (배포 완료)
-
-- ✅ **빙 웹마스터 메타 태그**: `app/layout.tsx` verification.other에 `msvalidate.01` 추가. 구글·네이버에 이어 빙 소유확인 준비. (commit cfb6f7b)
-- ✅ **IndexNow 자동 색인** (commit fb92a63): 빙·네이버·Yandex 등 참여 엔진에 즉시 색인 요청.
-  - 키 파일 `public/9d0817bd5e9a59d21ab9bfb876612795.txt` (라이브 200 확인) + `lib/indexnow.ts` 제출 유틸
-  - 블로그 발행/수정(create·update route)에서 발행 상태 시 자동 ping (fire-and-forget, 발행 안 막음)
-  - `scripts/indexnow-submit-all.mjs`: sitemap 전체 일괄 제출 1회성
-- ✅ **RSS 2.0 피드 `/rss.xml`**: 최신 발행글 50건, 30분 캐시. layout alternate 링크 노출. (라이브 200 확인)
-- ✅ **사이트맵 55건 IndexNow 일괄 제출 완료**: 응답 202 Accepted.
-- 📌 **사용자 수동 작업(웹마스터 UI)**: 빙/네이버/구글 콘솔에서 `sitemap.xml`·`rss.xml` 제출 + 빙 소유확인 버튼 클릭.
-- 📌 **IndexNow 키는 비밀 아님**: 공개 검증 토큰. 키 변경 시 public 파일명·lib/indexnow.ts·스크립트 3곳 동시 변경 필요.
 
 ## 프로젝트 단계
 
@@ -114,44 +71,6 @@
 - **Phase 2**: 트리거 미도달 (미등록 강사 50명, 미달)
 
 ---
-
-## 2026-06-09 보안·결제 수정 + 배송비 기능 (배포 완료)
-
-- 🔴→✅ **D-1 과소결제 취약점 수정**: toss-success가 URL amount를 DB 실제금액과 대조 없이 paid 처리하던 문제 → 5개 결제 타입(booking·order·cart·artwork·class_request) 전부 서버 금액 검증 + 불일치 시 토스 결제 취소. (commit 5fe2f90)
-- ✅ **D-2 멱등성**: 이미 paid인 주문 재호출 시 중복 정산·알림 방지.
-- ✅ **C-1**: supabase/migrations/README.md — 중복 번호(0002/0005/0006) 문서화. 재번호 금지 규칙.
-- ✅ **작가 배송비 기능**: migration 0048(artworks/artwork_orders.shipping_fee) 적용 완료. 결제액=작품가+배송비. (commit c6605ad)
-- ⚠️ **배포 후 권장 테스트**: 실제 결제로 정상금액 통과/조작금액 차단 확인 (booking·쿠폰·작품). webhooks/toss 동일 검증 별도 검토.
-
-## 2026-06-10 블로그 홍보 기획 + 타겟별 홍보글 7편 (✅ 운영 DB 발행 완료)
-
-- ✅ **블로그 홍보 기획서 + 홍보글 7편 작성**: 타겟 7세그먼트(입문/B2B/강사/작품/커플/학부모/선물) 맞춤, AEO 3종(excerpt·FAQ·소제목) 적용, 광고법 안전. `outputs/04-marketing/20260610-오센틱아트-블로그홍보{기획,글7편}.md(+.docx)`
-- ✅ **CTA 실제 라우트 반영**: `/classes`·`/artworks`·`/group-request`·`/signup/instructor`
-- ✅ **운영 DB(blog_posts) 7건 published INSERT 완료** (사용자 승인, execute_sql): blog_posts 22편 → 29편. 홈 노출(is_featured) Day1·4·7=true. 라이브 검증: `/blog` 목록·3개 글 HTTP 200 + 본문 렌더링 확인 (www.authenticart.co.kr).
-- 📌 후속(선택): 글별 cover_image(대표 이미지) URL 입력 — 현재 미입력(카드 이미지 없음). 상세 `20260610-블로그홍보7편-worklog.md`
-
-## 2026-06-13 블로그 홍보글 2주차 7편 작성 + 운영 DB 발행 완료 (✅)
-
-- ✅ **2주차 7편 작성 완료**: 기획서 로드맵대로 1주차 7타겟 로테이션 유지·주제만 교체. 여름·장마·여름방학 시즌 훅 반영. AEO 3종·광고법 안전 동일 기준. slug 1주차와 전부 다르게 생성. `outputs/04-marketing/20260613-오센틱아트-블로그홍보글7편-2주차.md(+.docx 21.9KB)`
-- ✅ **운영 DB(blog_posts) 7건 published INSERT 완료** (사용자 승인 "즉시 published 일괄", execute_sql): published 29편 → **36편**. Day1·4·7=is_featured true.
-- ✅ **홈 featured 로테이션**: 1주차 Day1·4·7(6/10) featured 내림 → 2주차 Day1·4·7 올림. 6/8 상록 가이드 2편(강사되는법·수수료비교)은 유지. **featured 총 5편**.
-- ✅ **라이브 검증**: 새 글 3건 + `/blog` 목록 HTTP 200, 본문 렌더링 확인(www.authenticart.co.kr).
-- 📌 후속(선택): 글별 cover_image URL 미입력(카드 이미지 없음). 상세 `20260613-블로그홍보2주차-worklog.md`
-
-## 2026-06-10 CS 자동응답 봇 검증·정리 (커밋 완료, 푸시 대기)
-
-- ✅ **CS봇 mini 모델 라이브 검증**: `/api/ai/cs` — 수수료(86.7%)·환불 단계 등 KB 질문 정상 답변, KB 밖(날씨 등) 질문은 채널톡 안내로 정확히 거부. 모델 `gpt-4o-mini-2024-07-18`, finish=stop, 키 정상.
-- 📌 **어제 "과도 거부" 원인 확정**: 모델 문제 아님 → 터미널 테스트 시 **한글 인코딩 깨짐**이 원인이었음. (UTF-8 JSON 파일로 재검증해 확인) → 모델 gpt-4o 상향 불필요, mini 유지.
-- ✅ **임시 진단 로깅 `?debug=1` 제거** (키 prefix·에러 노출 위험 제거) + catch 폴백 메시지 폐지된 게시판(/board) → 채널톡으로 통일. tsc --noEmit 통과. (commit 2a9fcd5)
-- ⚠️ **미푸시**: 2a9fcd5 아직 origin 미반영 → push 시 Vercel 자동 배포.
-
-## 2026-06-09 1인 운영 자동화 (배포 완료)
-
-- **1순위**: class-reminder cron 활성화+윈도우 수정 / operator-digest(매일 09시 미처리 8종 요약) / weekly-kpi(매주 월) — admin 4명 발송
-- **2순위**: 정산 지급 완료(mark-paid 단건·일괄) 시 강사 정산 명세 자동 발송 (monthlyPayoutHtml 연결, 계산 로직 불변)
-- **3순위**: B2B 단체문의 자동 1차 응답(접수확인+절차) + admin 즉시 이메일·인앱 알림
-- 미적용/판단대기: 강사신청 실시간 알림(signup 클라이언트 insert라 서버라우트화 필요, 다이제스트가 일단위 커버), 4순위(CS봇·블로그 파이프라인·후기 자동요청), 5순위(운영 대시보드)
-- ⚠️ cron은 vercel.json 등록됨 — CRON_SECRET 환경변수 설정 전제(기존 7개 cron과 동일)
 
 ## 수정하면 안 되는 고정값
 
@@ -179,6 +98,9 @@
 - `20260515-오센틱아트-에이전시파트너제안서.md` + `.docx` ✅ (14.4KB)
 - `20260515-오센틱아트-강사모집제안서.md` + `.docx` ✅ (16.6KB)
 
+### sessions/20260717-new-business/
+- `proposal-writer-output.md` ✅ (2026-07-17 완료, 대표 검토 대기)
+
 ### outputs/05-legal/
 - `20260513-개인정보처리방침검토.md` + `.docx`
 - `20260513-표시광고법검토.md` + `.docx`
@@ -186,30 +108,6 @@
 
 ### outputs/08-research/
 - `20260513-경쟁분석-공예플랫폼.md` + `.docx`
-
----
-
-## 최근 추가 기능 (2026-06-08)
-
-- **블로그(공예 매거진) + AI 검색 최적화(AEO)** 신규 구축
-  - 공개: `/blog`(목록), `/blog/[slug]`(상세) — JSON-LD(BlogPosting·FAQPage·BreadcrumbList)
-  - 관리자: `/admin/blog` CRUD (admin·branch_manager) + AI 생성 마크다운 붙여넣기 지원
-  - AEO 인프라: `/llms.txt`, robots AI 크롤러 허용, sitemap·홈 Organization/WebSite 구조화 데이터
-  - 빌드/타입체크 통과, `as any` 0건 — 상세는 `20260608-블로그-AEO-worklog.md`
-  - ✅ **마이그레이션 0047 운영 DB 적용 완료** (대시보드 SQL 에디터)
-  - ✅ **배포 완료** (commit caea87a → main push → Vercel): `/blog`, `/llms.txt`, 홈 JSON-LD, robots AI 크롤러 라이브 검증
-  - ⚠️ 같은 커밋에 **검토 안 된 결제·주문 변경분 8개**(toss/orders/bookings/cron)가 함께 배포됨 → 결제 흐름 정상 여부 확인 필요
-
-## 미완료 / 다음 세션 인계 사항
-
-- [ ] **migrations 0041~0047 운영 DB 적용**: `npx supabase db push` 실행 필요 (0047=블로그)
-- [ ] **Vercel 환경변수 OPENAI_API_KEY 추가**: Vercel 대시보드에서 직접 추가
-- [ ] **OpenAI API 키 폐기 및 재발급**: 이전 세션에서 노출된 키 → platform.openai.com에서 폐기
-- [ ] **크론 설정 (사용자 승인 대기)**:
-  - 주간 KPI 리포트 (매주 월 09:00)
-  - 미처리 강사 신청 알림 (매일)
-  - Phase 2 트리거 감지 (매일)
-- [ ] **홈페이지 메인 콘텐츠 기획**: 이해관계자 대상 감성+CTA 설계 (중단됨)
 
 ---
 

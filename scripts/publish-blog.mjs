@@ -17,6 +17,7 @@
 import { createClient } from '@supabase/supabase-js'
 import fs from 'node:fs'
 import path from 'node:path'
+import { embedBodyImages } from './embed-body-images.mjs'
 
 const jsonPath = process.argv[2]
 if (!jsonPath) { console.error('사용법: node scripts/publish-blog.mjs <posts.json>'); process.exit(1) }
@@ -47,6 +48,19 @@ async function main() {
     const { error } = await sb.from('blog_posts').update({ is_featured: false }).in('slug', unfeature)
     if (error) console.warn('featured 내리기 경고:', error.message)
     else console.log(`featured OFF: ${unfeature.length}건`)
+  }
+
+  // 1.5) 본문 삽화 삽입 — 초안의 [[IMG: 프롬프트 | 캡션]] 마커를 로컬 FLUX 이미지로 치환(비차단).
+  //      썸네일(cover_image)은 채우지 않음 → 프론트가 글자 있는 CSS 카드로 노출(가독성).
+  console.log(`본문 삽화 삽입(${posts.length}편)...`)
+  for (const p of posts) {
+    try {
+      const r = await embedBodyImages(sb, p, { auto: false, maxImages: 2 })
+      p.content = r.content
+      if (r.count) console.log(`  삽화 ${r.count}장: ${p.slug}`)
+    } catch (e) {
+      console.warn(`  삽화 건너뜀(${p.slug}): ${e.message}`)
+    }
   }
 
   // 2) 신규 발행 upsert (slug 충돌 시 갱신하지 않음 = 중복 발행 방지)

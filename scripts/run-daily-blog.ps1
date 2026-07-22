@@ -10,9 +10,24 @@ function Log($m) { $line = "$((Get-Date).ToString('HH:mm:ss')) $m"; Add-Content 
 
 Log "=== daily blog start ($date) ==="
 
-# 1) refresh refined keywords + pick today's 3 (exclude already-published, target diversity)
+# 0) index-linked quota: 색인률이 오늘 발행 편수를 정한다 (색인 안 되면 더 찍어봐야 순손실)
+$quota = 1; $qmode = 'publish'; $qreason = ''
+try {
+  $q = (& node scripts/publish-quota.mjs | Out-String).Trim() | ConvertFrom-Json
+  $quota = [int]$q.quota; $qmode = $q.mode; $qreason = $q.reason
+  Log "quota: $quota post(s) — $qreason"
+} catch { Log "WARN: quota check failed, fallback 1 post" }
+
+if ($quota -le 0) {
+  Log "SKIP new posts (mode=$qmode): $qreason"
+  & node scripts/notify-daily.mjs $date reinforce
+  Log "=== halted: 신규 발행 대신 기존 미색인 글 보강이 필요 ==="
+  exit 0
+}
+
+# 1) refresh refined keywords + pick today's quota (exclude already-published, target diversity)
 & node scripts/keyword-refine.mjs 2>&1 | Add-Content $log -Encoding UTF8
-& node scripts/pick-keywords.mjs 3 --out "out\today-keywords.json" 2>&1 | Add-Content $log -Encoding UTF8
+& node scripts/pick-keywords.mjs $quota --out "out\today-keywords.json" 2>&1 | Add-Content $log -Encoding UTF8
 if (-not (Test-Path "out\today-keywords.json")) {
   Log "FAIL: keyword pick"; & node scripts/notify-daily.mjs $date fail; exit 1
 }
@@ -30,6 +45,16 @@ try {
   $brief = (& node 'D:\키워드엔진\plans_brief.js' authenticart | Out-String).Trim()
   if ($brief) { Add-Content -Path "out\daily-prompt-final.txt" -Value "`n$brief" -Encoding UTF8 }
 } catch { Log "WARN: plans_brief append failed" }
+# 2.2) offer engine: append learned hook/CTA copy guide (conversion copy self-reinforcing loop)
+try {
+  $offerGuide = 'D:\엔진공장\out\offer\authenticart\daily_copy_guide.md'
+  if (Test-Path $offerGuide) { Add-Content -Path "out\daily-prompt-final.txt" -Value "`n$(Get-Content -Raw -Encoding UTF8 $offerGuide)" -Encoding UTF8; Log "offer copy guide injected" }
+} catch { Log "WARN: offer guide append failed" }
+# 2.3) opportunity engine: append customer pain-point guide (problem-solving angles -> 문제해결식 작성)
+try {
+  $painGuide = 'D:\엔진공장\out\opportunity\authenticart\pain_guide.md'
+  if (Test-Path $painGuide) { Add-Content -Path "out\daily-prompt-final.txt" -Value "`n$(Get-Content -Raw -Encoding UTF8 $painGuide)" -Encoding UTF8; Log "opportunity pain guide injected" }
+} catch { Log "WARN: pain guide append failed" }
 $posts  = "outputs\04-marketing\posts-auto-$date.json"
 Log "Claude generating drafts (with learning digest)..."
 $prompt = Get-Content -Raw -Encoding UTF8 "out\daily-prompt-final.txt"
