@@ -87,7 +87,15 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
     .limit(60)
   const pool = (poolData ?? []) as BlogPostCard[]
   const newest = pool.slice(0, 3)
-  const oldest = pool.slice(-3).reverse()
+  // 오래된 쪽을 slice(-3) 고정으로 뽑으면 카테고리에서 "가장 오래된 3편"만 계속 링크를 받고
+  // 나머지 오래된 글은 여전히 고아로 남는다(2026-07-23 실측: 6/8 발행 롱폼 22편 중 색인 2편, 9%).
+  // 현재 글 slug 해시로 시작점을 정해 형제 글마다 다른 3편을 링크하면, 카테고리 안의 오래된 글
+  // 전체가 순환적으로 인바운드를 받는다. 해시는 결정적이라 렌더·재검증 사이에 결과가 흔들리지 않는다.
+  const older = pool.slice(3)
+  const seed = [...post.slug].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7)
+  const oldest = older.length
+    ? Array.from({ length: Math.min(3, older.length) }, (_, i) => older[(seed + i) % older.length])
+    : []
   const seen = new Set<string>()
   const related = [...newest, ...oldest].filter((r) => {
     if (seen.has(r.id)) return false
